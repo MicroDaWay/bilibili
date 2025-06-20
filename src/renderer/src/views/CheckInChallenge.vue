@@ -15,7 +15,7 @@ function getLastWeekStart() {
 // 获取活动列表
 async function fetchActivities() {
   try {
-    const activities = await window.electronAPI.fetchBilibiliActivities()
+    const activities = await window.electronAPI.fetchCheckInChallenge()
     return activities
   } catch (error) {
     window.electronAPI.showMessage({
@@ -84,15 +84,21 @@ async function main() {
 
     &:hover {
       cursor: pointer;
+      background-color: orange;
     }
   }
 
   .item-list {
     margin-top: 20px;
+    padding-bottom: 50px;
 
     .item-text {
       font-size: 22px;
       margin: 6px 0;
+
+      &:hover {
+        background-color: orange;
+      }
     }
   }
 }

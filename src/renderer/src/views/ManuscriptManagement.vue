@@ -27,7 +27,7 @@ const bilibiliStore = useBilibiliStore()
 
 // 获取指定页码的数据
 async function fetchPage(pn) {
-  const result = await window.electronAPI.fetchBilibiliData(pn)
+  const result = await window.electronAPI.fetchManuscriptManagement(pn)
   return result
 }
 

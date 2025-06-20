@@ -25,6 +25,7 @@ function createWindow() {
   })
 
   mainWindow.on('ready-to-show', () => {
+    // 最大化应用窗口
     mainWindow.maximize()
   })
 
@@ -47,8 +48,15 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
+  // 消息弹窗
+  ipcMain.handle('show-message', (e, params) => {
+    dialog.showMessageBox(mainWindow, {
+      ...params
+    })
+  })
+
   // 获取稿件管理数据
-  ipcMain.handle('fetch-bilibili-data', async (e, pn) => {
+  ipcMain.handle('manuscript-management', async (e, pn) => {
     const url = 'https://member.bilibili.com/x/web/archives'
     const headers = {
       Referer: 'https://member.bilibili.com/platform/upload-manager/article',
@@ -66,15 +74,8 @@ app.whenReady().then(() => {
     return response.data?.data?.arc_audits || []
   })
 
-  // 提示信息
-  ipcMain.handle('show-message', (e, params) => {
-    dialog.showMessageBox(mainWindow, {
-      ...params
-    })
-  })
-
   // 获取打卡挑战数据
-  ipcMain.handle('fetch-bilibili-activities', async () => {
+  ipcMain.handle('check-in-challenge', async () => {
     try {
       const response = await axios.get(
         'https://member.bilibili.com/x2/creative/h5/clock/v4/activity/list',
@@ -87,6 +88,29 @@ app.whenReady().then(() => {
         }
       )
       return response.data?.data?.list || []
+    } catch (error) {
+      dialog.showMessageBox(mainWindow, {
+        type: 'error',
+        message: `请求失败, ${error.message}`
+      })
+      console.error('请求失败:', error.message)
+      return []
+    }
+  })
+
+  // 获取热门活动数据
+  ipcMain.handle('popular-events', async () => {
+    const headers = {
+      Referer: 'https://member.bilibili.com/platform/releasecenter',
+      Cookie: import.meta.env.VITE_COOKIE,
+      'User-Agent': import.meta.env.VITE_USER_AGENT
+    }
+
+    const url = 'https://member.bilibili.com/x/web/activity/videoall'
+
+    try {
+      const response = await axios.get(url, { headers })
+      return response.data?.data || []
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
         type: 'error',
@@ -166,7 +190,7 @@ async function importExcelHandler() {
   }
 }
 
-// 开启图片代理服务器
+// 图片代理服务器
 function startServer() {
   const expressApp = express()
   const port = 3000

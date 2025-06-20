@@ -7,9 +7,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
       callback(data)
     })
   },
-  // 获取bilibili稿件管理数据
-  fetchBilibiliData: (params) => ipcRenderer.invoke('fetch-bilibili-data', params),
-  // 获取bilibili打卡挑战数据
-  fetchBilibiliActivities: () => ipcRenderer.invoke('fetch-bilibili-activities'),
-  showMessage: (params) => ipcRenderer.invoke('show-message', params)
+  // 消息弹窗
+  showMessage: (params) => ipcRenderer.invoke('show-message', params),
+  // 获取稿件管理数据
+  fetchManuscriptManagement: (params) => ipcRenderer.invoke('manuscript-management', params),
+  // 获取打卡挑战数据
+  fetchCheckInChallenge: () => ipcRenderer.invoke('check-in-challenge'),
+  // 获取热门活动数据
+  fetchPopularEvents: () => ipcRenderer.invoke('popular-events')
 })
