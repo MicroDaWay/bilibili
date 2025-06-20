@@ -47,13 +47,13 @@ app.whenReady().then(() => {
     optimizer.watchWindowShortcuts(window)
   })
 
-  // 获取投稿数据
+  // 获取稿件管理数据
   ipcMain.handle('fetch-bilibili-data', async (e, pn) => {
     const url = 'https://member.bilibili.com/x/web/archives'
     const headers = {
       Referer: 'https://member.bilibili.com/platform/upload-manager/article',
-      Cookie: process.env.COOKIE,
-      'User-Agent': process.env.USER_AGENT
+      Cookie: import.meta.env.VITE_COOKIE,
+      'User-Agent': import.meta.env.VITE_USER_AGENT
     }
     const response = await axios.get(url, {
       params: {
@@ -71,6 +71,30 @@ app.whenReady().then(() => {
     dialog.showMessageBox(mainWindow, {
       ...params
     })
+  })
+
+  // 获取打卡挑战数据
+  ipcMain.handle('fetch-bilibili-activities', async () => {
+    try {
+      const response = await axios.get(
+        'https://member.bilibili.com/x2/creative/h5/clock/v4/activity/list',
+        {
+          headers: {
+            Referer: 'https://member.bilibili.com/york/platform-punch-card/personal',
+            Cookie: import.meta.env.VITE_COOKIE,
+            'User-Agent': import.meta.env.VITE_USER_AGENT
+          }
+        }
+      )
+      return response.data?.data?.list || []
+    } catch (error) {
+      dialog.showMessageBox(mainWindow, {
+        type: 'error',
+        message: `请求失败, ${error.message}`
+      })
+      console.error('请求失败:', error.message)
+      return []
+    }
   })
 
   createWindow()

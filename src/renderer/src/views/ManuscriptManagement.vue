@@ -22,13 +22,6 @@ const filteredData = ref({
 const totalPlay = ref(0)
 const totalCount = ref(0)
 const itemList = ref([])
-const itemValue = ref({
-  view: 0,
-  ptime: '',
-  title: '',
-  cover: '',
-  topic: topic.value
-})
 
 const bilibiliStore = useBilibiliStore()
 
@@ -53,16 +46,12 @@ function processItems(items, startTime) {
       totalPlay.value += parseInt(view, 10)
       totalCount.value++
 
-      itemValue.value = {
+      itemList.value.push({
         view,
         ptime,
         title,
         cover,
         topic: topic.value
-      }
-
-      itemList.value.push({
-        ...itemValue.value
       })
 
       console.log(
