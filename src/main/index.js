@@ -5,12 +5,53 @@ import xlsx from 'xlsx'
 import axios from 'axios'
 import express from 'express'
 import dotenv from 'dotenv'
+import mysql from 'mysql2/promise'
 
 // 加载环境变量
 dotenv.config()
 
 let server
 let mainWindow
+
+// 创建数据库连接池
+const dbConfig = {
+  host: import.meta.env.VITE_HOST,
+  user: import.meta.env.VITE_USER,
+  password: import.meta.env.VITE_PASSWORD,
+  database: import.meta.env.VITE_DATABASE
+}
+
+const pool = mysql.createPool(dbConfig)
+
+// 初始化 rewards 表
+async function initRewards() {
+  const conn = await pool.getConnection()
+  try {
+    await conn.query('DROP TABLE IF EXISTS rewards')
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS rewards (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        product_name VARCHAR(100),
+        money DECIMAL(10,2),
+        create_time DATETIME
+      ) COMMENT '活动奖励'
+    `)
+  } finally {
+    conn.release()
+  }
+}
+
+// 获取余额
+async function getBalance(headers) {
+  const URL_WALLET = 'https://pay.bilibili.com/payplatform/getUserWalletInfo'
+  try {
+    const res = await axios.get(URL_WALLET, { headers })
+    return res.data.data.accountInfo.brokerage
+  } catch (error) {
+    console.error('获取余额失败:', error.message)
+    return 0
+  }
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -119,6 +160,84 @@ app.whenReady().then(() => {
       console.error('请求失败:', error.message)
       return []
     }
+  })
+
+  // 获取收益中心数据并保存到数据库
+  ipcMain.handle('earnings-center', async () => {
+    const headers = {
+      Referer: 'https://pay.bilibili.com/pay-v2/shell/bill',
+      Cookie: import.meta.env.VITE_COOKIE,
+      'User-Agent': import.meta.env.VITE_USER_AGENT
+    }
+
+    let currentPage = 1
+    let totalPages = 1
+    let totalMoney = 0
+
+    const balance = await getBalance(headers)
+
+    while (currentPage <= totalPages) {
+      await new Promise((r) => setTimeout(r, 1000))
+
+      const URL_RECORDS = 'https://pay.bilibili.com/bk/brokerage/v2/listForRechargeRecord'
+      const payload = {
+        currentPage,
+        pageSize: 15,
+        sdkVersion: '1.1.7',
+        timestamp: Math.floor(Date.now() / 1000),
+        traceId: Math.floor(Date.now() / 1000)
+      }
+
+      try {
+        const response = await axios.post(URL_RECORDS, payload, { headers })
+        const data = response.data?.data || {}
+        const records = data.result || []
+        totalPages = data.page?.totalPage || 1
+
+        const items = []
+
+        for (const item of records) {
+          const money = item.brokerage || 0
+          const name = item.productName || ''
+          const ctime = item.ctime || ''
+
+          totalMoney += money
+          items.push([name, money, ctime])
+        }
+
+        if (items.length > 0) {
+          const query = `
+          INSERT INTO rewards (product_name, money, create_time)
+          VALUES ?
+        `
+          const conn = await pool.getConnection()
+          try {
+            await conn.query(query, [items])
+          } finally {
+            conn.release()
+          }
+        }
+
+        currentPage++
+      } catch (error) {
+        console.error(`请求失败:`, error.message)
+        break
+      }
+    }
+
+    // 查询数据库中的所有记录
+    const [rows] = await pool.query('SELECT * FROM rewards ORDER BY create_time DESC')
+    return {
+      rows,
+      totalMoney: totalMoney.toFixed(2),
+      balance: balance.toFixed(2)
+    }
+  })
+
+  // 初始化 rewards 表
+  ipcMain.handle('init-table-rewards', async () => {
+    await initRewards()
+    return true
   })
 
   createWindow()

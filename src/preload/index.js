@@ -14,5 +14,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 获取打卡挑战数据
   fetchCheckInChallenge: () => ipcRenderer.invoke('check-in-challenge'),
   // 获取热门活动数据
-  fetchPopularEvents: () => ipcRenderer.invoke('popular-events')
+  fetchPopularEvents: () => ipcRenderer.invoke('popular-events'),
+  // 获取收益中心数据
+  fetchEarningsCenter: () => ipcRenderer.invoke('earnings-center'),
+  // 初始化 rewards 表
+  initTableRewards: () => ipcRenderer.invoke('init-table-rewards')
 })
