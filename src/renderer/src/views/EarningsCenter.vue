@@ -8,7 +8,6 @@ const balance = ref('')
 
 async function main() {
   try {
-    await window.electronAPI.initTableRewards()
     const result = await window.electronAPI.fetchEarningsCenter()
     itemList.value = result.rows
     totalMoney.value = result.totalMoney
@@ -19,7 +18,11 @@ async function main() {
       message: '查询结束'
     })
   } catch (error) {
-    console.error('获取数据失败:', error.message)
+    window.electronAPI.showMessage({
+      type: 'error',
+      message: `获取数据失败：, ${error.message}`
+    })
+    console.error('获取数据失败：', error.message)
   }
 }
 

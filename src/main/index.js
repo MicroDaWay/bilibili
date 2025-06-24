@@ -48,8 +48,81 @@ async function getBalance(headers) {
     const res = await axios.get(URL_WALLET, { headers })
     return res.data.data.accountInfo.brokerage
   } catch (error) {
-    console.error('获取余额失败:', error.message)
+    dialog.showMessageBox(mainWindow, {
+      type: 'error',
+      message: `获取余额失败：, ${error.message}`
+    })
+    console.error('获取余额失败：', error.message)
     return 0
+  }
+}
+
+// 初始化 bilibili 表
+async function initBilibili(conn) {
+  await conn.query('DROP TABLE IF EXISTS bilibili')
+  await conn.query(`
+    CREATE TABLE IF NOT EXISTS bilibili (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      title VARCHAR(255),
+      view INT,
+      post_time DATETIME,
+      tag VARCHAR(255)
+    ) COMMENT 'bilibili投稿数据'
+  `)
+}
+
+// 获取 bilibili 数据
+async function fetchBilibiliData(pageNumber) {
+  const URL_BILIBILI_ARCHIVES = 'https://member.bilibili.com/x/web/archives'
+
+  const headers = {
+    Referer: 'https://member.bilibili.com/platform/upload-manager/article',
+    Cookie: import.meta.env.VITE_COOKIE,
+    'User-Agent': import.meta.env.VITE_USER_AGENT
+  }
+
+  try {
+    const res = await axios.get(URL_BILIBILI_ARCHIVES, {
+      params: {
+        pn: pageNumber,
+        ps: 10
+      },
+      headers
+    })
+
+    return res.data?.data || null
+  } catch (e) {
+    console.error(`获取第 ${pageNumber} 页失败`, e.message)
+    return null
+  }
+}
+
+async function parseAndSave(data, conn) {
+  const records = []
+
+  for (const item of data.arc_audits || []) {
+    const archive = item.Archive || {}
+    const stat = item.stat || {}
+
+    const title = archive.title
+    const view = stat.view || 0
+    const pubTime = archive.ptime
+    const tag = archive.tag
+
+    const postTime = new Date(pubTime * 1000).toISOString().slice(0, 19).replace('T', ' ')
+
+    records.push([title, view, postTime, tag])
+    console.log(
+      `投稿时间 = ${postTime}, 播放量 = ${view.toString().padEnd(5)}, 标题 = ${title}, 投稿标签 = ${tag}`
+    )
+  }
+
+  if (records.length > 0) {
+    const sql = `
+      INSERT INTO bilibili(title, view, post_time, tag)
+      VALUES ?
+    `
+    await conn.query(sql, [records])
   }
 }
 
@@ -132,9 +205,9 @@ app.whenReady().then(() => {
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
         type: 'error',
-        message: `请求失败, ${error.message}`
+        message: `请求失败：, ${error.message}`
       })
-      console.error('请求失败:', error.message)
+      console.error('请求失败：', error.message)
       return []
     }
   })
@@ -155,15 +228,17 @@ app.whenReady().then(() => {
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
         type: 'error',
-        message: `请求失败, ${error.message}`
+        message: `请求失败：, ${error.message}`
       })
-      console.error('请求失败:', error.message)
+      console.error('请求失败：', error.message)
       return []
     }
   })
 
   // 获取收益中心数据并保存到数据库
   ipcMain.handle('earnings-center', async () => {
+    await initRewards()
+
     const headers = {
       Referer: 'https://pay.bilibili.com/pay-v2/shell/bill',
       Cookie: import.meta.env.VITE_COOKIE,
@@ -203,6 +278,9 @@ app.whenReady().then(() => {
 
           totalMoney += money
           items.push([name, money, ctime])
+          console.log(
+            `发放时间 = ${ctime}, 发放金额 = ${money.toFixed(2).padEnd(6)}, 活动名称 = ${name}`
+          )
         }
 
         if (items.length > 0) {
@@ -220,7 +298,11 @@ app.whenReady().then(() => {
 
         currentPage++
       } catch (error) {
-        console.error(`请求失败:`, error.message)
+        dialog.showMessageBox(mainWindow, {
+          type: 'error',
+          message: `请求失败：, ${error.message}`
+        })
+        console.error(`请求失败：`, error.message)
         break
       }
     }
@@ -234,10 +316,33 @@ app.whenReady().then(() => {
     }
   })
 
-  // 初始化 rewards 表
-  ipcMain.handle('init-table-rewards', async () => {
-    await initRewards()
-    return true
+  // 更新数据库
+  ipcMain.handle('update-database', async () => {
+    const conn = await pool.getConnection()
+    try {
+      await initBilibili(conn)
+
+      let page = 1
+      while (true) {
+        await new Promise((r) => setTimeout(r, 1000))
+        const data = await fetchBilibiliData(page)
+        if (!data) break
+
+        const { count, ps } = data.page || {}
+        const totalPages = Math.ceil(count / ps)
+
+        await parseAndSave(data, conn)
+        await conn.commit()
+
+        if (page >= totalPages) break
+        page++
+      }
+
+      const [rows] = await pool.query('SELECT * FROM bilibili ORDER BY post_time DESC')
+      return rows
+    } finally {
+      conn.release()
+    }
   })
 
   createWindow()
@@ -302,9 +407,9 @@ async function importExcelHandler() {
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
         type: 'error',
-        message: '导入Excel文件失败'
+        message: `导入Excel文件失败：, ${error.message}`
       })
-      console.error('导入Excel文件失败: ', error)
+      console.error(`导入Excel文件失败：`, error.message)
     }
   }
 }
@@ -332,9 +437,9 @@ function startServer() {
     } catch (error) {
       dialog.showMessageBox({
         type: 'error',
-        message: '代理错误'
+        message: `代理错误：, ${error.message}`
       })
-      console.error('代理错误:', error.message)
+      console.error('代理错误：', error.message)
       res.status(500).send('代理错误')
     }
   })

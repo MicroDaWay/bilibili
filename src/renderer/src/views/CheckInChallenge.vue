@@ -20,9 +20,9 @@ async function fetchActivities() {
   } catch (error) {
     window.electronAPI.showMessage({
       type: 'error',
-      message: `请求失败，${error.message}`
+      message: `请求失败：, ${error.message}`
     })
-    console.error('请求失败:', error.message)
+    console.error('请求失败：', error.message)
     return []
   }
 }

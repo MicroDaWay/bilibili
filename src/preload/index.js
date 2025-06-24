@@ -17,6 +17,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   fetchPopularEvents: () => ipcRenderer.invoke('popular-events'),
   // 获取收益中心数据
   fetchEarningsCenter: () => ipcRenderer.invoke('earnings-center'),
-  // 初始化 rewards 表
-  initTableRewards: () => ipcRenderer.invoke('init-table-rewards')
+  // 更新数据库
+  updateDatabase: () => ipcRenderer.invoke('update-database')
 })

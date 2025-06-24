@@ -92,9 +92,9 @@ async function main() {
   } catch (err) {
     window.electronAPI.showMessage({
       type: 'error',
-      message: `发生错误: ${err.message}`
+      message: `发生错误：, ${err.message}`
     })
-    console.error('发生错误:', err.message)
+    console.error('发生错误：', err.message)
   }
 }
 

@@ -49,9 +49,9 @@ async function main() {
   } catch (error) {
     window.electronAPI.showMessage({
       type: 'error',
-      message: `获取活动失败，${error.message}`
+      message: `获取活动失败：, ${error.message}`
     })
-    console.error('获取活动失败:', error.message)
+    console.error('获取活动失败：', error.message)
   }
 }
 </script>
