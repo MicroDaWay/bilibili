@@ -15,7 +15,7 @@ function getLastWeekStart() {
 // 获取活动列表
 async function fetchActivities() {
   try {
-    const activities = await window.electronAPI.fetchCheckInChallenge()
+    const activities = await window.electronAPI.checkInChallenge()
     return activities
   } catch (error) {
     window.electronAPI.showMessage({

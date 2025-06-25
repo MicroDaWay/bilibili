@@ -8,7 +8,7 @@ const balance = ref('')
 
 async function main() {
   try {
-    const result = await window.electronAPI.fetchEarningsCenter()
+    const result = await window.electronAPI.earningsCenter()
     itemList.value = result.rows
     totalMoney.value = result.totalMoney
     balance.value = result.balance

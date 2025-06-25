@@ -27,7 +27,7 @@ const bilibiliStore = useBilibiliStore()
 
 // 获取指定页码的数据
 async function fetchPage(pn) {
-  const result = await window.electronAPI.fetchManuscriptManagement(pn)
+  const result = await window.electronAPI.manuscriptManagement(pn)
   return result
 }
 
@@ -106,6 +106,8 @@ const searchHandler = () => {
         ...item,
         EventStartTime: format(excelDateToJSDate(item['活动开始时间']), 'yyyy-MM-dd'),
         EventEndTime: format(excelDateToJSDate(item['活动结束时间']), 'yyyy-MM-dd')
+        // EventStartTime: format(item['活动开始时间'], 'yyyy-MM-dd'),
+        // EventEndTime: format(item['活动结束时间'], 'yyyy-MM-dd')
       }
     }
   })

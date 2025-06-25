@@ -35,7 +35,7 @@ function filterActivitiesByTime(activities, startTime) {
 async function main() {
   try {
     itemList.value = []
-    const activities = await window.electronAPI.fetchPopularEvents()
+    const activities = await window.electronAPI.popularEvents()
     const lastSaturday = getLastSaturday()
     const validActivities = filterActivitiesByTime(activities, lastSaturday)
     itemList.value = validActivities

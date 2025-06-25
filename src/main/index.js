@@ -6,6 +6,7 @@ import axios from 'axios'
 import express from 'express'
 import dotenv from 'dotenv'
 import mysql from 'mysql2/promise'
+import { formatTimestampToDatetime } from '../renderer/src/utils/index'
 
 // 加载环境变量
 dotenv.config()
@@ -97,7 +98,8 @@ async function fetchBilibiliData(pageNumber) {
   }
 }
 
-async function parseAndSave(data, conn) {
+// 解析数据
+async function parseData(data, conn) {
   const records = []
 
   for (const item of data.arc_audits || []) {
@@ -123,6 +125,112 @@ async function parseAndSave(data, conn) {
       VALUES ?
     `
     await conn.query(sql, [records])
+  }
+}
+
+// 查找指定标题的投稿标签
+async function fetchBilibiliVideoData(titleToFind) {
+  const headers = {
+    Referer: 'https://space.bilibili.com/506485454/dynamic',
+    Cookie: import.meta.env.VITE_COOKIE,
+    'User-Agent': import.meta.env.VITE_USER_AGENT
+  }
+
+  const URL_DYNAMIC = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space'
+
+  let offset = ''
+
+  while (true) {
+    const params = {
+      offset,
+      host_mid: '506485454'
+    }
+
+    try {
+      const response = await axios.get(URL_DYNAMIC, {
+        headers,
+        params
+      })
+      const data = response.data
+
+      // 遍历动态列表
+      for (const item of data.data.items) {
+        const archive = item?.modules?.module_dynamic?.major?.archive || {}
+        const topic = item?.modules?.module_dynamic?.topic?.name || ''
+        const title = archive.title || ''
+        const pub_ts = item?.modules?.module_author?.pub_ts || ''
+        const post_time = formatTimestampToDatetime(pub_ts)
+
+        if (title === titleToFind) {
+          console.log(`标题 = ${title}, 投稿时间 = ${post_time}, 投稿标签 = ${topic}`)
+          return topic
+        }
+      }
+
+      // 更新 offset，继续下一页
+      offset = data.data.offset || ''
+      if (!offset) {
+        console.log('未找到匹配的视频')
+        return null
+      }
+    } catch (error) {
+      console.error('请求失败:', error.message)
+      return null
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+  }
+}
+
+// 获取 10 天前的零点时间
+function getTenDaysAgo() {
+  const today = new Date()
+  const tenDaysAgo = new Date(today)
+  tenDaysAgo.setDate(today.getDate() - 10)
+  tenDaysAgo.setHours(0, 0, 0, 0)
+  return tenDaysAgo
+}
+
+// 创建 disqualification 表
+async function createDisqualificationTable(conn) {
+  await conn.query('DROP TABLE IF EXISTS disqualification')
+  await conn.query(`
+    CREATE TABLE IF NOT EXISTS disqualification (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      title VARCHAR(255) COMMENT '标题',
+      topic VARCHAR(255) COMMENT '投稿标签',
+      post_time DATETIME COMMENT '投稿时间',
+      content VARCHAR(255) COMMENT '消息内容'
+    ) COMMENT '活动资格取消'
+  `)
+}
+
+// 获取消息数据
+async function fetchMessages() {
+  const URL_FETCH_MESSAGES = 'https://api.vc.bilibili.com/svr_sync/v1/svr_sync/fetch_session_msgs'
+
+  const headers = {
+    Referer: 'https://message.bilibili.com/',
+    Cookie: import.meta.env.VITE_COOKIE,
+    'User-Agent': import.meta.env.VITE_USER_AGENT
+  }
+
+  const params = {
+    talker_id: 844424930131966,
+    session_type: 1,
+    size: 200
+  }
+
+  try {
+    const res = await axios.get(URL_FETCH_MESSAGES, {
+      headers,
+      params
+    })
+
+    return res.data?.data?.messages || []
+  } catch (error) {
+    console.error('获取消息失败:', error.message)
+    return []
   }
 }
 
@@ -252,7 +360,7 @@ app.whenReady().then(() => {
     const balance = await getBalance(headers)
 
     while (currentPage <= totalPages) {
-      await new Promise((r) => setTimeout(r, 1000))
+      await new Promise((resolve) => setTimeout(resolve, 1000))
 
       const URL_RECORDS = 'https://pay.bilibili.com/bk/brokerage/v2/listForRechargeRecord'
       const payload = {
@@ -324,14 +432,14 @@ app.whenReady().then(() => {
 
       let page = 1
       while (true) {
-        await new Promise((r) => setTimeout(r, 1000))
+        await new Promise((resolve) => setTimeout(resolve, 1000))
         const data = await fetchBilibiliData(page)
         if (!data) break
 
         const { count, ps } = data.page || {}
         const totalPages = Math.ceil(count / ps)
 
-        await parseAndSave(data, conn)
+        await parseData(data, conn)
         await conn.commit()
 
         if (page >= totalPages) break
@@ -342,6 +450,53 @@ app.whenReady().then(() => {
       return rows
     } finally {
       conn.release()
+    }
+  })
+
+  // 活动资格取消
+  ipcMain.handle('cancel-event-qualification', async () => {
+    const connection = await pool.getConnection()
+    const FILTER_MESSAGE =
+      '已经通过审核，但由于不符合本次征稿活动的规则，故该稿件无法参与本次活动的评选'
+
+    try {
+      await createDisqualificationTable(connection)
+
+      const messages = await fetchMessages()
+      const tenDaysAgo = getTenDaysAgo()
+
+      for (const item of messages) {
+        const content = item.content || ''
+        const timestamp = item.timestamp || 0
+
+        if (!content.includes(FILTER_MESSAGE)) continue
+
+        const messageTime = new Date(timestamp * 1000)
+        if (messageTime < tenDaysAgo) break
+
+        let titleStart = content.indexOf('《') + 1
+        let titleEnd = content.indexOf('》')
+        let title =
+          titleStart > 0 && titleEnd > titleStart
+            ? content.substring(titleStart, titleEnd)
+            : '未知标题'
+
+        const topic = await fetchBilibiliVideoData(title)
+
+        const sql = `
+          INSERT INTO disqualification (title, topic, post_time, content)
+          VALUES (?, ?, ?, ?)
+        `
+
+        const post_time = formatTimestampToDatetime(timestamp)
+        await connection.query(sql, [title, topic, post_time, content])
+      }
+
+      // 查询数据库中的所有记录
+      const [rows] = await pool.query('SELECT * FROM disqualification')
+      return rows
+    } finally {
+      connection.release()
     }
   })
 

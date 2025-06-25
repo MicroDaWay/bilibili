@@ -9,14 +9,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   // 消息弹窗
   showMessage: (params) => ipcRenderer.invoke('show-message', params),
-  // 获取稿件管理数据
-  fetchManuscriptManagement: (params) => ipcRenderer.invoke('manuscript-management', params),
-  // 获取打卡挑战数据
-  fetchCheckInChallenge: () => ipcRenderer.invoke('check-in-challenge'),
-  // 获取热门活动数据
-  fetchPopularEvents: () => ipcRenderer.invoke('popular-events'),
-  // 获取收益中心数据
-  fetchEarningsCenter: () => ipcRenderer.invoke('earnings-center'),
+  // 稿件管理
+  manuscriptManagement: (params) => ipcRenderer.invoke('manuscript-management', params),
+  // 打卡挑战
+  checkInChallenge: () => ipcRenderer.invoke('check-in-challenge'),
+  // 热门活动
+  popularEvents: () => ipcRenderer.invoke('popular-events'),
+  // 收益中心
+  earningsCenter: () => ipcRenderer.invoke('earnings-center'),
   // 更新数据库
-  updateDatabase: () => ipcRenderer.invoke('update-database')
+  updateDatabase: () => ipcRenderer.invoke('update-database'),
+  // 活动资格取消
+  cancelEventQualification: () => ipcRenderer.invoke('cancel-event-qualification')
 })
