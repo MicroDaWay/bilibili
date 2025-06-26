@@ -29,5 +29,5 @@ export {
   excelDateToJSDate,
   jsDateToExcelDate,
   formatDatetimeToTimestamp,
-  formatTimestampToDatetime,
+  formatTimestampToDatetime
 }

@@ -24,7 +24,9 @@ function proxyImage(url) {
       <div class="title">{{ props.item.title }}</div>
       <div class="ptime">投稿时间：{{ props.item.ptime }}</div>
       <div class="topic">投稿话题：{{ props.item.topic }}</div>
-      <div class="view">播放量：{{ props.item.view }}</div>
+      <div :class="['view', { 'high-view': props.item.view >= 100 }]">
+        播放量：{{ props.item.view }}
+      </div>
       <div>稿件数：{{ props.count }}</div>
     </div>
   </div>
@@ -64,7 +66,9 @@ function proxyImage(url) {
     }
 
     .view {
-      color: red;
+      &.high-view {
+        color: red;
+      }
     }
   }
 }

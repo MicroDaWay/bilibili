@@ -8,15 +8,16 @@ import ContentCard from '../components/ContentCard.vue'
 
 // 投稿话题
 const topic = ref('')
+
 // 过滤后的数据
-const filteredData = ref({
-  EventName: '',
-  EventStartTime: '',
-  EventEndTime: '',
-  EventRules: '',
-  SubmissionCategory: '',
-  NumberOfSubmissions: 0,
-  SubmissionTopic: ''
+const filterData = ref({
+  eventName: '',
+  eventStartTime: '',
+  eventEndTime: '',
+  eventRules: '',
+  postCategory: '',
+  postCount: 0,
+  postTopic: ''
 })
 
 const totalPlay = ref(0)
@@ -26,19 +27,19 @@ const itemList = ref([])
 const bilibiliStore = useBilibiliStore()
 
 // 获取指定页码的数据
-async function fetchPage(pn) {
+async function getManuscriptList(pn) {
   const result = await window.electronAPI.manuscriptManagement(pn)
   return result
 }
 
-// 处理每一页的投稿数据
-function processItems(items, startTime) {
+// 处理每一页的数据
+function itemListHandler(items, startTime) {
   for (const item of items) {
     const archive = item.Archive || {}
     const stat = item.stat || {}
     const tag = archive.tag || ''
     const view = stat.view || 0
-    const ptime = formatTimestampToDatetime(archive.ptime) || ''
+    const ptime = formatTimestampToDatetime(archive.ptime) || 0
     const title = archive.title || ''
     const cover = archive.cover || ''
 
@@ -68,20 +69,22 @@ function processItems(items, startTime) {
   return items.length > 0 ? items[items.length - 1].Archive.ptime : 0
 }
 
+// 主函数
 async function main() {
   try {
     totalPlay.value = 0
     totalCount.value = 0
     itemList.value = []
-    const startTime = filteredData.value.EventStartTime
+    const startTime = filterData.value.eventStartTime
     let pn = 1
 
     while (true) {
       await new Promise((resolve) => setTimeout(resolve, 1000))
-      const items = await fetchPage(pn)
-      const latestPubTime = formatTimestampToDatetime(processItems(items, startTime))
-      if (latestPubTime < startTime) {
+      const itemList = await getManuscriptList(pn)
+      const latestPostTime = formatTimestampToDatetime(itemListHandler(itemList, startTime))
+      if (latestPostTime < startTime) {
         window.electronAPI.showMessage({
+          title: '稿件管理',
           type: 'info',
           message: '查询结束'
         })
@@ -89,12 +92,11 @@ async function main() {
       }
       pn++
     }
-  } catch (err) {
+  } catch (error) {
     window.electronAPI.showMessage({
       type: 'error',
-      message: `发生错误：, ${err.message}`
+      message: `发生错误：, ${error.message}`
     })
-    console.error('发生错误：', err.message)
   }
 }
 
@@ -102,12 +104,10 @@ async function main() {
 const searchHandler = () => {
   bilibiliStore.excelData.map((item) => {
     if (item['投稿话题'].includes(topic.value)) {
-      filteredData.value = {
+      filterData.value = {
         ...item,
-        EventStartTime: format(excelDateToJSDate(item['活动开始时间']), 'yyyy-MM-dd'),
-        EventEndTime: format(excelDateToJSDate(item['活动结束时间']), 'yyyy-MM-dd')
-        // EventStartTime: format(item['活动开始时间'], 'yyyy-MM-dd'),
-        // EventEndTime: format(item['活动结束时间'], 'yyyy-MM-dd')
+        eventStartTime: format(excelDateToJSDate(item['活动开始时间']), 'yyyy-MM-dd'),
+        eventEndTime: format(excelDateToJSDate(item['活动结束时间']), 'yyyy-MM-dd')
       }
     }
   })
@@ -129,7 +129,7 @@ const searchHandler = () => {
       <div class="search-button" @click="searchHandler">搜索</div>
     </div>
     <div class="event-rules">
-      <div>活动规则：{{ filteredData['活动规则'] }}</div>
+      <div>活动规则：{{ filterData['活动规则'] }}</div>
       <div>当前话题：投稿量={{ totalCount }}，播放量={{ totalPlay }}</div>
     </div>
     <div class="content-box">
