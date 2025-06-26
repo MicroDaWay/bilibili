@@ -14,7 +14,7 @@ dotenv.config()
 let server
 let mainWindow
 
-// 创建数据库连接池
+// 数据库配置
 const dbConfig = {
   host: import.meta.env.VITE_HOST,
   user: import.meta.env.VITE_USER,
@@ -290,8 +290,7 @@ app.whenReady().then(() => {
         pn,
         ps: 10
       },
-      headers,
-      timeout: 5000
+      headers
     })
     return response.data?.data?.arc_audits || []
   })
@@ -594,12 +593,11 @@ function startServer() {
         type: 'error',
         message: `代理错误：, ${error.message}`
       })
-      console.error('代理错误：', error.message)
       res.status(500).send('代理错误')
     }
   })
 
   server = expressApp.listen(port, () => {
-    console.log(`服务器运行在 http://localhost:${port}/`)
+    console.log(`服务器运行在http://localhost:${port}/`)
   })
 }

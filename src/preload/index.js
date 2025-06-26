@@ -1,7 +1,7 @@
 import { contextBridge, ipcRenderer } from 'electron'
 
 contextBridge.exposeInMainWorld('electronAPI', {
-  // 保存bilibili.xlsx的数据到pinia
+  // 持久化存储Excel数据
   saveExcelData: (callback) => {
     ipcRenderer.on('save-excel-data', (e, data) => {
       callback(data)
