@@ -297,49 +297,30 @@ app.whenReady().then(() => {
 
   // 获取打卡挑战数据
   ipcMain.handle('check-in-challenge', async () => {
-    try {
-      const response = await axios.get(
-        'https://member.bilibili.com/x2/creative/h5/clock/v4/activity/list',
-        {
-          headers: {
-            Referer: 'https://member.bilibili.com/york/platform-punch-card/personal',
-            Cookie: import.meta.env.VITE_COOKIE,
-            'User-Agent': import.meta.env.VITE_USER_AGENT
-          }
-        }
-      )
-      return response.data?.data?.list || []
-    } catch (error) {
-      dialog.showMessageBox(mainWindow, {
-        type: 'error',
-        message: `请求失败：, ${error.message}`
-      })
-      console.error('请求失败：', error.message)
-      return []
+    const url = 'https://member.bilibili.com/x2/creative/h5/clock/v4/activity/list'
+    const headers = {
+      Referer: 'https://member.bilibili.com/york/platform-punch-card/personal',
+      Cookie: import.meta.env.VITE_COOKIE,
+      'User-Agent': import.meta.env.VITE_USER_AGENT
     }
+    const response = await axios.get(url, {
+      headers
+    })
+    return response.data?.data?.list || []
   })
 
   // 获取热门活动数据
   ipcMain.handle('popular-events', async () => {
+    const url = 'https://member.bilibili.com/x/web/activity/videoall'
     const headers = {
       Referer: 'https://member.bilibili.com/platform/releasecenter',
       Cookie: import.meta.env.VITE_COOKIE,
       'User-Agent': import.meta.env.VITE_USER_AGENT
     }
-
-    const url = 'https://member.bilibili.com/x/web/activity/videoall'
-
-    try {
-      const response = await axios.get(url, { headers })
-      return response.data?.data || []
-    } catch (error) {
-      dialog.showMessageBox(mainWindow, {
-        type: 'error',
-        message: `请求失败：, ${error.message}`
-      })
-      console.error('请求失败：', error.message)
-      return []
-    }
+    const response = await axios.get(url, {
+      headers
+    })
+    return response.data?.data || []
   })
 
   // 获取收益中心数据并保存到数据库
