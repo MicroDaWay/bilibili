@@ -2,51 +2,38 @@
 <script setup>
 import dayjs from 'dayjs'
 import { ref } from 'vue'
+import { formatTimestampToDatetime } from '../utils/index.js'
 
 const itemList = ref([])
 
-// 获取上周六的开始时间
-function getLastWeekStart() {
+// 获取7天前的日期
+function getSevenDaysAgo() {
   const today = dayjs()
-  const lastSaturday = today.subtract(7, 'day')
-  return lastSaturday.startOf('day').toDate()
+  const sevenDaysAgo = today.subtract(7, 'day')
+  return sevenDaysAgo.startOf('day').toDate()
 }
 
-// 获取活动列表
-async function fetchActivities() {
-  try {
-    const activities = await window.electronAPI.checkInChallenge()
-    return activities
-  } catch (error) {
-    window.electronAPI.showMessage({
-      type: 'error',
-      message: `请求失败：, ${error.message}`
-    })
-    console.error('请求失败：', error.message)
-    return []
-  }
-}
-
-// 过滤出在指定时间之后的活动
-function filterActivitiesByTime(activities, startTime) {
-  return activities
+// 过滤出一周的活动
+function filterActivityListByTime(activityList, startTime) {
+  return activityList
     .filter((item) => {
       const stime = new Date(item.stime * 1000)
       return stime >= startTime
     })
     .map((item) => ({
       title: item.title,
-      startTime: new Date(item.stime * 1000).toISOString().replace('T', ' ').substring(0, 19)
+      startTime: formatTimestampToDatetime(item.stime)
     }))
 }
 
+// 主函数
 async function main() {
   itemList.value = []
-  const lastWeekStart = getLastWeekStart()
-  const activities = await fetchActivities()
-  const validActivities = filterActivitiesByTime(activities, lastWeekStart)
+  const sevenDaysAgo = getSevenDaysAgo()
+  const activityList = await window.electronAPI.checkInChallenge()
+  const filterActivityList = filterActivityListByTime(activityList, sevenDaysAgo)
 
-  validActivities.forEach((item) => {
+  filterActivityList.forEach((item) => {
     itemList.value.push({
       startTime: item.startTime,
       title: item.title
@@ -55,6 +42,7 @@ async function main() {
   })
 
   window.electronAPI.showMessage({
+    title: '打卡挑战',
     type: 'info',
     message: '查询结束'
   })
@@ -64,11 +52,20 @@ async function main() {
 <template>
   <div class="check-in-challenge">
     <div class="text" @click="main">打卡挑战</div>
-    <ul class="item-list">
-      <li v-for="item in itemList" :key="item.title" class="item-text">
-        活动开始时间 = {{ item.startTime }}，活动名称 = {{ item.title }}
-      </li>
-    </ul>
+    <table class="table-container">
+      <thead v-if="itemList.length">
+        <tr class="table-tr">
+          <th class="start-time">活动开始时间</th>
+          <th class="title">活动名称</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="item in itemList" :key="item.title" class="tr-text">
+          <td>{{ item.startTime }}</td>
+          <td>{{ item.title }}</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </template>
 
@@ -88,11 +85,20 @@ async function main() {
     }
   }
 
-  .item-list {
+  .table-container {
     margin-top: 20px;
     padding-bottom: 50px;
+    width: 80%;
 
-    .item-text {
+    .table-tr {
+      font-size: 22px;
+
+      .start-time {
+        width: 30%;
+      }
+    }
+
+    .tr-text {
       font-size: 22px;
       margin: 6px 0;
 

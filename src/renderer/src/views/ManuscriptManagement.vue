@@ -27,13 +27,13 @@ const itemList = ref([])
 const bilibiliStore = useBilibiliStore()
 
 // 获取指定页码的数据
-async function getManuscriptList(pn) {
+async function getItemListByPageNumber(pn) {
   const result = await window.electronAPI.manuscriptManagement(pn)
   return result
 }
 
 // 处理每一页的数据
-function itemListHandler(items, startTime) {
+function everyPageHandler(items, startTime) {
   for (const item of items) {
     const archive = item.Archive || {}
     const stat = item.stat || {}
@@ -80,8 +80,8 @@ async function main() {
 
     while (true) {
       await new Promise((resolve) => setTimeout(resolve, 1000))
-      const itemList = await getManuscriptList(pn)
-      const latestPostTime = formatTimestampToDatetime(itemListHandler(itemList, startTime))
+      const itemList = await getItemListByPageNumber(pn)
+      const latestPostTime = formatTimestampToDatetime(everyPageHandler(itemList, startTime))
       if (latestPostTime < startTime) {
         window.electronAPI.showMessage({
           title: '稿件管理',
