@@ -13,7 +13,7 @@ function getSevenDaysAgo() {
   return sevenDaysAgo.startOf('day').toDate()
 }
 
-// 过滤出一周的活动
+// 过滤出前一周的活动
 function filterActivityListByTime(activityList, startTime) {
   return activityList
     .filter((item) => {
