@@ -5,22 +5,16 @@ import { ref } from 'vue'
 
 const itemList = ref([])
 
-// 获取上周六的零点时间
-function getLastSaturday() {
+// 获取7天前的日期
+function getSevenDaysAgo() {
   const today = dayjs()
-  let lastSaturday = today.subtract(7, 'day')
-
-  // 如果今天是周六，则再减一周
-  if (today.day() === 6) {
-    lastSaturday = today.subtract(1, 'week')
-  }
-
-  return lastSaturday.startOf('day').toDate()
+  const sevenDaysAgo = today.subtract(7, 'day')
+  return sevenDaysAgo.startOf('day').toDate()
 }
 
-// 过滤出在指定时间之后的活动
-function filterActivitiesByTime(activities, startTime) {
-  return activities
+// 过滤出前一周的活动
+function filterActivityListByTime(activityList, startTime) {
+  return activityList
     .filter((item) => {
       const activityTime = dayjs.unix(item.stime)
       return activityTime.isAfter(startTime) || activityTime.isSame(startTime)
@@ -33,37 +27,44 @@ function filterActivitiesByTime(activities, startTime) {
 
 // 主函数
 async function main() {
-  try {
-    itemList.value = []
-    const activities = await window.electronAPI.popularEvents()
-    const lastSaturday = getLastSaturday()
-    const validActivities = filterActivitiesByTime(activities, lastSaturday)
-    itemList.value = validActivities
-    validActivities.forEach((item) => {
-      console.log(`活动开始时间 = ${item.startTime}, 活动名称 = ${item.name}`)
+  itemList.value = []
+  const activityList = await window.electronAPI.popularEvents()
+  const sevenDaysAgo = getSevenDaysAgo()
+  const filterActivityList = filterActivityListByTime(activityList, sevenDaysAgo)
+
+  filterActivityList.forEach((item) => {
+    itemList.value.push({
+      startTime: item.startTime,
+      name: item.name
     })
-    window.electronAPI.showMessage({
-      type: 'info',
-      message: '查询结束'
-    })
-  } catch (error) {
-    window.electronAPI.showMessage({
-      type: 'error',
-      message: `获取活动失败：, ${error.message}`
-    })
-    console.error('获取活动失败：', error.message)
-  }
+    console.log(`活动开始时间 = ${item.startTime}, 活动名称 = ${item.name}`)
+  })
+
+  window.electronAPI.showMessage({
+    title: '热门活动',
+    type: 'info',
+    message: '查询结束'
+  })
 }
 </script>
 
 <template>
   <div class="popular-events">
     <div class="text" @click="main">热门活动</div>
-    <ul class="item-list">
-      <li v-for="item in itemList" :key="item.title" class="item-text">
-        活动开始时间 = {{ item.startTime }}，活动名称 = {{ item.name }}
-      </li>
-    </ul>
+    <table class="table-container">
+      <thead v-if="itemList.length">
+        <tr class="table-tr">
+          <th class="start-time">活动开始时间</th>
+          <th class="title">活动名称</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="item in itemList" :key="item.name" class="tr-text">
+          <td>{{ item.startTime }}</td>
+          <td>{{ item.name }}</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </template>
 
@@ -83,11 +84,20 @@ async function main() {
     }
   }
 
-  .item-list {
+  .table-container {
     margin-top: 20px;
     padding-bottom: 50px;
+    width: 80%;
 
-    .item-text {
+    .table-tr {
+      font-size: 22px;
+
+      .start-time {
+        width: 30%;
+      }
+    }
+
+    .tr-text {
       font-size: 22px;
       margin: 6px 0;
 

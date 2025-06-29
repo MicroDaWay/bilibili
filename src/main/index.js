@@ -533,6 +533,7 @@ async function importExcelHandler() {
       const excelData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetNames[0]])
       if (excelData) {
         dialog.showMessageBox(mainWindow, {
+          title: '导入Excel',
           type: 'info',
           message: '导入成功'
         })
@@ -541,10 +542,10 @@ async function importExcelHandler() {
       }
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
+        title: '导入Excel',
         type: 'error',
-        message: `导入Excel文件失败：, ${error.message}`
+        message: `导入失败：, ${error.message}`
       })
-      console.error(`导入Excel文件失败：`, error.message)
     }
   }
 }
