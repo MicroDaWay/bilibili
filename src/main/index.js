@@ -14,28 +14,7 @@ dotenv.config()
 let server
 let mainWindow
 
-// 动态生成固定长度的标签
-function createMenuItem(label, role, shortcut) {
-  // 控制左侧文字宽度
-  const paddingLength = 20
-  const paddedLabel = label.padEnd(paddingLength)
-  return {
-    label: `${paddedLabel}`,
-    role: role,
-    accelerator: shortcut
-  }
-}
-
-// 自定义右键菜单
-const contextMenuTemplate = [
-  createMenuItem('复制', 'copy', 'Ctrl + C'),
-  createMenuItem('粘贴', 'paste', 'Ctrl + V'),
-  createMenuItem('剪切', 'cut', 'Ctrl + X'),
-  { type: 'separator' },
-  createMenuItem('全选', 'selectAll', 'Ctrl + A')
-]
-
-// 数据库配置
+// 创建数据库连接池
 const dbConfig = {
   host: import.meta.env.VITE_HOST,
   user: import.meta.env.VITE_USER,
