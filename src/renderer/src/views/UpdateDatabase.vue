@@ -1,35 +1,41 @@
 <!-- 更新数据库 -->
 <script setup>
 import { ref } from 'vue'
+import { format } from 'date-fns'
 
 const itemList = ref([])
 
+// 主函数
 async function main() {
-  try {
-    const result = await window.electronAPI.updateDatabase()
-    itemList.value = result
-    window.electronAPI.showMessage({
-      type: 'info',
-      message: '更新数据库结束'
-    })
-  } catch (error) {
-    window.electronAPI.showMessage({
-      type: 'error',
-      message: `更新失败：, ${error.message}`
-    })
-    console.error('更新失败：', error.message)
-  }
+  const result = await window.electronAPI.updateDatabase()
+  itemList.value = result
+  window.electronAPI.showMessage({
+    title: '更新数据库',
+    type: 'info',
+    message: '更新数据库成功'
+  })
 }
 </script>
 
 <template>
   <div class="update-database">
     <div class="text" @click="main">更新数据库</div>
-    <ul class="item-list">
-      <li v-for="item in itemList" :key="item.id" class="item-text">
-        播放量 = {{ item.view.toString().padEnd(5) }}，标题 = {{ item.title }}
-      </li>
-    </ul>
+    <table class="table-container">
+      <thead v-if="itemList.length">
+        <tr class="table-tr">
+          <th class="post-time">投稿时间</th>
+          <th class="view">播放量</th>
+          <th class="title">标题</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="item in itemList" :key="item.id" class="tr-text">
+          <td>{{ format(item.post_time, 'yyyy-MM-dd HH:mm:ss') }}</td>
+          <td>{{ item.view.toString().padEnd(5) }}</td>
+          <td>{{ item.title }}</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </template>
 
@@ -38,7 +44,7 @@ async function main() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 50px;
+  margin: 50px 0;
 
   .text {
     font-size: 30px;
@@ -49,14 +55,26 @@ async function main() {
     }
   }
 
-  .item-list {
+  .table-container {
     margin-top: 20px;
     padding-bottom: 50px;
+    width: 98%;
 
-    .item-text {
-      font-size: 20px;
+    .table-tr {
+      font-size: 22px;
+
+      .post-time {
+        width: 20%;
+      }
+
+      .view {
+        width: 6%;
+      }
+    }
+
+    .tr-text {
+      font-size: 22px;
       margin: 6px 0;
-      white-space: pre;
 
       &:hover {
         background-color: orange;

@@ -14,6 +14,63 @@ dotenv.config()
 let server
 let mainWindow
 
+function createMenuItem(label, role, shortcut) {
+  // 控制左侧文字宽度
+  const paddingLength = 20
+  const paddedLabel = label.padEnd(paddingLength)
+  return {
+    label: `${paddedLabel}`,
+    accelerator: shortcut,
+    role: role
+  }
+}
+
+// 自定义右键菜单
+const contextMenuTemplate = [
+  createMenuItem('复制', 'copy', 'Ctrl + C'),
+  createMenuItem('粘贴', 'paste', 'Ctrl + V'),
+  { type: 'separator' },
+  createMenuItem('剪切', 'cut', 'Ctrl + X'),
+  createMenuItem('全选', 'selectAll', 'Ctrl + A')
+]
+
+// 导入Excel文件的处理函数
+async function importExcelHandler() {
+  const result = await dialog.showOpenDialog({
+    properties: ['openFile'],
+    filters: [
+      {
+        name: 'Excel',
+        extensions: ['xlsx', 'xls']
+      }
+    ]
+  })
+
+  if (!result.canceled && result.filePaths.length > 0) {
+    const filePath = result.filePaths[0]
+    try {
+      const workbook = xlsx.readFile(filePath)
+      const sheetNames = workbook.SheetNames
+      const excelData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetNames[0]])
+      if (excelData) {
+        dialog.showMessageBox(mainWindow, {
+          title: '导入Excel',
+          type: 'info',
+          message: '导入成功'
+        })
+
+        BrowserWindow.getFocusedWindow().webContents.send('save-excel-data', excelData)
+      }
+    } catch (error) {
+      dialog.showMessageBox(mainWindow, {
+        title: '导入Excel',
+        type: 'error',
+        message: `导入失败：, ${error.message}`
+      })
+    }
+  }
+}
+
 // 创建数据库连接池
 const dbConfig = {
   host: import.meta.env.VITE_HOST,
@@ -31,11 +88,11 @@ async function initRewards() {
     await conn.query('DROP TABLE IF EXISTS rewards')
     await conn.query(`
       CREATE TABLE IF NOT EXISTS rewards (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        product_name VARCHAR(100),
-        money DECIMAL(10,2),
-        create_time DATETIME
-      ) COMMENT '活动奖励'
+        id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'id',
+        product_name VARCHAR(100) COMMENT '活动名称',
+        money DECIMAL(10,2) COMMENT '发放金额',
+        create_time DATETIME COMMENT '发放时间'
+      ) COMMENT '收益中心'
     `)
   } finally {
     conn.release()
@@ -56,39 +113,33 @@ async function initBilibili(conn) {
   await conn.query('DROP TABLE IF EXISTS bilibili')
   await conn.query(`
     CREATE TABLE IF NOT EXISTS bilibili (
-      id INT AUTO_INCREMENT PRIMARY KEY,
-      title VARCHAR(255),
-      view INT,
-      post_time DATETIME,
-      tag VARCHAR(255)
-    ) COMMENT 'bilibili投稿数据'
+      id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'id',
+      title VARCHAR(255) COMMENT '标题',
+      view INT COMMENT '播放量',
+      post_time DATETIME COMMENT '投稿时间',
+      tag VARCHAR(255) COMMENT '投稿标签'
+    ) COMMENT '稿件管理'
   `)
 }
 
 // 获取 bilibili 数据
-async function fetchBilibiliData(pageNumber) {
-  const URL_BILIBILI_ARCHIVES = 'https://member.bilibili.com/x/web/archives'
-
+async function getBilibiliList(pageNumber) {
+  const url = 'https://member.bilibili.com/x/web/archives'
   const headers = {
     Referer: 'https://member.bilibili.com/platform/upload-manager/article',
     Cookie: import.meta.env.VITE_COOKIE,
     'User-Agent': import.meta.env.VITE_USER_AGENT
   }
 
-  try {
-    const res = await axios.get(URL_BILIBILI_ARCHIVES, {
-      params: {
-        pn: pageNumber,
-        ps: 10
-      },
-      headers
-    })
+  const response = await axios.get(url, {
+    params: {
+      pn: pageNumber,
+      ps: 10
+    },
+    headers
+  })
 
-    return res.data?.data || null
-  } catch (e) {
-    console.error(`获取第 ${pageNumber} 页失败`, e.message)
-    return null
-  }
+  return response.data?.data || null
 }
 
 // 解析数据
@@ -103,9 +154,7 @@ async function parseData(data, conn) {
     const view = stat.view || 0
     const pubTime = archive.ptime
     const tag = archive.tag
-
-    const postTime = new Date(pubTime * 1000).toISOString().slice(0, 19).replace('T', ' ')
-
+    const postTime = formatTimestampToDatetime(pubTime)
     records.push([title, view, postTime, tag])
     console.log(
       `投稿时间 = ${postTime}, 播放量 = ${view.toString().padEnd(5)}, 标题 = ${title}, 投稿标签 = ${tag}`
@@ -225,6 +274,40 @@ async function fetchMessages() {
     console.error('获取消息失败:', error.message)
     return []
   }
+}
+
+// 图片代理服务器
+function startServer() {
+  const expressApp = express()
+  const port = 3000
+
+  expressApp.use(express.json())
+  expressApp.use(express.urlencoded({ extended: true }))
+
+  expressApp.get('/proxy/image', async (req, res) => {
+    const imageUrl = req.query.url
+    if (!imageUrl || !/^https?:\/\/.*\.hdslb\.com/.test(imageUrl)) {
+      return res.status(400).send('无效的URL')
+    }
+
+    try {
+      const response = await axios({
+        url: imageUrl,
+        responseType: 'stream'
+      })
+      response.data.pipe(res)
+    } catch (error) {
+      dialog.showMessageBox({
+        type: 'error',
+        message: `代理错误：, ${error.message}`
+      })
+      res.status(500).send('代理错误')
+    }
+  })
+
+  server = expressApp.listen(port, () => {
+    console.log(`服务器运行在http://localhost:${port}/`)
+  })
 }
 
 function createWindow() {
@@ -407,16 +490,16 @@ app.whenReady().then(() => {
       let page = 1
       while (true) {
         await new Promise((resolve) => setTimeout(resolve, 1000))
-        const data = await fetchBilibiliData(page)
+        const data = await getBilibiliList(page)
         if (!data) break
 
         const { count, ps } = data.page || {}
-        const totalPages = Math.ceil(count / ps)
+        const totalPage = Math.ceil(count / ps)
 
         await parseData(data, conn)
         await conn.commit()
 
-        if (page >= totalPages) break
+        if (page >= totalPage) break
         page++
       }
 
@@ -506,74 +589,3 @@ app.on('window-all-closed', () => {
     server.close()
   }
 })
-
-// 导入Excel文件的处理函数
-async function importExcelHandler() {
-  const result = await dialog.showOpenDialog({
-    properties: ['openFile'],
-    filters: [
-      {
-        name: 'Excel',
-        extensions: ['xlsx', 'xls']
-      }
-    ]
-  })
-
-  if (!result.canceled && result.filePaths.length > 0) {
-    const filePath = result.filePaths[0]
-    try {
-      const workbook = xlsx.readFile(filePath)
-      const sheetNames = workbook.SheetNames
-      const excelData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetNames[0]])
-      if (excelData) {
-        dialog.showMessageBox(mainWindow, {
-          title: '导入Excel',
-          type: 'info',
-          message: '导入成功'
-        })
-
-        BrowserWindow.getFocusedWindow().webContents.send('save-excel-data', excelData)
-      }
-    } catch (error) {
-      dialog.showMessageBox(mainWindow, {
-        title: '导入Excel',
-        type: 'error',
-        message: `导入失败：, ${error.message}`
-      })
-    }
-  }
-}
-
-// 图片代理服务器
-function startServer() {
-  const expressApp = express()
-  const port = 3000
-
-  expressApp.use(express.json())
-  expressApp.use(express.urlencoded({ extended: true }))
-
-  expressApp.get('/proxy/image', async (req, res) => {
-    const imageUrl = req.query.url
-    if (!imageUrl || !/^https?:\/\/.*\.hdslb\.com/.test(imageUrl)) {
-      return res.status(400).send('无效的URL')
-    }
-
-    try {
-      const response = await axios({
-        url: imageUrl,
-        responseType: 'stream'
-      })
-      response.data.pipe(res)
-    } catch (error) {
-      dialog.showMessageBox({
-        type: 'error',
-        message: `代理错误：, ${error.message}`
-      })
-      res.status(500).send('代理错误')
-    }
-  })
-
-  server = expressApp.listen(port, () => {
-    console.log(`服务器运行在http://localhost:${port}/`)
-  })
-}

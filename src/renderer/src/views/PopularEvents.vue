@@ -73,7 +73,7 @@ async function main() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: 50px;
+  margin: 50px 0;
 
   .text {
     font-size: 30px;
