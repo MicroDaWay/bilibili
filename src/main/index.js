@@ -30,6 +30,7 @@ function createMenuItem(label, role, shortcut) {
 const contextMenuTemplate = [
   createMenuItem('复制', 'copy', 'Ctrl + C'),
   createMenuItem('粘贴', 'paste', 'Ctrl + V'),
+  createMenuItem('剪切', 'cut', 'Ctrl + X'),
   { type: 'separator' },
   createMenuItem('全选', 'selectAll', 'Ctrl + A')
 ]
@@ -64,18 +65,11 @@ async function initRewards() {
 
 // 获取余额
 async function getBalance(headers) {
-  const URL_WALLET = 'https://pay.bilibili.com/payplatform/getUserWalletInfo'
-  try {
-    const res = await axios.get(URL_WALLET, { headers })
-    return res.data.data.accountInfo.brokerage
-  } catch (error) {
-    dialog.showMessageBox(mainWindow, {
-      type: 'error',
-      message: `获取余额失败：, ${error.message}`
-    })
-    console.error('获取余额失败：', error.message)
-    return 0
-  }
+  const url = 'https://pay.bilibili.com/payplatform/getUserWalletInfo'
+  const response = await axios.get(url, {
+    headers
+  })
+  return response.data?.data?.accountInfo.brokerage || 0
 }
 
 // 初始化 bilibili 表
@@ -351,7 +345,7 @@ app.whenReady().then(() => {
     return response.data?.data || []
   })
 
-  // 获取收益中心数据并保存到数据库
+  // 获取收益中心数据
   ipcMain.handle('earnings-center', async () => {
     await initRewards()
 
@@ -362,15 +356,15 @@ app.whenReady().then(() => {
     }
 
     let currentPage = 1
-    let totalPages = 1
+    let totalPage = 1
     let totalMoney = 0
 
     const balance = await getBalance(headers)
 
-    while (currentPage <= totalPages) {
+    while (currentPage <= totalPage) {
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      const URL_RECORDS = 'https://pay.bilibili.com/bk/brokerage/v2/listForRechargeRecord'
+      const url = 'https://pay.bilibili.com/bk/brokerage/v2/listForRechargeRecord'
       const payload = {
         currentPage,
         pageSize: 15,
@@ -379,48 +373,41 @@ app.whenReady().then(() => {
         traceId: Math.floor(Date.now() / 1000)
       }
 
-      try {
-        const response = await axios.post(URL_RECORDS, payload, { headers })
-        const data = response.data?.data || {}
-        const records = data.result || []
-        totalPages = data.page?.totalPage || 1
+      const response = await axios.post(url, payload, {
+        headers
+      })
+      const data = response.data?.data || {}
+      const records = data.result || []
+      totalPage = data.page?.totalPage || 1
 
-        const items = []
+      const items = []
 
-        for (const item of records) {
-          const money = item.brokerage || 0
-          const name = item.productName || ''
-          const ctime = item.ctime || ''
+      for (const item of records) {
+        const money = item.brokerage || 0
+        const name = item.productName || ''
+        const ctime = item.ctime || ''
 
-          totalMoney += money
-          items.push([name, money, ctime])
-          console.log(
-            `发放时间 = ${ctime}, 发放金额 = ${money.toFixed(2).padEnd(6)}, 活动名称 = ${name}`
-          )
-        }
-
-        if (items.length > 0) {
-          const query = `
-          INSERT INTO rewards (product_name, money, create_time)
-          VALUES ?
-        `
-          const conn = await pool.getConnection()
-          try {
-            await conn.query(query, [items])
-          } finally {
-            conn.release()
-          }
-        }
-
-        currentPage++
-      } catch (error) {
-        dialog.showMessageBox(mainWindow, {
-          type: 'error',
-          message: `请求失败：, ${error.message}`
-        })
-        console.error(`请求失败：`, error.message)
-        break
+        totalMoney += money
+        items.push([name, money, ctime])
+        console.log(
+          `发放时间 = ${ctime}, 发放金额 = ${money.toFixed(2).padEnd(6)}, 活动名称 = ${name}`
+        )
       }
+
+      if (items.length > 0) {
+        const query = `
+            INSERT INTO rewards (product_name, money, create_time)
+            VALUES ?
+          `
+        const conn = await pool.getConnection()
+        try {
+          await conn.query(query, [items])
+        } finally {
+          conn.release()
+        }
+      }
+
+      currentPage++
     }
 
     // 查询数据库中的所有记录

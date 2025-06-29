@@ -6,28 +6,18 @@ const itemList = ref([])
 const totalMoney = ref('')
 const balance = ref('')
 
+// 主函数
 async function main() {
-  try {
-    const result = await window.electronAPI.earningsCenter()
-    itemList.value = result.rows
-    totalMoney.value = result.totalMoney
-    balance.value = result.balance
+  const result = await window.electronAPI.earningsCenter()
+  itemList.value = result.rows
+  totalMoney.value = result.totalMoney
+  balance.value = result.balance
 
-    window.electronAPI.showMessage({
-      type: 'info',
-      message: '查询结束'
-    })
-  } catch (error) {
-    window.electronAPI.showMessage({
-      type: 'error',
-      message: `获取数据失败：, ${error.message}`
-    })
-    console.error('获取数据失败：', error.message)
-  }
-}
-
-function formatMoney(money) {
-  return parseFloat(money).toFixed(2).padEnd(6)
+  window.electronAPI.showMessage({
+    title: '收益中心',
+    type: 'info',
+    message: '查询结束'
+  })
 }
 </script>
 
@@ -38,13 +28,22 @@ function formatMoney(money) {
       <div class="total-money">累计金额：{{ totalMoney }}</div>
       <div class="balance">账户余额：{{ balance }}</div>
     </div>
-    <ul class="item-list">
-      <li v-for="item in itemList" :key="item.id" class="item-text">
-        发放时间 = {{ format(item.create_time, 'yyyy-MM-dd') }}，发放金额 =
-        {{ formatMoney(item.money) }}，活动名称 =
-        {{ item.product_name }}
-      </li>
-    </ul>
+    <table class="table-container">
+      <thead v-if="itemList.length">
+        <tr class="table-tr">
+          <th class="create-time">发放时间</th>
+          <th class="money">发放金额</th>
+          <th class="title">活动名称</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="item in itemList" :key="item.id" class="tr-text">
+          <td>{{ format(item.create_time, 'yyyy-MM-dd HH:mm:ss') }}</td>
+          <td>{{ item.money }}</td>
+          <td>{{ item.product_name }}</td>
+        </tr>
+      </tbody>
+    </table>
   </div>
 </template>
 
@@ -72,20 +71,31 @@ function formatMoney(money) {
       font-size: 22px;
 
       &:hover {
-        cursor: pointer;
         background-color: orange;
       }
     }
   }
 
-  .item-list {
+  .table-container {
     margin-top: 20px;
     padding-bottom: 50px;
+    width: 98%;
 
-    .item-text {
-      font-size: 20px;
+    .table-tr {
+      font-size: 22px;
+
+      .create-time {
+        width: 20%;
+      }
+
+      .money {
+        width: 8%;
+      }
+    }
+
+    .tr-text {
+      font-size: 22px;
       margin: 6px 0;
-      white-space: pre;
 
       &:hover {
         background-color: orange;
