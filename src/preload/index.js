@@ -9,6 +9,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   // 消息弹窗
   showMessage: (params) => ipcRenderer.invoke('show-message', params),
+  // 展示右键菜单
+  showContextMenu: () => ipcRenderer.send('show-context-menu'),
   // 稿件管理
   manuscriptManagement: (params) => ipcRenderer.invoke('manuscript-management', params),
   // 打卡挑战

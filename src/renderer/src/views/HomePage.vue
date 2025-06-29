@@ -1,5 +1,15 @@
 <!-- 首页 -->
-<script setup></script>
+<script setup>
+import { onMounted } from 'vue'
+
+// 监听右键菜单事件
+onMounted(() => {
+  window.addEventListener('contextmenu', (e) => {
+    e.preventDefault()
+    window.electronAPI.showContextMenu()
+  })
+})
+</script>
 
 <template>
   <ul class="left-nav">

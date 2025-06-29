@@ -14,6 +14,26 @@ dotenv.config()
 let server
 let mainWindow
 
+// 动态生成固定长度的标签
+function createMenuItem(label, role, shortcut) {
+  // 控制左侧文字宽度
+  const paddingLength = 20
+  const paddedLabel = label.padEnd(paddingLength)
+  return {
+    label: `${paddedLabel}`,
+    role: role,
+    accelerator: shortcut
+  }
+}
+
+// 自定义右键菜单
+const contextMenuTemplate = [
+  createMenuItem('复制', 'copy', 'Ctrl + C'),
+  createMenuItem('粘贴', 'paste', 'Ctrl + V'),
+  { type: 'separator' },
+  createMenuItem('全选', 'selectAll', 'Ctrl + A')
+]
+
 // 数据库配置
 const dbConfig = {
   host: import.meta.env.VITE_HOST,
@@ -274,6 +294,14 @@ app.whenReady().then(() => {
   ipcMain.handle('show-message', (e, params) => {
     dialog.showMessageBox(mainWindow, {
       ...params
+    })
+  })
+
+  // 展示右键菜单
+  ipcMain.on('show-context-menu', () => {
+    const menu = Menu.buildFromTemplate(contextMenuTemplate)
+    menu.popup({
+      window: BrowserWindow.getFocusedWindow()
     })
   })
 
