@@ -14,8 +14,8 @@ dotenv.config()
 let server
 let mainWindow
 
+// 创建自定义右键菜单项
 function createMenuItem(label, role, shortcut) {
-  // 控制左侧文字宽度
   const paddingLength = 20
   const paddedLabel = label.padEnd(paddingLength)
   return {
@@ -56,7 +56,7 @@ async function importExcelHandler() {
         dialog.showMessageBox(mainWindow, {
           title: '导入Excel',
           type: 'info',
-          message: '导入成功'
+          text: '导入成功'
         })
 
         BrowserWindow.getFocusedWindow().webContents.send('save-excel-data', excelData)
@@ -65,7 +65,7 @@ async function importExcelHandler() {
       dialog.showMessageBox(mainWindow, {
         title: '导入Excel',
         type: 'error',
-        message: `导入失败：, ${error.message}`
+        text: `导入失败：, ${error.text}`
       })
     }
   }
@@ -122,7 +122,7 @@ async function initBilibili(conn) {
   `)
 }
 
-// 获取 bilibili 数据
+// 获取 bilibili 列表
 async function getBilibiliList(pageNumber) {
   const url = 'https://member.bilibili.com/x/web/archives'
   const headers = {
@@ -170,61 +170,61 @@ async function parseData(data, conn) {
   }
 }
 
-// 查找指定标题的投稿标签
-async function fetchBilibiliVideoData(titleToFind) {
+// 根据标题查找投稿标签
+async function getTopicByTitle(titleToFind) {
+  const url = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space'
   const headers = {
     Referer: 'https://space.bilibili.com/506485454/dynamic',
     Cookie: import.meta.env.VITE_COOKIE,
     'User-Agent': import.meta.env.VITE_USER_AGENT
   }
 
-  const URL_DYNAMIC = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space'
-
   let offset = ''
 
   while (true) {
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+
     const params = {
       offset,
       host_mid: '506485454'
     }
 
-    try {
-      const response = await axios.get(URL_DYNAMIC, {
-        headers,
-        params
-      })
-      const data = response.data
+    const response = await axios.get(url, {
+      headers,
+      params
+    })
 
-      // 遍历动态列表
-      for (const item of data.data.items) {
-        const archive = item?.modules?.module_dynamic?.major?.archive || {}
-        const topic = item?.modules?.module_dynamic?.topic?.name || ''
-        const title = archive.title || ''
-        const pub_ts = item?.modules?.module_author?.pub_ts || ''
-        const post_time = formatTimestampToDatetime(pub_ts)
+    const data = response.data
 
-        if (title === titleToFind) {
-          console.log(`标题 = ${title}, 投稿时间 = ${post_time}, 投稿标签 = ${topic}`)
-          return topic
-        }
+    // 遍历动态列表
+    for (const item of data.data.items) {
+      const archive = item?.modules?.module_dynamic?.major?.archive || {}
+      const topic = item?.modules?.module_dynamic?.topic?.name || ''
+      const title = archive.title || ''
+      const pub_ts = item?.modules?.module_author?.pub_ts || 0
+      const post_time = formatTimestampToDatetime(pub_ts)
+
+      if (title === titleToFind) {
+        console.log(`投稿时间 = ${post_time}, 标题 = ${title}, 投稿标签 = ${topic}`)
+        return topic
       }
-
-      // 更新 offset，继续下一页
-      offset = data.data.offset || ''
-      if (!offset) {
-        console.log('未找到匹配的视频')
-        return null
-      }
-    } catch (error) {
-      console.error('请求失败:', error.message)
-      return null
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    // 更新 offset，继续下一页
+    offset = data.data.offset || ''
+
+    if (!offset) {
+      dialog.showMessageBox(mainWindow, {
+        title: '查找活动资格取消稿件',
+        type: 'info',
+        message: '未找到匹配的视频'
+      })
+      return null
+    }
   }
 }
 
-// 获取 10 天前的零点时间
+// 获取10天前的零点时间
 function getTenDaysAgo() {
   const today = new Date()
   const tenDaysAgo = new Date(today)
@@ -233,12 +233,12 @@ function getTenDaysAgo() {
   return tenDaysAgo
 }
 
-// 创建 disqualification 表
-async function createDisqualificationTable(conn) {
+// 初始化 disqualification 表
+async function initDisqualification(conn) {
   await conn.query('DROP TABLE IF EXISTS disqualification')
   await conn.query(`
     CREATE TABLE IF NOT EXISTS disqualification (
-      id INT AUTO_INCREMENT PRIMARY KEY,
+      id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'id',
       title VARCHAR(255) COMMENT '标题',
       topic VARCHAR(255) COMMENT '投稿标签',
       post_time DATETIME COMMENT '投稿时间',
@@ -247,12 +247,11 @@ async function createDisqualificationTable(conn) {
   `)
 }
 
-// 获取消息数据
-async function fetchMessages() {
-  const URL_FETCH_MESSAGES = 'https://api.vc.bilibili.com/svr_sync/v1/svr_sync/fetch_session_msgs'
-
+// 获取消息列表
+async function getMessageList() {
+  const url = 'https://api.vc.bilibili.com/svr_sync/v1/svr_sync/fetch_session_msgs'
   const headers = {
-    Referer: 'https://message.bilibili.com/',
+    Referer: 'https://text.bilibili.com/',
     Cookie: import.meta.env.VITE_COOKIE,
     'User-Agent': import.meta.env.VITE_USER_AGENT
   }
@@ -263,17 +262,12 @@ async function fetchMessages() {
     size: 200
   }
 
-  try {
-    const res = await axios.get(URL_FETCH_MESSAGES, {
-      headers,
-      params
-    })
+  const response = await axios.get(url, {
+    headers,
+    params
+  })
 
-    return res.data?.data?.messages || []
-  } catch (error) {
-    console.error('获取消息失败:', error.message)
-    return []
-  }
+  return response.data?.data?.messages || []
 }
 
 // 图片代理服务器
@@ -297,19 +291,21 @@ function startServer() {
       })
       response.data.pipe(res)
     } catch (error) {
-      dialog.showMessageBox({
+      dialog.showMessageBox(mainWindow, {
+        title: '开启图片代理服务器',
         type: 'error',
-        message: `代理错误：, ${error.message}`
+        text: `代理错误：, ${error.text}`
       })
       res.status(500).send('代理错误')
     }
   })
 
   server = expressApp.listen(port, () => {
-    console.log(`服务器运行在http://localhost:${port}/`)
+    console.log(`服务器运行在 http://localhost:${port}/`)
   })
 }
 
+// 创建窗口
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 800,
@@ -458,9 +454,9 @@ app.whenReady().then(() => {
 
       if (items.length > 0) {
         const query = `
-            INSERT INTO rewards (product_name, money, create_time)
-            VALUES ?
-          `
+          INSERT INTO rewards (product_name, money, create_time)
+          VALUES ?
+        `
         const conn = await pool.getConnection()
         try {
           await conn.query(query, [items])
@@ -512,21 +508,20 @@ app.whenReady().then(() => {
 
   // 活动资格取消
   ipcMain.handle('cancel-event-qualification', async () => {
-    const connection = await pool.getConnection()
-    const FILTER_MESSAGE =
-      '已经通过审核，但由于不符合本次征稿活动的规则，故该稿件无法参与本次活动的评选'
+    const conn = await pool.getConnection()
+    const text = '已经通过审核，但由于不符合本次征稿活动的规则，故该稿件无法参与本次活动的评选'
 
     try {
-      await createDisqualificationTable(connection)
+      await initDisqualification(conn)
 
-      const messages = await fetchMessages()
+      const messages = await getMessageList()
       const tenDaysAgo = getTenDaysAgo()
 
       for (const item of messages) {
         const content = item.content || ''
         const timestamp = item.timestamp || 0
 
-        if (!content.includes(FILTER_MESSAGE)) continue
+        if (!content.includes(text)) continue
 
         const messageTime = new Date(timestamp * 1000)
         if (messageTime < tenDaysAgo) break
@@ -538,7 +533,7 @@ app.whenReady().then(() => {
             ? content.substring(titleStart, titleEnd)
             : '未知标题'
 
-        const topic = await fetchBilibiliVideoData(title)
+        const topic = await getTopicByTitle(title)
 
         const sql = `
           INSERT INTO disqualification (title, topic, post_time, content)
@@ -546,14 +541,14 @@ app.whenReady().then(() => {
         `
 
         const post_time = formatTimestampToDatetime(timestamp)
-        await connection.query(sql, [title, topic, post_time, content])
+        await conn.query(sql, [title, topic, post_time, content])
       }
 
       // 查询数据库中的所有记录
       const [rows] = await pool.query('SELECT * FROM disqualification')
       return rows
     } finally {
-      connection.release()
+      conn.release()
     }
   })
 
