@@ -1,4 +1,4 @@
-<!-- 活动资格取消 -->
+<!-- 活动资格取消稿件 -->
 <script setup>
 import { ref } from 'vue'
 import { format } from 'date-fns'

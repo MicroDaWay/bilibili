@@ -93,7 +93,7 @@ async function main() {
       font-size: 22px;
 
       .start-time {
-        width: 30%;
+        width: 26%;
       }
     }
 

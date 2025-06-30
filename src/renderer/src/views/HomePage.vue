@@ -29,7 +29,7 @@ onMounted(() => {
       <RouterLink to="/update-database">更新数据库</RouterLink>
     </li>
     <li class="item">
-      <RouterLink to="/cancel-event-qualification">活动资格取消</RouterLink>
+      <RouterLink to="/cancel-event-qualification">活动资格取消稿件</RouterLink>
     </li>
   </ul>
   <div class="right-content">
