@@ -52,10 +52,16 @@ async function main() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 50px 0;
+  margin: 0 0 50px 0;
 
   .text {
+    position: fixed;
+    width: 1280px;
+    height: 100px;
+    line-height: 100px;
+    text-align: center;
     font-size: 30px;
+    background-color: #fff;
 
     &:hover {
       cursor: pointer;
@@ -64,7 +70,16 @@ async function main() {
   }
 
   .container {
-    margin: 10px 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: fixed;
+    top: 100px;
+    width: 1280px;
+    text-align: center;
+    margin-bottom: 10px;
+    background-color: #fff;
 
     .total-money,
     .balance {
@@ -77,7 +92,7 @@ async function main() {
   }
 
   .table-container {
-    margin-top: 20px;
+    margin-top: 160px;
     padding-bottom: 50px;
     width: 98%;
 
