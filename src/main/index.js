@@ -56,7 +56,7 @@ async function importExcelHandler() {
         dialog.showMessageBox(mainWindow, {
           title: '导入Excel',
           type: 'info',
-          text: '导入成功'
+          message: '导入成功'
         })
 
         BrowserWindow.getFocusedWindow().webContents.send('save-excel-data', excelData)
@@ -65,7 +65,7 @@ async function importExcelHandler() {
       dialog.showMessageBox(mainWindow, {
         title: '导入Excel',
         type: 'error',
-        text: `导入失败：, ${error.text}`
+        message: `导入失败：, ${error.text}`
       })
     }
   }

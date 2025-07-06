@@ -130,7 +130,7 @@ const searchHandler = () => {
     </div>
     <div class="event-rules">
       <div>活动规则：{{ filterData['活动规则'] }}</div>
-      <div>当前话题：投稿量={{ totalCount }}，播放量={{ totalPlay }}</div>
+      <div>当前话题：投稿量={{ totalCount }}, 播放量={{ totalPlay }}</div>
     </div>
     <div class="content-box">
       <ContentCard

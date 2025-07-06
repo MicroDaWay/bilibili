@@ -73,10 +73,16 @@ async function main() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 50px 0;
+  margin: 0 0 50px 0;
 
   .text {
+    position: fixed;
+    width: 68%;
+    height: 100px;
+    line-height: 100px;
+    text-align: center;
     font-size: 30px;
+    background-color: #fff;
 
     &:hover {
       cursor: pointer;
@@ -85,7 +91,7 @@ async function main() {
   }
 
   .table-container {
-    margin-top: 20px;
+    margin-top: 120px;
     padding-bottom: 50px;
     width: 80%;
 
