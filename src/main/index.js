@@ -552,6 +552,18 @@ app.whenReady().then(() => {
     }
   })
 
+  // 获取bilibili表中的数据
+  ipcMain.handle('get-bilibili-data', async () => {
+    const [rows] = await pool.query('SELECT * FROM bilibili ORDER BY post_time DESC')
+    return rows
+  })
+
+  // 获取rewards表中的数据
+  ipcMain.handle('get-rewards-data', async () => {
+    const [rows] = await pool.query('SELECT * FROM rewards ORDER BY create_time DESC')
+    return rows
+  })
+
   createWindow()
   startServer()
 

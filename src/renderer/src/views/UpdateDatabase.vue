@@ -1,9 +1,19 @@
 <!-- 更新数据库 -->
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { format } from 'date-fns'
 
 const itemList = ref([])
+
+// 获取数据库中的数据
+const getDatabaseData = async () => {
+  const result = await window.electronAPI.getBilibiliData()
+  itemList.value = result
+}
+
+onMounted(() => {
+  getDatabaseData()
+})
 
 // 主函数
 async function main() {
@@ -44,10 +54,16 @@ async function main() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 50px 0;
+  margin-bottom: 50px;
 
   .text {
+    position: fixed;
+    width: 1280px;
+    height: 100px;
+    line-height: 100px;
+    text-align: center;
     font-size: 30px;
+    background-color: #fff;
 
     &:hover {
       cursor: pointer;
@@ -56,7 +72,7 @@ async function main() {
   }
 
   .table-container {
-    margin-top: 20px;
+    margin-top: 100px;
     padding-bottom: 50px;
     width: 98%;
 

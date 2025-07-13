@@ -22,5 +22,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 更新数据库
   updateDatabase: () => ipcRenderer.invoke('update-database'),
   // 活动资格取消
-  cancelEventQualification: () => ipcRenderer.invoke('cancel-event-qualification')
+  cancelEventQualification: () => ipcRenderer.invoke('cancel-event-qualification'),
+  // 获取bilibili表中的数据
+  getBilibiliData: () => ipcRenderer.invoke('get-bilibili-data'),
+  // 获取rewards表中的数据
+  getRewardsData: () => ipcRenderer.invoke('get-rewards-data')
 })

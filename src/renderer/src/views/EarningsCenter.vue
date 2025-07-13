@@ -1,10 +1,20 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { format } from 'date-fns'
 
 const itemList = ref([])
 const totalMoney = ref('')
 const balance = ref('')
+
+// 获取数据库中的数据
+const getDatabaseData = async () => {
+  const result = await window.electronAPI.getRewardsData()
+  itemList.value = result
+}
+
+onMounted(() => {
+  getDatabaseData()
+})
 
 // 主函数
 async function main() {
