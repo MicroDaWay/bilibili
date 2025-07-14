@@ -2,6 +2,33 @@
 <script setup>
 import { onMounted } from 'vue'
 
+const itemList = [
+  {
+    text: '稿件管理',
+    url: '/manuscript-management'
+  },
+  {
+    text: '打卡挑战',
+    url: '/check-in-challenge'
+  },
+  {
+    text: '热门活动',
+    url: '/popular-events'
+  },
+  {
+    text: '收益中心',
+    url: '/earnings-center'
+  },
+  {
+    text: '更新数据库',
+    url: '/update-database'
+  },
+  {
+    text: '活动资格取消稿件',
+    url: '/cancel-event-qualification'
+  }
+]
+
 // 监听右键菜单事件
 onMounted(() => {
   window.addEventListener('contextmenu', (e) => {
@@ -13,23 +40,8 @@ onMounted(() => {
 
 <template>
   <ul class="left-nav">
-    <li class="item">
-      <RouterLink to="/manuscript-management">稿件管理</RouterLink>
-    </li>
-    <li class="item">
-      <RouterLink to="/check-in-challenge">打卡挑战</RouterLink>
-    </li>
-    <li class="item">
-      <RouterLink to="/popular-events">热门活动</RouterLink>
-    </li>
-    <li class="item">
-      <RouterLink to="/earnings-center">收益中心</RouterLink>
-    </li>
-    <li class="item">
-      <RouterLink to="/update-database">更新数据库</RouterLink>
-    </li>
-    <li class="item">
-      <RouterLink to="/cancel-event-qualification">活动资格取消稿件</RouterLink>
+    <li v-for="item in itemList" :key="item.url" class="item">
+      <RouterLink :to="item.url" active-class="active">{{ item.text }}</RouterLink>
     </li>
   </ul>
   <div class="right-content">
@@ -60,6 +72,10 @@ onMounted(() => {
       display: block;
       width: 100%;
       height: 100%;
+
+      &.active {
+        background-color: orange;
+      }
     }
   }
 }
