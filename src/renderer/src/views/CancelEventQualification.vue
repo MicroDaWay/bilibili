@@ -1,9 +1,19 @@
 <!-- 活动资格取消稿件 -->
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { format } from 'date-fns'
 
 const itemList = ref([])
+
+// 获取数据库中的数据
+const getDatabaseData = async () => {
+  const result = await window.electronAPI.getDisqualificationData()
+  itemList.value = result
+}
+
+onMounted(() => {
+  getDatabaseData()
+})
 
 // 主函数
 async function main() {
@@ -20,12 +30,6 @@ async function main() {
 <template>
   <div class="cancel-event-qualification">
     <div class="text" @click="main">活动资格取消</div>
-    <!-- <ul class="item-list">
-      <li v-for="item in itemList" :key="item.id" class="item-text">
-        投稿时间 = {{ format(item.post_time, 'yyyy-MM-dd HH:mm:ss') }}, 标题 = {{ item.title }},
-        投稿标签 = {{ item.topic }}
-      </li>
-    </ul> -->
     <table class="table-container">
       <thead v-if="itemList.length">
         <tr class="table-tr">
@@ -50,10 +54,16 @@ async function main() {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 50px 0;
+  margin-bottom: 50px;
 
   .text {
+    position: fixed;
+    width: 1280px;
+    height: 100px;
+    line-height: 100px;
+    text-align: center;
     font-size: 30px;
+    background-color: #fff;
 
     &:hover {
       cursor: pointer;
@@ -62,7 +72,7 @@ async function main() {
   }
 
   .table-container {
-    margin-top: 20px;
+    margin-top: 100px;
     padding-bottom: 50px;
     width: 98%;
 

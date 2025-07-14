@@ -26,5 +26,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 获取bilibili表中的数据
   getBilibiliData: () => ipcRenderer.invoke('get-bilibili-data'),
   // 获取rewards表中的数据
-  getRewardsData: () => ipcRenderer.invoke('get-rewards-data')
+  getRewardsData: () => ipcRenderer.invoke('get-rewards-data'),
+  // 获取disqualification表中的数据
+  getDisqualificationData: () => ipcRenderer.invoke('get-disqualification-data')
 })

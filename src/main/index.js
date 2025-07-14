@@ -564,6 +564,12 @@ app.whenReady().then(() => {
     return rows
   })
 
+  // 获取disqualification表中的数据
+  ipcMain.handle('get-disqualification-data', async () => {
+    const [rows] = await pool.query('SELECT * FROM disqualification ORDER BY post_time DESC')
+    return rows
+  })
+
   createWindow()
   startServer()
 
