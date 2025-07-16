@@ -102,6 +102,8 @@ async function main() {
 
 // 点击搜索的处理函数
 const searchHandler = () => {
+  let flag = false
+
   bilibiliStore.excelData.map((item) => {
     if (item['投稿话题'].includes(topic.value)) {
       filterData.value = {
@@ -109,8 +111,19 @@ const searchHandler = () => {
         eventStartTime: format(excelDateToJSDate(item['活动开始时间']), 'yyyy-MM-dd'),
         eventEndTime: format(excelDateToJSDate(item['活动结束时间']), 'yyyy-MM-dd')
       }
+
+      flag = true
     }
   })
+
+  if (!flag) {
+    window.electronAPI.showMessage({
+      title: '稿件管理',
+      type: 'info',
+      message: '没有找到相关话题'
+    })
+    return
+  }
 
   main()
 }
