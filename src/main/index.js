@@ -509,7 +509,7 @@ app.whenReady().then(() => {
   // 活动资格取消
   ipcMain.handle('cancel-event-qualification', async () => {
     const conn = await pool.getConnection()
-    const text = '已经通过审核，但由于不符合本次征稿活动的规则，故该稿件无法参与本次活动的评选'
+    const text = '由于不符合本次征稿活动的规则，故无法参与本次活动的评选'
 
     try {
       await initDisqualification(conn)
