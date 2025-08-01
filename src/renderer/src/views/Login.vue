@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { nextTick, onMounted, ref } from 'vue'
 import qrcode from 'qrcode'
 
 const QRCode = ref(null)
@@ -12,6 +12,7 @@ async function login() {
   const result = await window.electronAPI.getQRCode()
   const url = result.data.url
   QRCodeKey.value = result.data.qrcode_key
+  await nextTick()
   const QRCodeCanvas = QRCode.value
   await qrcode.toCanvas(QRCodeCanvas, url, {
     width: 300,
@@ -25,7 +26,7 @@ async function checkStatus() {
   isLogin.value = false
 
   while (true) {
-    await new Promise((resolve) => setTimeout(resolve, 5000))
+    await new Promise((resolve) => setTimeout(resolve, 1000))
     const result = await window.electronAPI.checkQRCodeStatus(QRCodeKey.value)
     if (result.data.code === 86101) {
       console.log('未扫码')
@@ -46,26 +47,23 @@ async function checkStatus() {
       const cookie = `SESSDATA=${SESSDATA}; bili_jct=${bili_jct}; DedeUserID=${DedeUserID}`
       await window.electronAPI.saveCookie(cookie)
       await getNavigation()
-      console.log('cookie:', cookie)
       break
     }
-    console.log(result)
   }
 }
 
 // 退出登录
 async function logout() {
-  await window.electronAPI.logout()
-  isLogin.value = false
-  QRCodeKey.value = ''
-  QRCode.value.getContext('2d').clearRect(0, 0, QRCode.value.width, QRCode.value.height)
-  console.log('退出登录成功')
+  const result = await window.electronAPI.logout()
+  if (result.code === 0) {
+    isLogin.value = false
+    QRCodeKey.value = ''
+    avatar.value = ''
+    login()
+  }
 }
 
-function proxyImage(url) {
-  return `http://localhost:3000/proxy/image?url=${encodeURIComponent(url)}`
-}
-
+// 获取导航栏信息
 async function getNavigation() {
   const result = await window.electronAPI.getNavigationData()
   avatar.value = result.face
@@ -77,8 +75,11 @@ onMounted(async () => {
   if (!isLogin.value) {
     login()
   }
-  // 读取主进程中cookie.txt是否有内容
 })
+
+function proxyImage(url) {
+  return `http://localhost:3000/proxy/image?url=${encodeURIComponent(url)}`
+}
 </script>
 
 <template>

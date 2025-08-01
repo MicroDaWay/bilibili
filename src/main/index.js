@@ -20,7 +20,6 @@ const cookieFilePath = path.join(userDataPath, 'cookie.txt')
 // 确保文件存在，如果不存在则创建空文件
 if (!fs.existsSync(cookieFilePath)) {
   fs.writeFileSync(cookieFilePath, '', 'utf8')
-  console.log('创建cookie.txt成功.')
 }
 
 let server
@@ -395,7 +394,6 @@ app.whenReady().then(() => {
   // 保存cookie
   ipcMain.handle('save-cookie', async (e, cookie) => {
     await fs.promises.writeFile(cookieFilePath, cookie, 'utf8')
-    console.log('cookie已保存')
   })
 
   // 获取导航栏数据
@@ -414,18 +412,19 @@ app.whenReady().then(() => {
 
   // 退出登录
   ipcMain.handle('logout', async () => {
-    const a = fs.readFileSync(cookieFilePath, 'utf8')
-    console.log(a)
-    // const url = 'https://passport.bilibili.com/login/exit/v2'
-    // const headers = {
-    //   Cookie: fs.readFileSync(cookieFilePath, 'utf8'),
-    //   'User-Agent': import.meta.env.VITE_USER_AGENT
-    // }
-    // await axios.post(url, {
-    //   headers
-    // })
-    // await fs.promises.writeFile(cookieFilePath, '', 'utf8')
-    console.log('已退出登录，cookie已清空')
+    const result = fs.readFileSync(cookieFilePath, 'utf8')
+    const biliCSRF = result.split(';')[1].split('=')[1]
+    const url = 'https://passport.bilibili.com/login/exit/v2'
+    const headers = {
+      Cookie: fs.readFileSync(cookieFilePath, 'utf8'),
+      'User-Agent': import.meta.env.VITE_USER_AGENT,
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }
+    const response = await axios.post(url, `biliCSRF=${biliCSRF}`, {
+      headers
+    })
+    await fs.promises.writeFile(cookieFilePath, '', 'utf8')
+    return response.data || {}
   })
 
   // 获取稿件管理数据
