@@ -1,6 +1,6 @@
-# electron-bilibili
+# bilibili
 
-An Electron application with Vue
+bilibili稿件管理工具
 
 ## Recommended IDE Setup
 
