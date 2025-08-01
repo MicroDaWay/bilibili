@@ -2,6 +2,7 @@ import { createMemoryHistory, createRouter } from 'vue-router'
 
 const routes = [
   { path: '/', redirect: '/manuscript-management' },
+  { path: '/login', component: () => import('../views/Login.vue') },
   { path: '/manuscript-management', component: () => import('../views/ManuscriptManagement.vue') },
   { path: '/check-in-challenge', component: () => import('../views/CheckInChallenge.vue') },
   { path: '/popular-events', component: () => import('../views/PopularEvents.vue') },

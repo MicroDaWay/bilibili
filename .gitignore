@@ -7,3 +7,4 @@ build
 *.log*
 .env
 .vscode
+cookie.txt

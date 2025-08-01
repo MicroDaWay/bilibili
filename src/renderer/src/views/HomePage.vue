@@ -4,6 +4,10 @@ import { onMounted } from 'vue'
 
 const itemList = [
   {
+    text: '登录',
+    url: '/login'
+  },
+  {
     text: '稿件管理',
     url: '/manuscript-management'
   },

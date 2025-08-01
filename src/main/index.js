@@ -7,9 +7,21 @@ import express from 'express'
 import dotenv from 'dotenv'
 import mysql from 'mysql2/promise'
 import { formatTimestampToDatetime } from '../renderer/src/utils/index'
+import fs from 'fs'
+import path from 'node:path'
 
 // 加载环境变量
 dotenv.config()
+
+// 确保cookie.txt文件所在的目录存在
+const userDataPath = path.join(__dirname, '../../../electron-bilibili')
+const cookieFilePath = path.join(userDataPath, 'cookie.txt')
+
+// 确保文件存在，如果不存在则创建空文件
+if (!fs.existsSync(cookieFilePath)) {
+  fs.writeFileSync(cookieFilePath, '', 'utf8')
+  console.log('创建cookie.txt成功.')
+}
 
 let server
 let mainWindow
@@ -127,7 +139,7 @@ async function getBilibiliList(pageNumber) {
   const url = 'https://member.bilibili.com/x/web/archives'
   const headers = {
     Referer: 'https://member.bilibili.com/platform/upload-manager/article',
-    Cookie: import.meta.env.VITE_COOKIE,
+    Cookie: fs.readFileSync(cookieFilePath, 'utf8'),
     'User-Agent': import.meta.env.VITE_USER_AGENT
   }
 
@@ -175,7 +187,7 @@ async function getTopicByTitle(titleToFind) {
   const url = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space'
   const headers = {
     Referer: 'https://space.bilibili.com/506485454/dynamic',
-    Cookie: import.meta.env.VITE_COOKIE,
+    Cookie: fs.readFileSync(cookieFilePath, 'utf8'),
     'User-Agent': import.meta.env.VITE_USER_AGENT
   }
 
@@ -252,7 +264,7 @@ async function getMessageList() {
   const url = 'https://api.vc.bilibili.com/svr_sync/v1/svr_sync/fetch_session_msgs'
   const headers = {
     Referer: 'https://text.bilibili.com/',
-    Cookie: import.meta.env.VITE_COOKIE,
+    Cookie: fs.readFileSync(cookieFilePath, 'utf8'),
     'User-Agent': import.meta.env.VITE_USER_AGENT
   }
 
@@ -357,12 +369,71 @@ app.whenReady().then(() => {
     })
   })
 
+  // 获取登录二维码
+  ipcMain.handle('get-qrcode', async () => {
+    const url = 'https://passport.bilibili.com/x/passport-login/web/qrcode/generate'
+    const response = await axios.get(url, {
+      params: {
+        source: 'main-fe-header'
+      }
+    })
+    return response.data || {}
+  })
+
+  // 检查二维码状态
+  ipcMain.handle('check-qrcode-status', async (e, qrcode_key) => {
+    const url = 'https://passport.bilibili.com/x/passport-login/web/qrcode/poll'
+    const response = await axios.get(url, {
+      params: {
+        qrcode_key,
+        source: 'main-fe-header'
+      }
+    })
+    return response.data
+  })
+
+  // 保存cookie
+  ipcMain.handle('save-cookie', async (e, cookie) => {
+    await fs.promises.writeFile(cookieFilePath, cookie, 'utf8')
+    console.log('cookie已保存')
+  })
+
+  // 获取导航栏数据
+  ipcMain.handle('get-navigation-data', async () => {
+    const url = 'https://api.bilibili.com/x/web-interface/nav'
+    const headers = {
+      Referer: 'https://www.bilibili.com',
+      Cookie: fs.readFileSync(cookieFilePath, 'utf8'),
+      'User-Agent': import.meta.env.VITE_USER_AGENT
+    }
+    const response = await axios.get(url, {
+      headers
+    })
+    return response.data?.data || {}
+  })
+
+  // 退出登录
+  ipcMain.handle('logout', async () => {
+    const a = fs.readFileSync(cookieFilePath, 'utf8')
+    console.log(a)
+    // const url = 'https://passport.bilibili.com/login/exit/v2'
+    // const headers = {
+    //   Cookie: fs.readFileSync(cookieFilePath, 'utf8'),
+    //   'User-Agent': import.meta.env.VITE_USER_AGENT
+    // }
+    // await axios.post(url, {
+    //   headers
+    // })
+    // await fs.promises.writeFile(cookieFilePath, '', 'utf8')
+    console.log('已退出登录，cookie已清空')
+  })
+
   // 获取稿件管理数据
   ipcMain.handle('manuscript-management', async (e, pn) => {
     const url = 'https://member.bilibili.com/x/web/archives'
     const headers = {
       Referer: 'https://member.bilibili.com/platform/upload-manager/article',
-      Cookie: import.meta.env.VITE_COOKIE,
+      Cookie: fs.readFileSync(cookieFilePath, 'utf8'),
       'User-Agent': import.meta.env.VITE_USER_AGENT
     }
     const response = await axios.get(url, {
@@ -380,7 +451,7 @@ app.whenReady().then(() => {
     const url = 'https://member.bilibili.com/x2/creative/h5/clock/v4/activity/list'
     const headers = {
       Referer: 'https://member.bilibili.com/york/platform-punch-card/personal',
-      Cookie: import.meta.env.VITE_COOKIE,
+      Cookie: fs.readFileSync(cookieFilePath, 'utf8'),
       'User-Agent': import.meta.env.VITE_USER_AGENT
     }
     const response = await axios.get(url, {
@@ -394,7 +465,7 @@ app.whenReady().then(() => {
     const url = 'https://member.bilibili.com/x/web/activity/videoall'
     const headers = {
       Referer: 'https://member.bilibili.com/platform/releasecenter',
-      Cookie: import.meta.env.VITE_COOKIE,
+      Cookie: fs.readFileSync(cookieFilePath, 'utf8'),
       'User-Agent': import.meta.env.VITE_USER_AGENT
     }
     const response = await axios.get(url, {
@@ -409,7 +480,7 @@ app.whenReady().then(() => {
 
     const headers = {
       Referer: 'https://pay.bilibili.com/pay-v2/shell/bill',
-      Cookie: import.meta.env.VITE_COOKIE,
+      Cookie: fs.readFileSync(cookieFilePath, 'utf8'),
       'User-Agent': import.meta.env.VITE_USER_AGENT
     }
 

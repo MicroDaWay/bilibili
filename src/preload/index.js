@@ -11,6 +11,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   showMessage: (params) => ipcRenderer.invoke('show-message', params),
   // 展示右键菜单
   showContextMenu: () => ipcRenderer.send('show-context-menu'),
+  // 获取登录二维码
+  getQRCode: () => ipcRenderer.invoke('get-qrcode'),
+  // 检查二维码状态
+  checkQRCodeStatus: (params) => ipcRenderer.invoke('check-qrcode-status', params),
+  // 保存cookie
+  saveCookie: (params) => ipcRenderer.invoke('save-cookie', params),
+  // 获取导航栏数据
+  getNavigationData: () => ipcRenderer.invoke('get-navigation-data'),
+  // 退出登录
+  logout: () => ipcRenderer.invoke('logout'),
   // 稿件管理
   manuscriptManagement: (params) => ipcRenderer.invoke('manuscript-management', params),
   // 打卡挑战
