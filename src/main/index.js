@@ -14,7 +14,7 @@ import path from 'node:path'
 dotenv.config()
 
 // 确保cookie.txt文件所在的目录存在
-const userDataPath = path.join(__dirname, '../../../electron-bilibili')
+const userDataPath = path.join(__dirname, '../../../bilibili')
 const cookieFilePath = path.join(userDataPath, 'cookie.txt')
 
 // 确保文件存在，如果不存在则创建空文件
