@@ -31,7 +31,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   earningsCenter: () => ipcRenderer.invoke('earnings-center'),
   // 更新数据库
   updateDatabase: () => ipcRenderer.invoke('update-database'),
-  // 活动资格取消
+  // 活动资格取消稿件
   cancelEventQualification: () => ipcRenderer.invoke('cancel-event-qualification'),
   // 获取bilibili表中的数据
   getBilibiliData: () => ipcRenderer.invoke('get-bilibili-data'),

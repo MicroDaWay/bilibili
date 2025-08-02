@@ -254,7 +254,7 @@ async function initDisqualification(conn) {
       topic VARCHAR(255) COMMENT '投稿标签',
       post_time DATETIME COMMENT '投稿时间',
       content VARCHAR(255) COMMENT '消息内容'
-    ) COMMENT '活动资格取消'
+    ) COMMENT '活动资格取消稿件'
   `)
 }
 
@@ -576,7 +576,7 @@ app.whenReady().then(() => {
     }
   })
 
-  // 活动资格取消
+  // 活动资格取消稿件
   ipcMain.handle('cancel-event-qualification', async () => {
     const conn = await pool.getConnection()
     const text = '由于不符合本次征稿活动的规则，故无法参与本次活动的评选'

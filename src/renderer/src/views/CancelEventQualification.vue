@@ -20,7 +20,7 @@ async function main() {
   const result = await window.electronAPI.cancelEventQualification()
   itemList.value = result
   window.electronAPI.showMessage({
-    title: '活动资格取消',
+    title: '活动资格取消稿件',
     type: 'info',
     message: '查询结束'
   })
@@ -29,11 +29,11 @@ async function main() {
 
 <template>
   <div class="cancel-event-qualification">
-    <div class="text" @click="main">活动资格取消</div>
+    <div class="text" @click="main">活动资格取消稿件</div>
     <table class="table-container">
       <thead v-if="itemList.length">
         <tr class="table-tr">
-          <th class="post-time">投稿时间</th>
+          <th class="post-time">活动资格取消时间</th>
           <th class="title">标题</th>
           <th class="topic">投稿标签</th>
         </tr>
