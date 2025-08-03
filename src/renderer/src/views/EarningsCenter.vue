@@ -1,10 +1,13 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { format } from 'date-fns'
+import { useBilibiliStore } from '../stores/bilibiliStore'
 
 const itemList = ref([])
 const totalMoney = ref('')
 const balance = ref('')
+
+const bilibiliStore = useBilibiliStore()
 
 // 获取数据库中的数据
 const getDatabaseData = async () => {
@@ -14,6 +17,8 @@ const getDatabaseData = async () => {
 
 onMounted(() => {
   getDatabaseData()
+  totalMoney.value = bilibiliStore.totalMoney
+  balance.value = bilibiliStore.balance
 })
 
 // 主函数
@@ -22,6 +27,8 @@ async function main() {
   itemList.value = result.rows
   totalMoney.value = result.totalMoney
   balance.value = result.balance
+  bilibiliStore.setTotalMoney(totalMoney.value)
+  bilibiliStore.setBalance(balance.value)
 
   window.electronAPI.showMessage({
     title: '收益中心',
@@ -72,6 +79,7 @@ async function main() {
     text-align: center;
     font-size: 30px;
     background-color: #fff;
+    user-select: none;
 
     &:hover {
       cursor: pointer;

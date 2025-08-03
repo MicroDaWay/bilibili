@@ -40,11 +40,11 @@ async function checkStatus() {
       const cookieUrl = new URL(result.data.url)
       const params = new URLSearchParams(cookieUrl.search)
 
+      const DedeUserID = params.get('DedeUserID')
       const SESSDATA = params.get('SESSDATA')
       const bili_jct = params.get('bili_jct')
-      const DedeUserID = params.get('DedeUserID')
 
-      const cookie = `SESSDATA=${SESSDATA}; bili_jct=${bili_jct}; DedeUserID=${DedeUserID}`
+      const cookie = `DedeUserID=${DedeUserID}; SESSDATA=${SESSDATA}; bili_jct=${bili_jct};`
       await window.electronAPI.saveCookie(cookie)
       await getNavigation()
       break
@@ -104,6 +104,7 @@ function proxyImage(url) {
     width: 300px;
     height: 300px;
     border: 1px solid #ccc;
+    user-select: none;
   }
 
   .login-btn,

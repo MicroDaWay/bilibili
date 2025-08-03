@@ -182,6 +182,7 @@ const searchHandler = () => {
       border: 1px solid #ccc;
       font-size: 20px;
       padding: 0 16px;
+      user-select: none;
     }
 
     .search-button {
@@ -195,6 +196,7 @@ const searchHandler = () => {
       font-size: 20px;
       margin-left: 50px;
       cursor: pointer;
+      user-select: none;
 
       &:hover {
         background-color: #ffb121;

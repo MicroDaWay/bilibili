@@ -78,12 +78,13 @@ async function main() {
 
   .text {
     position: fixed;
-    width: 68%;
+    width: 1280px;
     height: 100px;
     line-height: 100px;
     text-align: center;
     font-size: 30px;
     background-color: #fff;
+    user-select: none;
 
     &:hover {
       cursor: pointer;
@@ -92,9 +93,9 @@ async function main() {
   }
 
   .table-container {
-    margin-top: 120px;
+    margin-top: 100px;
     padding-bottom: 50px;
-    width: 80%;
+    width: 98%;
 
     .table-tr {
       font-size: 22px;

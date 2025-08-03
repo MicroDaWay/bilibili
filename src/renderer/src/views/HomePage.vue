@@ -67,6 +67,7 @@ onMounted(() => {
     border-bottom: 1px solid #ccc;
     cursor: pointer;
     text-indent: 1em;
+    user-select: none;
 
     &:hover {
       background-color: orange;

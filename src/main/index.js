@@ -111,12 +111,23 @@ async function initRewards() {
 }
 
 // 获取余额
-async function getBalance(headers) {
-  const url = 'https://pay.bilibili.com/payplatform/getUserWalletInfo'
-  const response = await axios.get(url, {
+async function getBalance() {
+  const url = 'https://pay.bilibili.com/bk/brokerage/getUserBrokerage'
+  const payload = {
+    sdkVersion: '1.1.7',
+    timestamp: Math.floor(Date.now() / 1000),
+    traceId: Math.floor(Date.now() / 1000)
+  }
+  const headers = {
+    Referer: 'https://pay.bilibili.com/pay-v2/shell/index',
+    Cookie: fs.readFileSync(cookieFilePath, 'utf8').replace(/,/g, '%2C'),
+    'User-Agent': import.meta.env.VITE_USER_AGENT,
+    'Content-Type': 'application/json'
+  }
+  const response = await axios.post(url, payload, {
     headers
   })
-  return response.data?.data?.accountInfo.brokerage || 0
+  return response.data?.data?.brokerage || 0
 }
 
 // 初始化 bilibili 表
@@ -214,10 +225,16 @@ async function getTopicByTitle(titleToFind) {
       const title = archive.title || ''
       const pub_ts = item?.modules?.module_author?.pub_ts || 0
       const post_time = formatTimestampToDatetime(pub_ts)
+      const play = archive.stat?.play || 0
 
       if (title === titleToFind) {
-        console.log(`投稿时间 = ${post_time}, 标题 = ${title}, 投稿标签 = ${topic}`)
-        return topic
+        console.log(
+          `投稿时间 = ${post_time}, 标题 = ${title}, 播放量 = ${play}, 投稿标签 = ${topic}`
+        )
+        return {
+          topic,
+          play
+        }
       }
     }
 
@@ -252,6 +269,7 @@ async function initDisqualification(conn) {
       id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'id',
       title VARCHAR(255) COMMENT '标题',
       topic VARCHAR(255) COMMENT '投稿标签',
+      play INT COMMENT '播放量',
       post_time DATETIME COMMENT '投稿时间',
       content VARCHAR(255) COMMENT '消息内容'
     ) COMMENT '活动资格取消稿件'
@@ -413,7 +431,7 @@ app.whenReady().then(() => {
   // 退出登录
   ipcMain.handle('logout', async () => {
     const result = fs.readFileSync(cookieFilePath, 'utf8')
-    const biliCSRF = result.split(';')[1].split('=')[1]
+    const biliCSRF = result.split(';')[2].split('=')[1]
     const url = 'https://passport.bilibili.com/login/exit/v2'
     const headers = {
       Cookie: fs.readFileSync(cookieFilePath, 'utf8'),
@@ -477,17 +495,11 @@ app.whenReady().then(() => {
   ipcMain.handle('earnings-center', async () => {
     await initRewards()
 
-    const headers = {
-      Referer: 'https://pay.bilibili.com/pay-v2/shell/bill',
-      Cookie: fs.readFileSync(cookieFilePath, 'utf8'),
-      'User-Agent': import.meta.env.VITE_USER_AGENT
-    }
-
     let currentPage = 1
     let totalPage = 1
     let totalMoney = 0
 
-    const balance = await getBalance(headers)
+    const balance = await getBalance()
 
     while (currentPage <= totalPage) {
       await new Promise((resolve) => setTimeout(resolve, 1000))
@@ -500,7 +512,12 @@ app.whenReady().then(() => {
         timestamp: Math.floor(Date.now() / 1000),
         traceId: Math.floor(Date.now() / 1000)
       }
-
+      const headers = {
+        Referer: 'https://pay.bilibili.com/pay-v2/shell/index',
+        Cookie: fs.readFileSync(cookieFilePath, 'utf8').replace(/,/g, '%2C'),
+        'User-Agent': import.meta.env.VITE_USER_AGENT,
+        'Content-Type': 'application/json'
+      }
       const response = await axios.post(url, payload, {
         headers
       })
@@ -603,15 +620,15 @@ app.whenReady().then(() => {
             ? content.substring(titleStart, titleEnd)
             : '未知标题'
 
-        const topic = await getTopicByTitle(title)
+        const { topic, play } = await getTopicByTitle(title)
 
         const sql = `
-          INSERT INTO disqualification (title, topic, post_time, content)
-          VALUES (?, ?, ?, ?)
+          INSERT INTO disqualification (title, topic, play, post_time, content)
+          VALUES (?, ?, ?, ?, ?)
         `
 
         const post_time = formatTimestampToDatetime(timestamp)
-        await conn.query(sql, [title, topic, post_time, content])
+        await conn.query(sql, [title, topic, play, post_time, content])
       }
 
       // 查询数据库中的所有记录

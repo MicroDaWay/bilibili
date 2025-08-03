@@ -35,6 +35,7 @@ async function main() {
         <tr class="table-tr">
           <th class="post-time">活动资格取消时间</th>
           <th class="title">标题</th>
+          <th class="play">播放量</th>
           <th class="topic">投稿标签</th>
         </tr>
       </thead>
@@ -42,6 +43,7 @@ async function main() {
         <tr v-for="item in itemList" :key="item.id" class="tr-text">
           <td>{{ format(item.post_time, 'yyyy-MM-dd HH:mm:ss') }}</td>
           <td>{{ item.title }}</td>
+          <td>{{ item.play }}</td>
           <td>{{ item.topic }}</td>
         </tr>
       </tbody>
@@ -64,6 +66,7 @@ async function main() {
     text-align: center;
     font-size: 30px;
     background-color: #fff;
+    user-select: none;
 
     &:hover {
       cursor: pointer;
@@ -83,8 +86,12 @@ async function main() {
         width: 20%;
       }
 
+      .play {
+        width: 6%;
+      }
+
       .topic {
-        width: 30%;
+        width: 26%;
       }
     }
 

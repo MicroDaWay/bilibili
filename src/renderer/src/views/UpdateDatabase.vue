@@ -64,6 +64,7 @@ async function main() {
     text-align: center;
     font-size: 30px;
     background-color: #fff;
+    user-select: none;
 
     &:hover {
       cursor: pointer;
