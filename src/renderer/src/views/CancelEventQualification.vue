@@ -4,6 +4,7 @@ import { ref, onMounted } from 'vue'
 import { format } from 'date-fns'
 
 const itemList = ref([])
+const activeRow = ref(null)
 
 // 获取数据库中的数据
 const getDatabaseData = async () => {
@@ -40,7 +41,13 @@ async function main() {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="item in itemList" :key="item.id" class="tr-text">
+        <tr
+          v-for="item in itemList"
+          :key="item.id"
+          class="tr-text"
+          :class="{ 'tr-active': activeRow === item }"
+          @click="activeRow = item"
+        >
           <td>{{ format(item.post_time, 'yyyy-MM-dd HH:mm:ss') }}</td>
           <td>{{ item.title }}</td>
           <td>{{ item.play }}</td>
@@ -98,6 +105,10 @@ async function main() {
     .tr-text {
       font-size: 22px;
       margin: 6px 0;
+
+      &.tr-active {
+        background-color: orange;
+      }
 
       &:hover {
         background-color: orange;

@@ -11,7 +11,8 @@ const routes = [
   {
     path: '/cancel-event-qualification',
     component: () => import('../views/CancelEventQualification.vue')
-  }
+  },
+  { path: '/view-less-one-hundred', component: () => import('../views/ViewLessOneHundred.vue') }
 ]
 
 const router = createRouter({

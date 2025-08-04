@@ -6,6 +6,7 @@ import { useBilibiliStore } from '../stores/bilibiliStore'
 const itemList = ref([])
 const totalMoney = ref('')
 const balance = ref('')
+const activeRow = ref(null)
 
 const bilibiliStore = useBilibiliStore()
 
@@ -54,7 +55,13 @@ async function main() {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="item in itemList" :key="item.id" class="tr-text">
+        <tr
+          v-for="item in itemList"
+          :key="item.id"
+          class="tr-text"
+          :class="{ 'tr-active': activeRow === item }"
+          @click="activeRow = item"
+        >
           <td>{{ format(item.create_time, 'yyyy-MM-dd HH:mm:ss') }}</td>
           <td>{{ item.money }}</td>
           <td>{{ item.product_name }}</td>
@@ -129,6 +136,10 @@ async function main() {
     .tr-text {
       font-size: 22px;
       margin: 6px 0;
+
+      &.tr-active {
+        background-color: orange;
+      }
 
       &:hover {
         background-color: orange;

@@ -639,6 +639,22 @@ app.whenReady().then(() => {
     }
   })
 
+  // 播放量<100的稿件
+  ipcMain.handle('view-less-one-hundred', async () => {
+    const conn = await pool.getConnection()
+    try {
+      const sql = `
+        SELECT * FROM bilibili
+        WHERE view < 100 AND post_time <= DATE_SUB(CURDATE(),INTERVAL 180 DAY)
+        ORDER BY view ASC
+      `
+      const [rows] = await conn.query(sql)
+      return rows
+    } finally {
+      conn.release()
+    }
+  })
+
   // 获取bilibili表中的数据
   ipcMain.handle('get-bilibili-data', async () => {
     const [rows] = await pool.query('SELECT * FROM bilibili ORDER BY post_time DESC')

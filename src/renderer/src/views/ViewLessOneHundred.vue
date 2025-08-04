@@ -1,6 +1,5 @@
-<!-- 更新数据库 -->
 <script setup>
-import { onMounted, ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { format } from 'date-fns'
 
 const itemList = ref([])
@@ -8,7 +7,7 @@ const activeRow = ref(null)
 
 // 获取数据库中的数据
 const getDatabaseData = async () => {
-  const result = await window.electronAPI.getBilibiliData()
+  const result = await window.electronAPI.viewLessOneHundred()
   itemList.value = result
 }
 
@@ -18,19 +17,19 @@ onMounted(() => {
 
 // 主函数
 async function main() {
-  const result = await window.electronAPI.updateDatabase()
+  const result = await window.electronAPI.viewLessOneHundred()
   itemList.value = result
   window.electronAPI.showMessage({
-    title: '更新数据库',
+    title: '播放量<100的稿件',
     type: 'info',
-    message: '更新数据库成功'
+    message: '查询结束'
   })
 }
 </script>
 
 <template>
-  <div class="update-database">
-    <div class="text" @click="main">更新数据库</div>
+  <div class="view-less-one-hundred">
+    <div class="text" @click="main">播放量&lt;100的稿件</div>
     <table class="table-container">
       <thead v-if="itemList.length">
         <tr class="table-tr">
@@ -48,7 +47,7 @@ async function main() {
           @click="activeRow = item"
         >
           <td>{{ format(item.post_time, 'yyyy-MM-dd HH:mm:ss') }}</td>
-          <td>{{ item.view.toString().padEnd(5) }}</td>
+          <td>{{ item.view }}</td>
           <td>{{ item.title }}</td>
         </tr>
       </tbody>
@@ -57,7 +56,7 @@ async function main() {
 </template>
 
 <style scoped lang="scss">
-.update-database {
+.view-less-one-hundred {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -86,13 +85,12 @@ async function main() {
 
     .table-tr {
       font-size: 22px;
+      .view {
+        width: 6%;
+      }
 
       .post-time {
         width: 20%;
-      }
-
-      .view {
-        width: 6%;
       }
     }
 

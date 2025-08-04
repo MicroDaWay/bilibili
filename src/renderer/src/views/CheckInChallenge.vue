@@ -5,6 +5,7 @@ import { ref } from 'vue'
 import { formatTimestampToDatetime } from '../utils/index.js'
 
 const itemList = ref([])
+const activeRow = ref(null)
 
 // 获取7天前的日期
 function getSevenDaysAgo() {
@@ -60,7 +61,13 @@ async function main() {
         </tr>
       </thead>
       <tbody>
-        <tr v-for="item in itemList" :key="item.title" class="tr-text">
+        <tr
+          v-for="item in itemList"
+          :key="item.title"
+          class="tr-text"
+          :class="{ 'tr-active': activeRow === item }"
+          @click="activeRow = item"
+        >
           <td>{{ item.startTime }}</td>
           <td>{{ item.title }}</td>
         </tr>
@@ -108,6 +115,10 @@ async function main() {
     .tr-text {
       font-size: 22px;
       margin: 6px 0;
+
+      &.tr-active {
+        background-color: orange;
+      }
 
       &:hover {
         background-color: orange;

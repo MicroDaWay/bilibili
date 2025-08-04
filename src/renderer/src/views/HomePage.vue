@@ -30,6 +30,10 @@ const itemList = [
   {
     text: '活动资格取消稿件',
     url: '/cancel-event-qualification'
+  },
+  {
+    text: '播放量<100的稿件',
+    url: '/view-less-one-hundred'
   }
 ]
 
