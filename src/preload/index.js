@@ -32,7 +32,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 更新数据库
   updateDatabase: () => ipcRenderer.invoke('update-database'),
   // 活动资格取消稿件
-  cancelEventQualification: () => ipcRenderer.invoke('cancel-event-qualification'),
+  startCancelEventQualification: () => ipcRenderer.send('start-cancel-event-qualification'),
+  onDisqualificationItem: (callback) => ipcRenderer.on('disqualification-item', callback),
+  onDisqualificationComplete: (callback) => ipcRenderer.on('disqualification-complete', callback),
   // 播放量<100的稿件
   viewLessOneHundred: () => ipcRenderer.invoke('view-less-one-hundred'),
   // 获取bilibili表中的数据

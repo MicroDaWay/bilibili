@@ -13,18 +13,29 @@ const getDatabaseData = async () => {
 }
 
 onMounted(() => {
+  itemList.value = []
+
+  // 监听主进程发送的单条数据
+  window.electronAPI.onDisqualificationItem((event, item) => {
+    itemList.value.push(item)
+  })
+
+  // 监听处理完成
+  window.electronAPI.onDisqualificationComplete(() => {
+    window.electronAPI.showMessage({
+      title: '活动资格取消稿件',
+      type: 'info',
+      message: '查询结束'
+    })
+  })
+
   getDatabaseData()
 })
 
 // 主函数
 async function main() {
-  const result = await window.electronAPI.cancelEventQualification()
-  itemList.value = result
-  window.electronAPI.showMessage({
-    title: '活动资格取消稿件',
-    type: 'info',
-    message: '查询结束'
-  })
+  itemList.value = []
+  window.electronAPI.startCancelEventQualification()
 }
 </script>
 

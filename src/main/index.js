@@ -594,7 +594,7 @@ app.whenReady().then(() => {
   })
 
   // 活动资格取消稿件
-  ipcMain.handle('cancel-event-qualification', async () => {
+  ipcMain.on('start-cancel-event-qualification', async (event) => {
     const conn = await pool.getConnection()
     const text = '由于不符合本次征稿活动的规则，故无法参与本次活动的评选'
 
@@ -621,19 +621,22 @@ app.whenReady().then(() => {
             : '未知标题'
 
         const { topic, play } = await getTopicByTitle(title)
-
         const sql = `
           INSERT INTO disqualification (title, topic, play, post_time, content)
           VALUES (?, ?, ?, ?, ?)
         `
-
         const post_time = formatTimestampToDatetime(timestamp)
         await conn.query(sql, [title, topic, play, post_time, content])
+        // 实时推送给前端
+        event.sender.send('disqualification-item', {
+          title,
+          topic,
+          play,
+          post_time
+        })
       }
 
-      // 查询数据库中的所有记录
-      const [rows] = await pool.query('SELECT * FROM disqualification')
-      return rows
+      event.sender.send('disqualification-complete')
     } finally {
       conn.release()
     }
