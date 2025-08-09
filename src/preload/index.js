@@ -32,7 +32,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   earningsCenterProgress: (callback) => ipcRenderer.on('earnings-center-progress', callback),
   earningsCenterFinish: (callback) => ipcRenderer.on('earnings-center-finish', callback),
   // 更新数据库
-  updateDatabase: () => ipcRenderer.invoke('update-database'),
+  updateDatabase: () => ipcRenderer.send('update-database'),
+  updateDatabaseProgress: (callback) => ipcRenderer.on('update-database-progress', callback),
+  updateDatabaseFinish: (callback) => ipcRenderer.on('update-database-finish', callback),
   // 活动资格取消稿件
   cancelEventQualification: () => ipcRenderer.send('cancel-event-qualification'),
   cancelEventQualificationProgress: (callback) =>

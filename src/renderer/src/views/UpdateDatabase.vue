@@ -13,18 +13,32 @@ const getDatabaseData = async () => {
 }
 
 onMounted(() => {
+  itemList.value = []
+
+  window.electronAPI.updateDatabaseProgress((event, item) => {
+    itemList.value.push({
+      title: item.title,
+      view: item.view,
+      post_time: item.postTime,
+      tag: item.tag
+    })
+  })
+
+  window.electronAPI.updateDatabaseFinish(() => {
+    window.electronAPI.showMessage({
+      title: '更新数据库',
+      type: 'info',
+      message: '更新数据库成功'
+    })
+  })
+
   getDatabaseData()
 })
 
 // 主函数
 async function main() {
-  const result = await window.electronAPI.updateDatabase()
-  itemList.value = result
-  window.electronAPI.showMessage({
-    title: '更新数据库',
-    type: 'info',
-    message: '更新数据库成功'
-  })
+  itemList.value = []
+  window.electronAPI.updateDatabase()
 }
 </script>
 

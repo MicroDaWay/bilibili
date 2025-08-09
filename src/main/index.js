@@ -165,9 +165,7 @@ async function getBilibiliList(pageNumber) {
 }
 
 // 解析数据
-async function parseData(data, conn) {
-  const records = []
-
+async function parseData(event, data, conn) {
   for (const item of data.arc_audits || []) {
     const archive = item.Archive || {}
     const stat = item.stat || {}
@@ -177,18 +175,22 @@ async function parseData(data, conn) {
     const pubTime = archive.ptime
     const tag = archive.tag
     const postTime = formatTimestampToDatetime(pubTime)
-    records.push([title, view, postTime, tag])
     console.log(
       `投稿时间 = ${postTime}, 播放量 = ${view.toString().padEnd(5)}, 标题 = ${title}, 投稿标签 = ${tag}`
     )
-  }
 
-  if (records.length > 0) {
     const sql = `
       INSERT INTO bilibili(title, view, post_time, tag)
-      VALUES ?
+      VALUES (?, ?, ?, ?)
     `
-    await conn.query(sql, [records])
+    await conn.query(sql, [title, view, postTime, tag])
+
+    event.sender.send('update-database-progress', {
+      title,
+      view,
+      postTime,
+      tag
+    })
   }
 }
 
@@ -562,7 +564,7 @@ app.whenReady().then(() => {
   })
 
   // 更新数据库
-  ipcMain.handle('update-database', async () => {
+  ipcMain.on('update-database', async (event) => {
     const conn = await pool.getConnection()
     try {
       await initBilibili(conn)
@@ -576,15 +578,15 @@ app.whenReady().then(() => {
         const { count, ps } = data.page || {}
         const totalPage = Math.ceil(count / ps)
 
-        await parseData(data, conn)
+        await parseData(event, data, conn)
         await conn.commit()
 
-        if (page >= totalPage) break
+        if (page >= totalPage) {
+          event.sender.send('update-database-finish')
+          break
+        }
         page++
       }
-
-      const [rows] = await pool.query('SELECT * FROM bilibili ORDER BY post_time DESC')
-      return rows
     } finally {
       conn.release()
     }
@@ -625,7 +627,6 @@ app.whenReady().then(() => {
         const post_time = formatTimestampToDatetime(timestamp)
         await conn.query(sql, [title, topic, play, post_time, content])
 
-        // 实时推送给前端
         event.sender.send('cancel-event-qualification-progress', {
           title,
           topic,
