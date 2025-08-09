@@ -17,25 +17,35 @@ const getDatabaseData = async () => {
 }
 
 onMounted(() => {
-  getDatabaseData()
+  itemList.value = []
   totalMoney.value = bilibiliStore.totalMoney
   balance.value = bilibiliStore.balance
+
+  window.electronAPI.earningsCenterProgress((event, item) => {
+    itemList.value.push({
+      create_time: item.create_time,
+      money: item.money,
+      product_name: item.product_name
+    })
+    totalMoney.value = item.totalMoney
+    balance.value = item.balance
+  })
+
+  window.electronAPI.earningsCenterFinish(() => {
+    window.electronAPI.showMessage({
+      title: '收益中心',
+      type: 'info',
+      message: '查询结束'
+    })
+  })
+
+  getDatabaseData()
 })
 
 // 主函数
 async function main() {
-  const result = await window.electronAPI.earningsCenter()
-  itemList.value = result.rows
-  totalMoney.value = result.totalMoney
-  balance.value = result.balance
-  bilibiliStore.setTotalMoney(totalMoney.value)
-  bilibiliStore.setBalance(balance.value)
-
-  window.electronAPI.showMessage({
-    title: '收益中心',
-    type: 'info',
-    message: '查询结束'
-  })
+  itemList.value = []
+  window.electronAPI.earningsCenter()
 }
 </script>
 

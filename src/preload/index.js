@@ -28,13 +28,17 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 热门活动
   popularEvents: () => ipcRenderer.invoke('popular-events'),
   // 收益中心
-  earningsCenter: () => ipcRenderer.invoke('earnings-center'),
+  earningsCenter: () => ipcRenderer.send('earnings-center'),
+  earningsCenterProgress: (callback) => ipcRenderer.on('earnings-center-progress', callback),
+  earningsCenterFinish: (callback) => ipcRenderer.on('earnings-center-finish', callback),
   // 更新数据库
   updateDatabase: () => ipcRenderer.invoke('update-database'),
   // 活动资格取消稿件
-  startCancelEventQualification: () => ipcRenderer.send('start-cancel-event-qualification'),
-  onDisqualificationItem: (callback) => ipcRenderer.on('disqualification-item', callback),
-  onDisqualificationComplete: (callback) => ipcRenderer.on('disqualification-complete', callback),
+  cancelEventQualification: () => ipcRenderer.send('cancel-event-qualification'),
+  cancelEventQualificationProgress: (callback) =>
+    ipcRenderer.on('cancel-event-qualification-progress', callback),
+  cancelEventQualificationFinish: (callback) =>
+    ipcRenderer.on('cancel-event-qualification-finish', callback),
   // 播放量<100的稿件
   viewLessOneHundred: () => ipcRenderer.invoke('view-less-one-hundred'),
   // 获取bilibili表中的数据

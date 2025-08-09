@@ -492,7 +492,7 @@ app.whenReady().then(() => {
   })
 
   // 获取收益中心数据
-  ipcMain.handle('earnings-center', async () => {
+  ipcMain.on('earnings-center', async (event) => {
     await initRewards()
 
     let currentPage = 1
@@ -525,28 +525,31 @@ app.whenReady().then(() => {
       const records = data.result || []
       totalPage = data.page?.totalPage || 1
 
-      const items = []
-
       for (const item of records) {
         const money = item.brokerage || 0
-        const name = item.productName || ''
-        const ctime = item.ctime || ''
+        const product_name = item.productName || ''
+        const create_time = item.ctime || ''
 
         totalMoney += money
-        items.push([name, money, ctime])
         console.log(
-          `发放时间 = ${ctime}, 发放金额 = ${money.toFixed(2).padEnd(6)}, 活动名称 = ${name}`
+          `发放时间 = ${create_time}, 发放金额 = ${money.toFixed(2).padEnd(6)}, 活动名称 = ${product_name}`
         )
-      }
 
-      if (items.length > 0) {
-        const query = `
+        const sql = `
           INSERT INTO rewards (product_name, money, create_time)
-          VALUES ?
+          VALUES (?, ?, ?)
         `
         const conn = await pool.getConnection()
         try {
-          await conn.query(query, [items])
+          await conn.query(sql, [product_name, money, create_time])
+
+          event.sender.send('earnings-center-progress', {
+            product_name,
+            money,
+            create_time,
+            totalMoney: totalMoney.toFixed(2),
+            balance: balance.toFixed(2)
+          })
         } finally {
           conn.release()
         }
@@ -555,13 +558,7 @@ app.whenReady().then(() => {
       currentPage++
     }
 
-    // 查询数据库中的所有记录
-    const [rows] = await pool.query('SELECT * FROM rewards ORDER BY create_time DESC')
-    return {
-      rows,
-      totalMoney: totalMoney.toFixed(2),
-      balance: balance.toFixed(2)
-    }
+    event.sender.send('earnings-center-finish')
   })
 
   // 更新数据库
@@ -594,7 +591,7 @@ app.whenReady().then(() => {
   })
 
   // 活动资格取消稿件
-  ipcMain.on('start-cancel-event-qualification', async (event) => {
+  ipcMain.on('cancel-event-qualification', async (event) => {
     const conn = await pool.getConnection()
     const text = '由于不符合本次征稿活动的规则，故无法参与本次活动的评选'
 
@@ -627,19 +624,20 @@ app.whenReady().then(() => {
         `
         const post_time = formatTimestampToDatetime(timestamp)
         await conn.query(sql, [title, topic, play, post_time, content])
+
         // 实时推送给前端
-        event.sender.send('disqualification-item', {
+        event.sender.send('cancel-event-qualification-progress', {
           title,
           topic,
           play,
           post_time
         })
       }
-
-      event.sender.send('disqualification-complete')
     } finally {
       conn.release()
     }
+
+    event.sender.send('cancel-event-qualification-finish')
   })
 
   // 播放量<100的稿件

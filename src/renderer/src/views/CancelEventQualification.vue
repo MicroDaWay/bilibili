@@ -16,12 +16,12 @@ onMounted(() => {
   itemList.value = []
 
   // 监听主进程发送的单条数据
-  window.electronAPI.onDisqualificationItem((event, item) => {
+  window.electronAPI.cancelEventQualificationProgress((event, item) => {
     itemList.value.push(item)
   })
 
   // 监听处理完成
-  window.electronAPI.onDisqualificationComplete(() => {
+  window.electronAPI.cancelEventQualificationFinish(() => {
     window.electronAPI.showMessage({
       title: '活动资格取消稿件',
       type: 'info',
@@ -35,7 +35,7 @@ onMounted(() => {
 // 主函数
 async function main() {
   itemList.value = []
-  window.electronAPI.startCancelEventQualification()
+  window.electronAPI.cancelEventQualification()
 }
 </script>
 
