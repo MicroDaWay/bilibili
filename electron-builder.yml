@@ -1,7 +1,7 @@
 appId: com.electron.app
 productName: bilibili
 directories:
-  buildResources: build
+  buildResources: resources
 files:
   - '!**/.vscode/*'
   - '!src/*'
@@ -12,6 +12,7 @@ asarUnpack:
   - resources/**
 win:
   executableName: bilibili
+  icon: icon.ico
 nsis:
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
