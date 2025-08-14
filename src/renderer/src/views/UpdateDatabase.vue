@@ -79,7 +79,7 @@ async function main() {
 
   .text {
     position: fixed;
-    width: 1280px;
+    width: calc(83.3% - 12px);
     height: 100px;
     line-height: 100px;
     text-align: center;

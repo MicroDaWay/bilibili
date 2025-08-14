@@ -1,10 +1,12 @@
 <!-- 活动资格取消稿件 -->
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { format } from 'date-fns'
 
 const itemList = ref([])
 const activeRow = ref(null)
+const textEl = ref(null)
+let resizeObserver = null
 
 // 获取数据库中的数据
 const getDatabaseData = async () => {
@@ -12,8 +14,27 @@ const getDatabaseData = async () => {
   itemList.value = result
 }
 
+const checkScrollbar = () => {
+  const container = document.querySelector('.right-content')
+  if (!container || !textEl.value) return
+  const hasScrollbar = container.scrollHeight > container.clientHeight
+  textEl.value.style.width = hasScrollbar ? 'calc(83.3% - 12px)' : '83.3%'
+}
+
 onMounted(() => {
   itemList.value = []
+
+  checkScrollbar()
+
+  // 用 ResizeObserver 监控容器变化
+  const container = document.querySelector('.right-content')
+  if (container) {
+    resizeObserver = new ResizeObserver(checkScrollbar)
+    resizeObserver.observe(container)
+  }
+
+  // 监听窗口变化
+  window.addEventListener('resize', checkScrollbar)
 
   // 监听主进程发送的单条数据
   window.electronAPI.cancelEventQualificationProgress((event, item) => {
@@ -32,6 +53,11 @@ onMounted(() => {
   getDatabaseData()
 })
 
+onBeforeUnmount(() => {
+  if (resizeObserver) resizeObserver.disconnect()
+  window.removeEventListener('resize', checkScrollbar)
+})
+
 // 主函数
 async function main() {
   itemList.value = []
@@ -41,7 +67,7 @@ async function main() {
 
 <template>
   <div class="cancel-event-qualification">
-    <div class="text" @click="main">活动资格取消稿件</div>
+    <div ref="textEl" class="text" @click="main">活动资格取消稿件</div>
     <table class="table-container">
       <thead v-if="itemList.length">
         <tr class="table-tr">
@@ -78,7 +104,7 @@ async function main() {
 
   .text {
     position: fixed;
-    width: 1280px;
+    width: 83.3%;
     height: 100px;
     line-height: 100px;
     text-align: center;

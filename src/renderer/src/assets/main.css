@@ -8,9 +8,9 @@ body {
   font-family: 'Consolas', monospace;
 }
 
-/* body::-webkit-scrollbar {
+body::-webkit-scrollbar {
   display: none;
-} */
+}
 
 table {
   border-collapse: collapse;

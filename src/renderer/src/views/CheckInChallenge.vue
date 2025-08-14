@@ -1,11 +1,13 @@
 <!-- 打卡挑战 -->
 <script setup>
 import dayjs from 'dayjs'
-import { ref } from 'vue'
+import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { formatTimestampToDatetime } from '../utils/index.js'
 
 const itemList = ref([])
 const activeRow = ref(null)
+const textEl = ref(null)
+let resizeObserver = null
 
 // 获取7天前的日期
 function getSevenDaysAgo() {
@@ -26,6 +28,33 @@ function filterActivityListByTime(activityList, startTime) {
       startTime: formatTimestampToDatetime(item.stime)
     }))
 }
+
+const checkScrollbar = () => {
+  const container = document.querySelector('.right-content')
+  if (!container || !textEl.value) return
+  const hasScrollbar = container.scrollHeight > container.clientHeight
+  textEl.value.style.width = hasScrollbar ? 'calc(83.3% - 12px)' : '83.3%'
+}
+
+onMounted(() => {
+  // 初始化检测
+  checkScrollbar()
+
+  // 用 ResizeObserver 监控容器变化
+  const container = document.querySelector('.right-content')
+  if (container) {
+    resizeObserver = new ResizeObserver(checkScrollbar)
+    resizeObserver.observe(container)
+  }
+
+  // 监听窗口变化
+  window.addEventListener('resize', checkScrollbar)
+})
+
+onBeforeUnmount(() => {
+  if (resizeObserver) resizeObserver.disconnect()
+  window.removeEventListener('resize', checkScrollbar)
+})
 
 // 主函数
 async function main() {
@@ -52,7 +81,7 @@ async function main() {
 
 <template>
   <div class="check-in-challenge">
-    <div class="text" @click="main">打卡挑战</div>
+    <div ref="textEl" class="text" @click="main">打卡挑战</div>
     <table class="table-container">
       <thead v-if="itemList.length">
         <tr class="table-tr">
@@ -85,7 +114,7 @@ async function main() {
 
   .text {
     position: fixed;
-    width: 1280px;
+    width: 83.3%;
     height: 100px;
     line-height: 100px;
     text-align: center;

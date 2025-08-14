@@ -37,7 +37,7 @@ function proxyImage(url) {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 1100px;
+  width: 85%;
   border-bottom: 1px solid #ccc;
   padding: 20px 0;
 

@@ -63,6 +63,7 @@ onMounted(() => {
   height: 100vh;
   border-right: 1px solid #ccc;
   border-top: 1px solid #ccc;
+  // min-width: 200px;
 
   .item {
     height: 50px;
@@ -93,9 +94,27 @@ onMounted(() => {
   width: 85%;
   height: 100vh;
   overflow-y: auto;
-  border-top: 1px solid #ccc;
+  // min-width: 620px;
 
   &::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #e0e0e0;
+    border-radius: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #9e9e9e;
+    border-radius: 6px;
+  }
+
+  &::-webkit-scrollbar-thumb:hover {
+    background: #757575;
+  }
+
+  &::-webkit-scrollbar-button {
     display: none;
   }
 }

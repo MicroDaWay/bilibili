@@ -92,22 +92,17 @@ const dbConfig = {
 
 const pool = mysql.createPool(dbConfig)
 
-// 初始化 rewards 表
-async function initRewards() {
-  const conn = await pool.getConnection()
-  try {
-    await conn.query('DROP TABLE IF EXISTS rewards')
-    await conn.query(`
-      CREATE TABLE IF NOT EXISTS rewards (
-        id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'id',
-        product_name VARCHAR(100) COMMENT '活动名称',
-        money DECIMAL(10,2) COMMENT '发放金额',
-        create_time DATETIME COMMENT '发放时间'
-      ) COMMENT '收益中心'
-    `)
-  } finally {
-    conn.release()
-  }
+// 初始化rewards表
+async function initRewards(conn) {
+  await conn.query('DROP TABLE IF EXISTS rewards')
+  await conn.query(`
+    CREATE TABLE IF NOT EXISTS rewards (
+      id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'id',
+      product_name VARCHAR(100) COMMENT '活动名称',
+      money DECIMAL(10,2) COMMENT '发放金额',
+      create_time DATETIME COMMENT '发放时间'
+    ) COMMENT '收益中心'
+  `)
 }
 
 // 获取余额
@@ -130,7 +125,7 @@ async function getBalance() {
   return response.data?.data?.brokerage || 0
 }
 
-// 初始化 bilibili 表
+// 初始化bilibili表
 async function initBilibili(conn) {
   await conn.query('DROP TABLE IF EXISTS bilibili')
   await conn.query(`
@@ -339,7 +334,7 @@ function startServer() {
 // 创建窗口
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 800,
+    width: 1300,
     height: 600,
     show: false,
     icon: join(__dirname, '../../resources/icon.ico'),
@@ -495,7 +490,8 @@ app.whenReady().then(() => {
 
   // 获取收益中心数据
   ipcMain.on('earnings-center', async (event) => {
-    await initRewards()
+    const conn = await pool.getConnection()
+    await initRewards(conn)
 
     let currentPage = 1
     let totalPage = 1
@@ -541,7 +537,7 @@ app.whenReady().then(() => {
           INSERT INTO rewards (product_name, money, create_time)
           VALUES (?, ?, ?)
         `
-        const conn = await pool.getConnection()
+
         try {
           await conn.query(sql, [product_name, money, create_time])
 

@@ -90,7 +90,7 @@ async function main() {
 
   .text {
     position: fixed;
-    width: 1280px;
+    width: calc(83.3% - 12px);
     height: 100px;
     line-height: 100px;
     text-align: center;
@@ -111,7 +111,7 @@ async function main() {
     align-items: center;
     position: fixed;
     top: 100px;
-    width: 1280px;
+    width: calc(83.3% - 12px);
     text-align: center;
     margin-bottom: 10px;
     background-color: #fff;

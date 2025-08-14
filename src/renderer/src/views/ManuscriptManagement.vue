@@ -169,7 +169,7 @@ const searchHandler = () => {
     justify-content: space-between;
     align-items: center;
     position: fixed;
-    width: 1100px;
+    width: calc(72.25% - 10px);
     padding: 20px 0;
     background-color: #fff;
 
@@ -210,7 +210,7 @@ const searchHandler = () => {
     justify-content: center;
     position: fixed;
     top: 80px;
-    width: 1100px;
+    width: calc(72.25% - 10px);
     min-height: 80px;
     font-size: 20px;
     background-color: #fff;
