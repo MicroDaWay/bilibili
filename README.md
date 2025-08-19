@@ -1,6 +1,4 @@
-# bilibili
-
-bilibili稿件管理工具
+# Bilibili Video Submission Management Tool
 
 ## Recommended IDE Setup
 

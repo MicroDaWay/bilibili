@@ -12,7 +12,9 @@ const routes = [
     path: '/cancel-event-qualification',
     component: () => import('../views/CancelEventQualification.vue')
   },
-  { path: '/view-less-one-hundred', component: () => import('../views/ViewLessOneHundred.vue') }
+  { path: '/view-less-one-hundred', component: () => import('../views/ViewLessOneHundred.vue') },
+  { path: '/money-by-year', component: () => import('../views/MoneyByYear.vue') },
+  { path: '/money-by-month', component: () => import('../views/MoneyByMonth.vue') }
 ]
 
 const router = createRouter({

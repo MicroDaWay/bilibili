@@ -267,8 +267,7 @@ async function initDisqualification(conn) {
       title VARCHAR(255) COMMENT '标题',
       topic VARCHAR(255) COMMENT '投稿标签',
       play INT COMMENT '播放量',
-      post_time DATETIME COMMENT '投稿时间',
-      content VARCHAR(255) COMMENT '消息内容'
+      post_time DATETIME COMMENT '投稿时间'
     ) COMMENT '活动资格取消稿件'
   `)
 }
@@ -617,11 +616,11 @@ app.whenReady().then(() => {
 
         const { topic, play } = await getTopicByTitle(title)
         const sql = `
-          INSERT INTO disqualification (title, topic, play, post_time, content)
-          VALUES (?, ?, ?, ?, ?)
+          INSERT INTO disqualification (title, topic, play, post_time)
+          VALUES (?, ?, ?, ?)
         `
         const post_time = formatTimestampToDatetime(timestamp)
-        await conn.query(sql, [title, topic, play, post_time, content])
+        await conn.query(sql, [title, topic, play, post_time])
 
         event.sender.send('cancel-event-qualification-progress', {
           title,
@@ -645,6 +644,40 @@ app.whenReady().then(() => {
         SELECT * FROM bilibili
         WHERE view < 100 AND post_time <= DATE_SUB(CURDATE(),INTERVAL 180 DAY)
         ORDER BY view ASC
+      `
+      const [rows] = await conn.query(sql)
+      return rows
+    } finally {
+      conn.release()
+    }
+  })
+
+  // 每年获得的激励金额
+  ipcMain.handle('money-by-year', async () => {
+    const conn = await pool.getConnection()
+    try {
+      const sql = `
+        SELECT YEAR(create_time) AS year, SUM(money) AS totalMoney
+        FROM rewards
+        GROUP BY YEAR(create_time)
+        ORDER BY year DESC
+      `
+      const [rows] = await conn.query(sql)
+      return rows
+    } finally {
+      conn.release()
+    }
+  })
+
+  // 每月获得的激励金额
+  ipcMain.handle('money-by-month', async () => {
+    const conn = await pool.getConnection()
+    try {
+      const sql = `
+        SELECT YEAR(create_time) AS year, MONTH(create_time) AS month, SUM(money) AS totalMoney
+        FROM rewards
+        GROUP BY YEAR(create_time), MONTH(create_time)
+        ORDER BY year DESC, month DESC
       `
       const [rows] = await conn.query(sql)
       return rows

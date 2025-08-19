@@ -43,6 +43,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.on('cancel-event-qualification-finish', callback),
   // 播放量<100的稿件
   viewLessOneHundred: () => ipcRenderer.invoke('view-less-one-hundred'),
+  // 每年获得的激励金额
+  moneyByYear: () => ipcRenderer.invoke('money-by-year'),
+  // 每月获得的激励金额
+  moneyByMonth: () => ipcRenderer.invoke('money-by-month'),
   // 获取bilibili表中的数据
   getBilibiliData: () => ipcRenderer.invoke('get-bilibili-data'),
   // 获取rewards表中的数据

@@ -34,6 +34,14 @@ const itemList = [
   {
     text: '播放量<100的稿件',
     url: '/view-less-one-hundred'
+  },
+  {
+    text: '每年获得的激励金额',
+    url: '/money-by-year'
+  },
+  {
+    text: '每月获得的激励金额',
+    url: '/money-by-month'
   }
 ]
 
@@ -63,11 +71,10 @@ onMounted(() => {
   height: 100vh;
   border-right: 1px solid #ccc;
   border-top: 1px solid #ccc;
-  // min-width: 200px;
 
   .item {
-    height: 50px;
-    line-height: 50px;
+    height: 6.25vh;
+    line-height: 6.25vh;
     font-size: 20px;
     border-bottom: 1px solid #ccc;
     cursor: pointer;
@@ -94,7 +101,6 @@ onMounted(() => {
   width: 85%;
   height: 100vh;
   overflow-y: auto;
-  // min-width: 620px;
 
   &::-webkit-scrollbar {
     width: 12px;
