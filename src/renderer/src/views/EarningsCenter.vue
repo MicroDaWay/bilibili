@@ -29,6 +29,8 @@ onMounted(() => {
     })
     totalMoney.value = item.totalMoney
     balance.value = item.balance
+    bilibiliStore.setTotalMoney(item.totalMoney)
+    bilibiliStore.setBalance(item.balance)
   })
 
   window.electronAPI.earningsCenterFinish(() => {
