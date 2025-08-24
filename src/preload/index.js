@@ -47,6 +47,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   moneyByYear: () => ipcRenderer.invoke('money-by-year'),
   // 每月获得的激励金额
   moneyByMonth: () => ipcRenderer.invoke('money-by-month'),
+  // 根据标签查询激励金额
+  getMoneyByTag: (params) => ipcRenderer.invoke('get-money-by-tag', params),
   // 获取bilibili表中的数据
   getBilibiliData: () => ipcRenderer.invoke('get-bilibili-data'),
   // 获取rewards表中的数据

@@ -14,7 +14,8 @@ const routes = [
   },
   { path: '/view-less-one-hundred', component: () => import('../views/ViewLessOneHundred.vue') },
   { path: '/money-by-year', component: () => import('../views/MoneyByYear.vue') },
-  { path: '/money-by-month', component: () => import('../views/MoneyByMonth.vue') }
+  { path: '/money-by-month', component: () => import('../views/MoneyByMonth.vue') },
+  { path: '/get-money-by-tag', component: () => import('../views/GetMoneyByTag.vue') }
 ]
 
 const router = createRouter({

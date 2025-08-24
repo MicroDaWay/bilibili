@@ -45,7 +45,7 @@ onMounted(() => {
 })
 
 // 主函数
-async function main() {
+const main = () => {
   itemList.value = []
   window.electronAPI.earningsCenter()
 }

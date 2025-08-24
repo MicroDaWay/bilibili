@@ -8,7 +8,7 @@ const isLogin = ref(false)
 const avatar = ref('')
 
 // 登录
-async function login() {
+const login = async () => {
   const result = await window.electronAPI.getQRCode()
   const url = result.data.url
   QRCodeKey.value = result.data.qrcode_key
@@ -22,7 +22,7 @@ async function login() {
 }
 
 // 检查二维码状态
-async function checkStatus() {
+const checkStatus = async () => {
   isLogin.value = false
 
   while (true) {
@@ -53,7 +53,7 @@ async function checkStatus() {
 }
 
 // 退出登录
-async function logout() {
+const logout = async () => {
   const result = await window.electronAPI.logout()
   if (result.code === 0) {
     isLogin.value = false
@@ -64,7 +64,7 @@ async function logout() {
 }
 
 // 获取导航栏信息
-async function getNavigation() {
+const getNavigation = async () => {
   const result = await window.electronAPI.getNavigationData()
   avatar.value = result.face
   isLogin.value = result.isLogin
@@ -77,7 +77,7 @@ onMounted(async () => {
   }
 })
 
-function proxyImage(url) {
+const proxyImage = (url) => {
   return `http://localhost:3000/proxy/image?url=${encodeURIComponent(url)}`
 }
 </script>

@@ -27,13 +27,13 @@ const itemList = ref([])
 const bilibiliStore = useBilibiliStore()
 
 // 获取指定页码的数据
-async function getItemListByPageNumber(pn) {
+const getItemListByPageNumber = async (pn) => {
   const result = await window.electronAPI.manuscriptManagement(pn)
   return result
 }
 
 // 处理每一页的数据
-function everyPageHandler(items, startTime) {
+const everyPageHandler = (items, startTime) => {
   for (const item of items) {
     const archive = item.Archive || {}
     const stat = item.stat || {}
@@ -70,7 +70,7 @@ function everyPageHandler(items, startTime) {
 }
 
 // 主函数
-async function main() {
+const main = async () => {
   try {
     totalPlay.value = 0
     totalCount.value = 0

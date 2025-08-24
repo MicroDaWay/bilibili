@@ -42,6 +42,10 @@ const itemList = [
   {
     text: '每月获得的激励金额',
     url: '/money-by-month'
+  },
+  {
+    text: '根据标签查询激励金额',
+    url: '/get-money-by-tag'
   }
 ]
 

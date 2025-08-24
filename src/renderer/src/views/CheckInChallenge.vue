@@ -10,14 +10,14 @@ const textEl = ref(null)
 let resizeObserver = null
 
 // 获取7天前的日期
-function getSevenDaysAgo() {
+const getSevenDaysAgo = () => {
   const today = dayjs()
   const sevenDaysAgo = today.subtract(7, 'day')
   return sevenDaysAgo.startOf('day').toDate()
 }
 
 // 过滤出前一周的活动
-function filterActivityListByTime(activityList, startTime) {
+const filterActivityListByTime = (activityList, startTime) => {
   return activityList
     .filter((item) => {
       const stime = new Date(item.stime * 1000)
@@ -57,7 +57,7 @@ onBeforeUnmount(() => {
 })
 
 // 主函数
-async function main() {
+const main = async () => {
   itemList.value = []
   const sevenDaysAgo = getSevenDaysAgo()
   const activityList = await window.electronAPI.checkInChallenge()

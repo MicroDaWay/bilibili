@@ -10,7 +10,7 @@ const props = defineProps({
   }
 })
 
-function proxyImage(url) {
+const proxyImage = (url) => {
   return `http://localhost:3000/proxy/image?url=${encodeURIComponent(url)}`
 }
 </script>

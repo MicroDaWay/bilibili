@@ -42,7 +42,7 @@ onBeforeUnmount(() => {
 })
 
 // 主函数
-async function main() {
+const main = async () => {
   const result = await window.electronAPI.viewLessOneHundred()
   itemList.value = result
   window.electronAPI.showMessage({

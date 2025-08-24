@@ -26,7 +26,7 @@ let server
 let mainWindow
 
 // 创建自定义右键菜单项
-function createMenuItem(label, role, shortcut) {
+const createMenuItem = (label, role, shortcut) => {
   const paddingLength = 20
   const paddedLabel = label.padEnd(paddingLength)
   return {
@@ -46,7 +46,7 @@ const contextMenuTemplate = [
 ]
 
 // 导入Excel文件的处理函数
-async function importExcelHandler() {
+const importExcelHandler = async () => {
   const result = await dialog.showOpenDialog({
     properties: ['openFile'],
     filters: [
@@ -93,7 +93,7 @@ const dbConfig = {
 const pool = mysql.createPool(dbConfig)
 
 // 初始化rewards表
-async function initRewards(conn) {
+const initRewards = async (conn) => {
   await conn.query('DROP TABLE IF EXISTS rewards')
   await conn.query(`
     CREATE TABLE IF NOT EXISTS rewards (
@@ -106,7 +106,7 @@ async function initRewards(conn) {
 }
 
 // 获取余额
-async function getBalance() {
+const getBalance = async () => {
   const url = 'https://pay.bilibili.com/bk/brokerage/getUserBrokerage'
   const payload = {
     sdkVersion: '1.1.7',
@@ -126,7 +126,7 @@ async function getBalance() {
 }
 
 // 初始化bilibili表
-async function initBilibili(conn) {
+const initBilibili = async (conn) => {
   await conn.query('DROP TABLE IF EXISTS bilibili')
   await conn.query(`
     CREATE TABLE IF NOT EXISTS bilibili (
@@ -140,7 +140,7 @@ async function initBilibili(conn) {
 }
 
 // 获取 bilibili 列表
-async function getBilibiliList(pageNumber) {
+const getBilibiliList = async (pageNumber) => {
   const url = 'https://member.bilibili.com/x/web/archives'
   const headers = {
     Referer: 'https://member.bilibili.com/platform/upload-manager/article',
@@ -160,7 +160,7 @@ async function getBilibiliList(pageNumber) {
 }
 
 // 解析数据
-async function parseData(event, data, conn) {
+const parseData = async (event, data, conn) => {
   for (const item of data.arc_audits || []) {
     const archive = item.Archive || {}
     const stat = item.stat || {}
@@ -190,7 +190,7 @@ async function parseData(event, data, conn) {
 }
 
 // 根据标题查找投稿标签
-async function getTopicByTitle(titleToFind) {
+const getTopicByTitle = async (titleToFind) => {
   const url = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space'
   const headers = {
     Referer: 'https://space.bilibili.com/506485454/dynamic',
@@ -250,7 +250,7 @@ async function getTopicByTitle(titleToFind) {
 }
 
 // 获取10天前的零点时间
-function getTenDaysAgo() {
+const getTenDaysAgo = () => {
   const today = new Date()
   const tenDaysAgo = new Date(today)
   tenDaysAgo.setDate(today.getDate() - 10)
@@ -259,7 +259,7 @@ function getTenDaysAgo() {
 }
 
 // 初始化 disqualification 表
-async function initDisqualification(conn) {
+const initDisqualification = async (conn) => {
   await conn.query('DROP TABLE IF EXISTS disqualification')
   await conn.query(`
     CREATE TABLE IF NOT EXISTS disqualification (
@@ -273,7 +273,7 @@ async function initDisqualification(conn) {
 }
 
 // 获取消息列表
-async function getMessageList() {
+const getMessageList = async () => {
   const url = 'https://api.vc.bilibili.com/svr_sync/v1/svr_sync/fetch_session_msgs'
   const headers = {
     Referer: 'https://text.bilibili.com/',
@@ -296,7 +296,7 @@ async function getMessageList() {
 }
 
 // 图片代理服务器
-function startServer() {
+const startServer = () => {
   const expressApp = express()
   const port = 3000
 
@@ -331,7 +331,7 @@ function startServer() {
 }
 
 // 创建窗口
-function createWindow() {
+const createWindow = () => {
   mainWindow = new BrowserWindow({
     width: 1300,
     height: 600,
@@ -686,6 +686,23 @@ app.whenReady().then(() => {
     }
   })
 
+  // 根据标签查询激励金额
+  ipcMain.handle('get-money-by-tag', async (e, product_name) => {
+    const conn = await pool.getConnection()
+    try {
+      const sql = `
+        SELECT product_name AS productName, money, create_time AS createTime, SUM(money) OVER () AS totalMoney
+        FROM rewards
+        WHERE product_name LIKE ?
+      `
+
+      const [rows] = await conn.query(sql, [`%${product_name}%`])
+      return rows
+    } finally {
+      conn.release()
+    }
+  })
+
   // 获取bilibili表中的数据
   ipcMain.handle('get-bilibili-data', async () => {
     const [rows] = await pool.query('SELECT * FROM bilibili ORDER BY post_time DESC')
@@ -725,7 +742,7 @@ app.whenReady().then(() => {
   const menu = Menu.buildFromTemplate(myMenu)
   Menu.setApplicationMenu(menu)
 
-  app.on('activate', function () {
+  app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
 })
