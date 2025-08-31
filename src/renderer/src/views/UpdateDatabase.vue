@@ -83,7 +83,7 @@ const main = () => {
     height: 100px;
     line-height: 100px;
     text-align: center;
-    font-size: 30px;
+    font-size: 2vw;
     background-color: #fff;
     user-select: none;
 
@@ -99,7 +99,7 @@ const main = () => {
     width: 98%;
 
     .table-tr {
-      font-size: 22px;
+      font-size: 1.4vw;
 
       .post-time {
         width: 20%;
@@ -111,7 +111,7 @@ const main = () => {
     }
 
     .tr-text {
-      font-size: 22px;
+      font-size: 1.4vw;
       margin: 6px 0;
 
       &.tr-active {

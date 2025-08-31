@@ -93,7 +93,7 @@ const main = async () => {
     height: 100px;
     line-height: 100px;
     text-align: center;
-    font-size: 30px;
+    font-size: 2vw;
     background-color: #fff;
     user-select: none;
 
@@ -109,7 +109,7 @@ const main = async () => {
     width: 98%;
 
     .table-tr {
-      font-size: 22px;
+      font-size: 1.4vw;
 
       .year {
         width: 33%;
@@ -125,7 +125,7 @@ const main = async () => {
     }
 
     .tr-text {
-      font-size: 22px;
+      font-size: 1.4vw;
       margin: 6px 0;
 
       &.tr-active {

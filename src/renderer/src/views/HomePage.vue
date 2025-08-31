@@ -79,7 +79,7 @@ onMounted(() => {
   .item {
     height: 6.25vh;
     line-height: 6.25vh;
-    font-size: 20px;
+    font-size: 1.3vw;
     border-bottom: 1px solid #ccc;
     cursor: pointer;
     text-indent: 1em;
