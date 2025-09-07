@@ -1,12 +1,24 @@
+<!-- 收益中心 -->
 <script setup>
 import { ref, onMounted } from 'vue'
 import { format } from 'date-fns'
 import { useBilibiliStore } from '../stores/bilibiliStore'
+import DataTable from '../components/DataTable.vue'
 
 const itemList = ref([])
 const totalMoney = ref('')
 const balance = ref('')
-const activeRow = ref(null)
+const title = '收益中心'
+const columns = [
+  {
+    title: '发放时间',
+    key: 'create_time',
+    width: '20%',
+    formatter: (value) => format(value, 'yyyy-MM-dd HH:mm:ss')
+  },
+  { title: '发放金额', key: 'money', width: '8%' },
+  { title: '活动名称', key: 'product_name' }
+]
 
 const bilibiliStore = useBilibiliStore()
 
@@ -52,111 +64,14 @@ const main = () => {
 </script>
 
 <template>
-  <div class="earnings-center">
-    <div class="text" @click="main">收益中心</div>
-    <div class="container">
-      <div class="total-money">累计金额：{{ totalMoney }}</div>
-      <div class="balance">账户余额：{{ balance }}</div>
-    </div>
-    <table class="table-container">
-      <thead v-if="itemList.length">
-        <tr class="table-tr">
-          <th class="create-time">发放时间</th>
-          <th class="money">发放金额</th>
-          <th class="title">活动名称</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          v-for="item in itemList"
-          :key="item.id"
-          class="tr-text"
-          :class="{ 'tr-active': activeRow === item }"
-          @click="activeRow = item"
-        >
-          <td>{{ format(item.create_time, 'yyyy-MM-dd HH:mm:ss') }}</td>
-          <td>{{ item.money }}</td>
-          <td>{{ item.product_name }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+  <DataTable
+    :title="title"
+    :item-list="itemList"
+    :columns="columns"
+    :total-money="totalMoney"
+    :balance="balance"
+    @main-handler="main"
+  ></DataTable>
 </template>
 
-<style scoped lang="scss">
-.earnings-center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin: 0 0 50px 0;
-
-  .text {
-    position: fixed;
-    width: calc(83.3% - 12px);
-    height: 100px;
-    line-height: 100px;
-    text-align: center;
-    font-size: 2vw;
-    background-color: #fff;
-    user-select: none;
-
-    &:hover {
-      cursor: pointer;
-      background-color: orange;
-    }
-  }
-
-  .container {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    position: fixed;
-    top: 100px;
-    width: calc(83.3% - 12px);
-    text-align: center;
-    margin-bottom: 10px;
-    background-color: #fff;
-
-    .total-money,
-    .balance {
-      font-size: 1.4vw;
-
-      &:hover {
-        background-color: orange;
-      }
-    }
-  }
-
-  .table-container {
-    margin-top: 160px;
-    padding-bottom: 50px;
-    width: 98%;
-
-    .table-tr {
-      font-size: 1.4vw;
-
-      .create-time {
-        width: 20%;
-      }
-
-      .money {
-        width: 8%;
-      }
-    }
-
-    .tr-text {
-      font-size: 1.4vw;
-      margin: 6px 0;
-
-      &.tr-active {
-        background-color: orange;
-      }
-
-      &:hover {
-        background-color: orange;
-      }
-    }
-  }
-}
-</style>
+<style scoped lang="scss"></style>

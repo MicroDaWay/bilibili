@@ -1,10 +1,14 @@
+<!-- 每年获得的激励金额 -->
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { ref, onMounted } from 'vue'
+import DataTable from '../components/DataTable.vue'
 
 const itemList = ref([])
-const activeRow = ref(null)
-const textEl = ref(null)
-let resizeObserver = null
+const title = '每年获得的激励金额'
+const columns = [
+  { title: '年份', key: 'year', width: '50%' },
+  { title: '累计金额', key: 'totalMoney', width: '50%' }
+]
 
 // 获取数据库中的数据
 const getDatabaseData = async () => {
@@ -12,32 +16,8 @@ const getDatabaseData = async () => {
   itemList.value = result
 }
 
-const checkScrollbar = () => {
-  const container = document.querySelector('.right-content')
-  if (!container || !textEl.value) return
-  const hasScrollbar = container.scrollHeight > container.clientHeight
-  textEl.value.style.width = hasScrollbar ? 'calc(83.3% - 12px)' : '83.3%'
-}
-
 onMounted(() => {
   getDatabaseData()
-
-  checkScrollbar()
-
-  // 用 ResizeObserver 监控容器变化
-  const container = document.querySelector('.right-content')
-  if (container) {
-    resizeObserver = new ResizeObserver(checkScrollbar)
-    resizeObserver.observe(container)
-  }
-
-  // 监听窗口变化
-  window.addEventListener('resize', checkScrollbar)
-})
-
-onBeforeUnmount(() => {
-  if (resizeObserver) resizeObserver.disconnect()
-  window.removeEventListener('resize', checkScrollbar)
 })
 
 // 主函数
@@ -53,82 +33,12 @@ const main = async () => {
 </script>
 
 <template>
-  <div class="money-by-year">
-    <div ref="textEl" class="text" @click="main">每年获得的激励金额</div>
-    <table class="table-container">
-      <thead v-if="itemList.length">
-        <tr class="table-tr">
-          <th class="year">年份</th>
-          <th class="total-money">累计金额</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          v-for="item in itemList"
-          :key="item.id"
-          class="tr-text"
-          :class="{ 'tr-active': activeRow === item }"
-          @click="activeRow = item"
-        >
-          <td>{{ item.year }}</td>
-          <td>{{ item.totalMoney }}</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+  <DataTable
+    :title="title"
+    :item-list="itemList"
+    :columns="columns"
+    @main-handler="main"
+  ></DataTable>
 </template>
 
-<style scoped lang="scss">
-.money-by-year {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 50px;
-
-  .text {
-    position: fixed;
-    width: 83.3%;
-    height: 100px;
-    line-height: 100px;
-    text-align: center;
-    font-size: 2vw;
-    background-color: #fff;
-    user-select: none;
-
-    &:hover {
-      cursor: pointer;
-      background-color: orange;
-    }
-  }
-
-  .table-container {
-    margin-top: 100px;
-    padding-bottom: 50px;
-    width: 98%;
-
-    .table-tr {
-      font-size: 1.4vw;
-      .total-money {
-        width: 50%;
-      }
-
-      .year {
-        width: 50%;
-      }
-    }
-
-    .tr-text {
-      font-size: 1.4vw;
-      margin: 6px 0;
-
-      &.tr-active {
-        background-color: orange;
-      }
-
-      &:hover {
-        background-color: orange;
-      }
-    }
-  }
-}
-</style>
+<style scoped lang="scss"></style>
