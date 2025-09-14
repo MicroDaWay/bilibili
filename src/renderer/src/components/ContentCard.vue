@@ -37,7 +37,7 @@ const proxyImage = (url) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 85%;
+  width: 98%;
   border-bottom: 1px solid #ccc;
   padding: 20px 0;
 

@@ -334,7 +334,9 @@ const startServer = () => {
 const createWindow = () => {
   mainWindow = new BrowserWindow({
     width: 1300,
+    minWidth: 1300,
     height: 600,
+    minHeight: 600,
     show: false,
     icon: join(__dirname, '../../resources/icon.ico'),
     webPreferences: {

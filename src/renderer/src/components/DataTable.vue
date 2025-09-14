@@ -149,7 +149,6 @@ onBeforeUnmount(() => {
   }
 
   .table-container {
-    // margin-top: 14vh;
     padding-bottom: 50px;
     width: 98%;
 
