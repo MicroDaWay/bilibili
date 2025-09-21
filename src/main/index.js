@@ -705,6 +705,22 @@ app.whenReady().then(() => {
     }
   })
 
+  // 根据投稿标签查询稿件
+  ipcMain.handle('get-manuscript-by-tag', async (e, tag) => {
+    const conn = await pool.getConnection()
+    try {
+      const sql = `
+        SELECT title, view, post_time AS postTime, tag
+        FROM bilibili
+        WHERE tag LIKE ?
+      `
+      const [rows] = await conn.query(sql, [`%${tag}%`])
+      return rows
+    } finally {
+      conn.release()
+    }
+  })
+
   // 获取bilibili表中的数据
   ipcMain.handle('get-bilibili-data', async () => {
     const [rows] = await pool.query('SELECT * FROM bilibili ORDER BY post_time DESC')

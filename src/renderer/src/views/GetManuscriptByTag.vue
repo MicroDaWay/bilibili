@@ -1,4 +1,4 @@
-<!-- 根据标签查询激励金额 -->
+<!-- 根据投稿标签查询稿件 -->
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { format } from 'date-fns'
@@ -38,18 +38,18 @@ onBeforeUnmount(() => {
 
 // 点击搜索的处理函数
 const searchHandler = async () => {
-  const result = await window.electronAPI.getMoneyByTag(tag.value)
+  const result = await window.electronAPI.getManuscriptByTag(tag.value)
   itemList.value = result
 
   if (result.length === 0) {
     window.electronAPI.showMessage({
-      title: '根据标签查询激励金额',
+      title: '根据投稿标签查询稿件',
       type: 'info',
       message: '未查询到相关数据'
     })
   } else {
     window.electronAPI.showMessage({
-      title: '根据标签查询激励金额',
+      title: '根据投稿标签查询稿件',
       type: 'info',
       message: '查询结束'
     })
@@ -58,7 +58,7 @@ const searchHandler = async () => {
 </script>
 
 <template>
-  <div class="get-money-by-tag">
+  <div class="get-manuscript-by-tag">
     <div ref="inputEl" class="search-input-box">
       <div class="input-container">
         <input
@@ -91,10 +91,10 @@ const searchHandler = async () => {
     <table class="table-container">
       <thead v-if="itemList.length">
         <tr class="table-tr">
-          <th class="product-name">投稿话题</th>
-          <th class="money">金额</th>
-          <th class="create-time">奖励时间</th>
-          <th class="total-money">累计金额</th>
+          <th class="title">标题</th>
+          <th class="view">播放量</th>
+          <th class="post-time">投稿时间</th>
+          <th class="tag">投稿话题</th>
         </tr>
       </thead>
       <tbody>
@@ -105,10 +105,10 @@ const searchHandler = async () => {
           :class="{ 'tr-active': activeRow === item }"
           @click="activeRow = item"
         >
-          <td>{{ item.productName }}</td>
-          <td>{{ item.money }}</td>
-          <td>{{ format(item.createTime, 'yyyy-MM-dd HH:mm:ss') }}</td>
-          <td>{{ item.totalMoney }}</td>
+          <td>{{ item.title }}</td>
+          <td>{{ item.view }}</td>
+          <td>{{ format(item.postTime, 'yyyy-MM-dd HH:mm:ss') }}</td>
+          <td>{{ item.tag }}</td>
         </tr>
       </tbody>
     </table>
@@ -116,7 +116,7 @@ const searchHandler = async () => {
 </template>
 
 <style scoped lang="scss">
-.get-money-by-tag {
+.get-manuscript-by-tag {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -183,16 +183,12 @@ const searchHandler = async () => {
 
     .table-tr {
       font-size: 22px;
-      .money {
-        width: 8%;
+      .view {
+        width: 6%;
       }
 
-      .create-time {
+      .post-time {
         width: 20%;
-      }
-
-      .total-money {
-        width: 8%;
       }
     }
 

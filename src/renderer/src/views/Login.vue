@@ -1,3 +1,4 @@
+<!-- 登录 -->
 <script setup>
 import { nextTick, onMounted, ref } from 'vue'
 import qrcode from 'qrcode'
