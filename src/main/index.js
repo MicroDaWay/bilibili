@@ -503,16 +503,15 @@ app.whenReady().then(() => {
     while (currentPage <= totalPage) {
       await new Promise((resolve) => setTimeout(resolve, 1000))
 
-      const url = 'https://pay.bilibili.com/bk/brokerage/v2/listForRechargeRecord'
+      const url = 'https://pay.bilibili.com/payplatform/cashier/bk/trans/list'
       const payload = {
         currentPage,
-        pageSize: 15,
+        pageSize: 20,
         sdkVersion: '1.1.7',
-        timestamp: Math.floor(Date.now() / 1000),
         traceId: Math.floor(Date.now() / 1000)
       }
       const headers = {
-        Referer: 'https://pay.bilibili.com/pay-v2/shell/index',
+        Referer: 'https://pay.bilibili.com/pay-v2/shell/bill',
         Cookie: fs.readFileSync(cookieFilePath, 'utf8').replace(/,/g, '%2C'),
         'User-Agent': import.meta.env.VITE_USER_AGENT,
         'Content-Type': 'application/json'
@@ -524,22 +523,24 @@ app.whenReady().then(() => {
       const records = data.result || []
       totalPage = data.page?.totalPage || 1
 
-      for (const item of records) {
-        const money = item.brokerage || 0
-        const product_name = item.productName || ''
-        const create_time = item.ctime || ''
+      try {
+        for (const item of records) {
+          const money = item.brokerage || 0
+          const product_name = item.title || ''
+          const create_time = item.ctime || ''
 
-        totalMoney += money
-        console.log(
-          `发放时间 = ${create_time}, 发放金额 = ${money.toFixed(2).padEnd(6)}, 活动名称 = ${product_name}`
-        )
+          if (product_name === '银行卡提现' || product_name === '支付宝提现') continue
 
-        const sql = `
+          totalMoney += money
+          console.log(
+            `发放时间 = ${create_time}, 发放金额 = ${money.toFixed(2).padEnd(6)}, 活动名称 = ${product_name}`
+          )
+
+          const sql = `
           INSERT INTO rewards (product_name, money, create_time)
           VALUES (?, ?, ?)
         `
 
-        try {
           await conn.query(sql, [product_name, money, create_time])
 
           event.sender.send('earnings-center-progress', {
@@ -549,12 +550,11 @@ app.whenReady().then(() => {
             totalMoney: totalMoney.toFixed(2),
             balance: balance.toFixed(2)
           })
-        } finally {
-          conn.release()
         }
+        currentPage++
+      } finally {
+        conn.release()
       }
-
-      currentPage++
     }
 
     event.sender.send('earnings-center-finish')
