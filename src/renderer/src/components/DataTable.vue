@@ -1,3 +1,4 @@
+<!-- 数据表格组件 -->
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 

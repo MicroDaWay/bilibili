@@ -1,3 +1,4 @@
+<!-- 稿件管理卡片组件 -->
 <script setup>
 const props = defineProps({
   item: {
