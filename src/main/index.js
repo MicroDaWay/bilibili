@@ -346,8 +346,7 @@ const createWindow = () => {
   })
 
   mainWindow.on('ready-to-show', () => {
-    // 最大化应用窗口
-    mainWindow.maximize()
+    mainWindow.show()
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
@@ -360,6 +359,23 @@ const createWindow = () => {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+}
+
+// 请求单实例锁
+const gotTheLock = app.requestSingleInstanceLock()
+
+if (!gotTheLock) {
+  // 如果没拿到锁，说明已有实例在运行，直接退出当前进程
+  app.quit()
+} else {
+  // 如果拿到了锁，监听 second-instance 事件
+  app.on('second-instance', () => {
+    // 当用户再次尝试启动应用时，聚焦到已有窗口
+    if (mainWindow) {
+      if (mainWindow.isMinimized()) mainWindow.restore()
+      mainWindow.focus()
+    }
+  })
 }
 
 app.whenReady().then(() => {
@@ -697,7 +713,6 @@ app.whenReady().then(() => {
         FROM rewards
         WHERE product_name LIKE ?
       `
-
       const [rows] = await conn.query(sql, [`%${product_name}%`])
       return rows
     } finally {
