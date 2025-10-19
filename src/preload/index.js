@@ -51,6 +51,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getMoneyByTag: (params) => ipcRenderer.invoke('get-money-by-tag', params),
   // 根据投稿标签查询稿件
   getManuscriptByTag: (params) => ipcRenderer.invoke('get-manuscript-by-tag', params),
+  // 根据标签查询取消稿件
+  getDisqualificationByTag: (params) => ipcRenderer.invoke('get-disqualification-by-tag', params),
   // 获取bilibili表中的数据
   getBilibiliData: () => ipcRenderer.invoke('get-bilibili-data'),
   // 获取rewards表中的数据

@@ -310,7 +310,7 @@ const getTopicByTitle = async (titleToFind) => {
   } catch (error) {
     dialog.showMessageBox(mainWindow, {
       title: '根据标题查找投稿标签',
-      info: 'error',
+      type: 'error',
       message: `根据标题查找投稿标签失败, ${error.message}`
     })
   }
@@ -328,20 +328,20 @@ const getTenDaysAgo = () => {
 // 初始化disqualification表
 const initDisqualification = async (conn) => {
   try {
-    await conn.query('DROP TABLE IF EXISTS disqualification')
     await conn.query(`
     CREATE TABLE IF NOT EXISTS disqualification (
       id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'id',
       title VARCHAR(255) COMMENT '标题',
       topic VARCHAR(255) COMMENT '投稿标签',
       play INT COMMENT '播放量',
-      post_time DATETIME COMMENT '投稿时间'
+      post_time DATETIME COMMENT '投稿时间',
+      UNIQUE KEY uk_title_post_time(title, post_time)
     ) COMMENT '活动资格取消稿件'
   `)
   } catch (error) {
     dialog.showMessageBox(mainWindow, {
       title: '初始化disqualification表',
-      info: 'error',
+      type: 'error',
       message: `初始化disqualification表失败, ${error.message}`
     })
   }
@@ -372,7 +372,7 @@ const getMessageList = async () => {
   } catch (error) {
     dialog.showMessageBox(mainWindow, {
       title: '获取消息列表',
-      info: 'error',
+      type: 'error',
       message: `获取消息列表失败, ${error.message}`
     })
     return []
@@ -798,7 +798,7 @@ app.whenReady().then(async () => {
 
         const { topic, play } = await getTopicByTitle(title)
         const sql = `
-          INSERT INTO disqualification (title, topic, play, post_time)
+          INSERT IGNORE INTO disqualification (title, topic, play, post_time)
           VALUES (?, ?, ?, ?)
         `
         const post_time = formatTimestampToDatetime(timestamp)
@@ -934,6 +934,29 @@ app.whenReady().then(async () => {
         title: '根据投稿标签查询稿件',
         type: 'error',
         message: `根据投稿标签查询稿件失败, ${error.message}`
+      })
+      return []
+    } finally {
+      conn.release()
+    }
+  })
+
+  // 根据标签查询取消稿件
+  ipcMain.handle('get-disqualification-by-tag', async (e, tag) => {
+    const conn = await pool.getConnection()
+    try {
+      const sql = `
+        SELECT title, topic, play, post_time AS postTime
+        FROM disqualification
+        WHERE topic LIKE ?
+      `
+      const [rows] = await conn.query(sql, [`%${tag}%`])
+      return rows
+    } catch (error) {
+      dialog.showMessageBox(mainWindow, {
+        title: '根据标签查询取消稿件',
+        type: 'error',
+        message: `根据标签查询取消稿件失败, ${error.message}`
       })
       return []
     } finally {

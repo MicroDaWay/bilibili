@@ -16,7 +16,11 @@ const routes = [
   { path: '/money-by-year', component: () => import('../views/MoneyByYear.vue') },
   { path: '/money-by-month', component: () => import('../views/MoneyByMonth.vue') },
   { path: '/get-money-by-tag', component: () => import('../views/GetMoneyByTag.vue') },
-  { path: '/get-manuscript-by-tag', component: () => import('../views/GetManuscriptByTag.vue') }
+  { path: '/get-manuscript-by-tag', component: () => import('../views/GetManuscriptByTag.vue') },
+  {
+    path: '/get-disqualified-by-tag',
+    component: () => import('../views/GetDisqualifiedByTag.vue')
+  }
 ]
 
 const router = createRouter({

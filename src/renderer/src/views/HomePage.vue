@@ -50,6 +50,10 @@ const itemList = [
   {
     text: '根据投稿标签查询稿件',
     url: '/get-manuscript-by-tag'
+  },
+  {
+    text: '根据标签查询取消稿件',
+    url: '/get-disqualified-by-tag'
   }
 ]
 
