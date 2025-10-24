@@ -14,6 +14,9 @@ win:
   executableName: bilibili
   icon: icon.ico
 nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  perMachine: true
   artifactName: ${name}-${version}-setup.${ext}
   shortcutName: ${productName}
   uninstallDisplayName: ${productName}

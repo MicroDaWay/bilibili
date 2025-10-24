@@ -30,3 +30,13 @@ $ npm run build:mac
 # For Linux
 $ npm run build:linux
 ```
+
+### .env config
+
+```bash
+VITE_HOST=xxx
+VITE_USER=xxx
+VITE_PASSWORD=xxx
+VITE_DATABASE=xxx
+VITE_USER_AGENT=xxx
+```
