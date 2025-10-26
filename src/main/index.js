@@ -721,6 +721,8 @@ app.whenReady().then(async () => {
         }
         currentPage++
       }
+
+      event.sender.send('earnings-center-finish')
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
         title: '获取收益中心数据',
@@ -730,8 +732,6 @@ app.whenReady().then(async () => {
     } finally {
       conn.release()
     }
-
-    event.sender.send('earnings-center-finish')
   })
 
   // 更新数据库
@@ -811,6 +811,8 @@ app.whenReady().then(async () => {
           post_time
         })
       }
+
+      event.sender.send('cancel-event-qualification-finish')
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
         title: '活动资格取消稿件',
@@ -820,8 +822,6 @@ app.whenReady().then(async () => {
     } finally {
       conn.release()
     }
-
-    event.sender.send('cancel-event-qualification-finish')
   })
 
   // 播放量<100的稿件

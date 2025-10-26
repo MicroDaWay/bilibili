@@ -8,6 +8,7 @@ import ContentCard from '../components/ContentCard.vue'
 
 // 投稿话题
 const topic = ref('')
+const isSearching = ref(false)
 
 // 过滤后的数据
 const filterData = ref({
@@ -127,14 +128,18 @@ const main = async () => {
     }
   } catch (error) {
     window.electronAPI.showMessage({
+      title: '稿件管理',
       type: 'error',
       message: `发生错误：, ${error.message}`
     })
+  } finally {
+    isSearching.value = false
   }
 }
 
 // 点击搜索的处理函数
 const searchHandler = () => {
+  if (isSearching.value) return
   let flag = false
 
   bilibiliStore.excelData.map((item) => {
@@ -158,6 +163,7 @@ const searchHandler = () => {
     return
   }
 
+  isSearching.value = true
   main()
 }
 </script>

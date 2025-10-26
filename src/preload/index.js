@@ -31,16 +31,28 @@ contextBridge.exposeInMainWorld('electronAPI', {
   earningsCenter: () => ipcRenderer.send('earnings-center'),
   earningsCenterProgress: (callback) => ipcRenderer.on('earnings-center-progress', callback),
   earningsCenterFinish: (callback) => ipcRenderer.on('earnings-center-finish', callback),
+  removeEarningsCenterProgressListener: (callback) =>
+    ipcRenderer.removeListener('earnings-center-progress', callback),
+  removeEarningsCenterFinishListener: (callback) =>
+    ipcRenderer.removeListener('earnings-center-finish', callback),
   // 更新数据库
   updateDatabase: () => ipcRenderer.send('update-database'),
   updateDatabaseProgress: (callback) => ipcRenderer.on('update-database-progress', callback),
   updateDatabaseFinish: (callback) => ipcRenderer.on('update-database-finish', callback),
+  removeUpdateDatabaseProgressListener: (callback) =>
+    ipcRenderer.removeListener('update-database-progress', callback),
+  removeUpdateDatabaseFinishListener: (callback) =>
+    ipcRenderer.removeListener('update-database-finish', callback),
   // 活动资格取消稿件
   cancelEventQualification: () => ipcRenderer.send('cancel-event-qualification'),
   cancelEventQualificationProgress: (callback) =>
     ipcRenderer.on('cancel-event-qualification-progress', callback),
   cancelEventQualificationFinish: (callback) =>
     ipcRenderer.on('cancel-event-qualification-finish', callback),
+  removeCancelEventQualificationProgressListener: (callback) =>
+    ipcRenderer.removeListener('cancel-event-qualification-progress', callback),
+  removeCancelEventQualificationFinishListener: (callback) =>
+    ipcRenderer.removeListener('cancel-event-qualification-finish', callback),
   // 播放量<100的稿件
   viewLessOneHundred: () => ipcRenderer.invoke('view-less-one-hundred'),
   // 每年获得的激励金额
