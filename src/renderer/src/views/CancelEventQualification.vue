@@ -7,6 +7,7 @@ import DataTable from '../components/DataTable.vue'
 const itemList = ref([])
 const title = '活动资格取消稿件'
 const isProcessing = ref(false)
+let globalItemListRef = null
 
 const columns = [
   {
@@ -21,16 +22,20 @@ const columns = [
 ]
 
 const handleProgress = (event, item) => {
-  itemList.value.push(item)
+  if (globalItemListRef) {
+    globalItemListRef.value.push(item)
+  }
 }
 
 const handleFinish = () => {
-  isProcessing.value = false
-  window.electronAPI.showMessage({
-    title: '活动资格取消稿件',
-    type: 'info',
-    message: '查询结束'
-  })
+  if (globalItemListRef) {
+    isProcessing.value = false
+    window.electronAPI.showMessage({
+      title: '活动资格取消稿件',
+      type: 'info',
+      message: '查询结束'
+    })
+  }
 }
 
 // 获取数据库中的数据
@@ -40,8 +45,14 @@ const getDatabaseData = async () => {
 }
 
 onMounted(() => {
-  itemList.value = []
+  globalItemListRef = itemList
+  isProcessing.value = false
 
+  // 先移除可能存在的监听器
+  window.electronAPI.removeCancelEventQualificationProgressListener(handleProgress)
+  window.electronAPI.removeCancelEventQualificationFinishListener(handleFinish)
+
+  // 再注册
   window.electronAPI.cancelEventQualificationProgress(handleProgress)
   window.electronAPI.cancelEventQualificationFinish(handleFinish)
 
@@ -49,6 +60,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  globalItemListRef = null
   window.electronAPI.removeCancelEventQualificationProgressListener(handleProgress)
   window.electronAPI.removeCancelEventQualificationFinishListener(handleFinish)
 })

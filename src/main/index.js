@@ -45,43 +45,6 @@ const contextMenuTemplate = [
   createMenuItem('全选', 'selectAll', 'Ctrl + A')
 ]
 
-// 导入Excel文件的处理函数
-const importExcelHandler = async () => {
-  const result = await dialog.showOpenDialog({
-    properties: ['openFile'],
-    filters: [
-      {
-        name: 'Excel',
-        extensions: ['xlsx', 'xls']
-      }
-    ]
-  })
-
-  if (!result.canceled && result.filePaths.length > 0) {
-    const filePath = result.filePaths[0]
-    try {
-      const workbook = xlsx.readFile(filePath)
-      const sheetNames = workbook.SheetNames
-      const excelData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetNames[0]])
-      if (excelData) {
-        dialog.showMessageBox(mainWindow, {
-          title: '导入Excel',
-          type: 'info',
-          message: '导入Excel成功'
-        })
-
-        BrowserWindow.getFocusedWindow().webContents.send('save-excel-data', excelData)
-      }
-    } catch (error) {
-      dialog.showMessageBox(mainWindow, {
-        title: '导入Excel',
-        type: 'error',
-        message: `导入Excel失败, ${error.message}`
-      })
-    }
-  }
-}
-
 // 创建数据库连接池
 const dbConfig = {
   host: import.meta.env.VITE_HOST,
@@ -111,24 +74,52 @@ const checkDatabaseConnection = async () => {
   }
 }
 
-// 初始化rewards表
-const initRewards = async (conn) => {
+// 初始化数据库表
+const initTable = async () => {
+  const conn = await pool.getConnection()
   try {
-    await conn.query('DROP TABLE IF EXISTS rewards')
+    // 初始化bilibili表
+    await conn.query(`
+    CREATE TABLE IF NOT EXISTS bilibili (
+      id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'id',
+      title VARCHAR(255) COMMENT '标题',
+      view INT COMMENT '播放量',
+      post_time DATETIME COMMENT '投稿时间',
+      tag VARCHAR(255) COMMENT '投稿标签',
+      UNIQUE KEY UK_title_post_time(title, post_time)
+    ) COMMENT '稿件管理'
+  `)
+
+    // 初始化rewards表
     await conn.query(`
     CREATE TABLE IF NOT EXISTS rewards (
       id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'id',
       product_name VARCHAR(100) COMMENT '活动名称',
       money DECIMAL(10,2) COMMENT '发放金额',
-      create_time DATETIME COMMENT '发放时间'
+      create_time DATETIME COMMENT '发放时间',
+      UNIQUE KEY UK_product_name_money_create_time(product_name, money, create_time)
     ) COMMENT '收益中心'
+  `)
+
+    // 初始化disqualification表
+    await conn.query(`
+    CREATE TABLE IF NOT EXISTS disqualification (
+      id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'id',
+      title VARCHAR(255) COMMENT '标题',
+      topic VARCHAR(255) COMMENT '投稿标签',
+      play INT COMMENT '播放量',
+      post_time DATETIME COMMENT '投稿时间',
+      UNIQUE KEY UK_title_post_time(title, post_time)
+    ) COMMENT '活动资格取消稿件'
   `)
   } catch (error) {
     dialog.showMessageBox(mainWindow, {
-      title: '初始化rewards表',
+      title: '初始化数据库表',
       type: 'error',
-      message: `初始化rewards表失败, ${error.message}`
+      message: `初始化数据库表失败: ${error.message}`
     })
+  } finally {
+    conn.release()
   }
 }
 
@@ -158,28 +149,6 @@ const getBalance = async () => {
       message: `获取余额失败, ${error.message}`
     })
     return 0
-  }
-}
-
-// 初始化bilibili表
-const initBilibili = async (conn) => {
-  try {
-    await conn.query('DROP TABLE IF EXISTS bilibili')
-    await conn.query(`
-    CREATE TABLE IF NOT EXISTS bilibili (
-      id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'id',
-      title VARCHAR(255) COMMENT '标题',
-      view INT COMMENT '播放量',
-      post_time DATETIME COMMENT '投稿时间',
-      tag VARCHAR(255) COMMENT '投稿标签'
-    ) COMMENT '稿件管理'
-  `)
-  } catch (error) {
-    dialog.showMessageBox(mainWindow, {
-      title: '初始化bilibili表',
-      type: 'error',
-      message: `初始化bilibili表失败, ${error.message}`
-    })
   }
 }
 
@@ -227,7 +196,7 @@ const parseData = async (event, data, conn) => {
       )
 
       const sql = `
-      INSERT INTO bilibili(title, view, post_time, tag)
+      INSERT IGNORE INTO bilibili(title, view, post_time, tag)
       VALUES (?, ?, ?, ?)
     `
       await conn.query(sql, [title, view, postTime, tag])
@@ -325,28 +294,6 @@ const getTenDaysAgo = () => {
   return tenDaysAgo
 }
 
-// 初始化disqualification表
-const initDisqualification = async (conn) => {
-  try {
-    await conn.query(`
-    CREATE TABLE IF NOT EXISTS disqualification (
-      id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'id',
-      title VARCHAR(255) COMMENT '标题',
-      topic VARCHAR(255) COMMENT '投稿标签',
-      play INT COMMENT '播放量',
-      post_time DATETIME COMMENT '投稿时间',
-      UNIQUE KEY uk_title_post_time(title, post_time)
-    ) COMMENT '活动资格取消稿件'
-  `)
-  } catch (error) {
-    dialog.showMessageBox(mainWindow, {
-      title: '初始化disqualification表',
-      type: 'error',
-      message: `初始化disqualification表失败, ${error.message}`
-    })
-  }
-}
-
 // 获取消息列表
 const getMessageList = async () => {
   try {
@@ -376,6 +323,43 @@ const getMessageList = async () => {
       message: `获取消息列表失败, ${error.message}`
     })
     return []
+  }
+}
+
+// 导入Excel文件的处理函数
+const importExcelHandler = async () => {
+  const result = await dialog.showOpenDialog({
+    properties: ['openFile'],
+    filters: [
+      {
+        name: 'Excel',
+        extensions: ['xlsx', 'xls']
+      }
+    ]
+  })
+
+  if (!result.canceled && result.filePaths.length > 0) {
+    const filePath = result.filePaths[0]
+    try {
+      const workbook = xlsx.readFile(filePath)
+      const sheetNames = workbook.SheetNames
+      const excelData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetNames[0]])
+      if (excelData) {
+        dialog.showMessageBox(mainWindow, {
+          title: '导入Excel',
+          type: 'info',
+          message: '导入Excel成功'
+        })
+
+        BrowserWindow.getFocusedWindow().webContents.send('save-excel-data', excelData)
+      }
+    } catch (error) {
+      dialog.showMessageBox(mainWindow, {
+        title: '导入Excel',
+        type: 'error',
+        message: `导入Excel失败, ${error.message}`
+      })
+    }
   }
 }
 
@@ -417,8 +401,8 @@ const startServer = () => {
 // 创建窗口
 const createWindow = () => {
   mainWindow = new BrowserWindow({
-    width: 1300,
-    minWidth: 1300,
+    width: 1200,
+    minWidth: 1200,
     height: 600,
     minHeight: 600,
     show: false,
@@ -430,6 +414,7 @@ const createWindow = () => {
   })
 
   mainWindow.on('ready-to-show', () => {
+    mainWindow.maximize()
     mainWindow.show()
   })
 
@@ -661,8 +646,6 @@ app.whenReady().then(async () => {
   ipcMain.on('earnings-center', async (event) => {
     const conn = await pool.getConnection()
     try {
-      await initRewards(conn)
-
       let currentPage = 1
       let totalPage = 1
       let totalMoney = 0
@@ -705,7 +688,7 @@ app.whenReady().then(async () => {
           )
 
           const sql = `
-          INSERT INTO rewards (product_name, money, create_time)
+          INSERT IGNORE INTO rewards (product_name, money, create_time)
           VALUES (?, ?, ?)
         `
 
@@ -738,8 +721,6 @@ app.whenReady().then(async () => {
   ipcMain.on('update-database', async (event) => {
     const conn = await pool.getConnection()
     try {
-      await initBilibili(conn)
-
       let page = 1
       while (true) {
         await new Promise((resolve) => setTimeout(resolve, 1000))
@@ -775,7 +756,6 @@ app.whenReady().then(async () => {
 
     try {
       const text = '由于不符合本次征稿活动的规则，故无法参与本次活动的评选'
-      await initDisqualification(conn)
 
       const messages = await getMessageList()
       const tenDaysAgo = getTenDaysAgo()
@@ -975,6 +955,7 @@ app.whenReady().then(async () => {
         type: 'error',
         message: `获取bilibili表中的数据失败, ${error.message}`
       })
+      return []
     }
   })
 
@@ -989,6 +970,7 @@ app.whenReady().then(async () => {
         type: 'error',
         message: `获取rewards表中的数据失败, ${error.message}`
       })
+      return []
     }
   })
 
@@ -1003,9 +985,11 @@ app.whenReady().then(async () => {
         type: 'error',
         message: `获取disqualification表中的数据失败, ${error.message}`
       })
+      return []
     }
   })
 
+  await initTable()
   createWindow()
   startServer()
 

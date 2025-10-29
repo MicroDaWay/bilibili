@@ -10,6 +10,7 @@ const totalMoney = ref('')
 const balance = ref('')
 const title = '收益中心'
 const isProcessing = ref(false)
+let globalItemListRef = null
 
 const columns = [
   {
@@ -25,24 +26,28 @@ const columns = [
 const bilibiliStore = useBilibiliStore()
 
 const handleProgress = (event, item) => {
-  itemList.value.push({
-    create_time: item.create_time,
-    money: item.money,
-    product_name: item.product_name
-  })
-  totalMoney.value = item.totalMoney
-  balance.value = item.balance
-  bilibiliStore.setTotalMoney(item.totalMoney)
-  bilibiliStore.setBalance(item.balance)
+  if (globalItemListRef) {
+    itemList.value.push({
+      create_time: item.create_time,
+      money: item.money,
+      product_name: item.product_name
+    })
+    totalMoney.value = item.totalMoney
+    balance.value = item.balance
+    bilibiliStore.setTotalMoney(item.totalMoney)
+    bilibiliStore.setBalance(item.balance)
+  }
 }
 
 const handleFinish = () => {
-  isProcessing.value = false
-  window.electronAPI.showMessage({
-    title: '收益中心',
-    type: 'info',
-    message: '查询结束'
-  })
+  if (globalItemListRef) {
+    isProcessing.value = false
+    window.electronAPI.showMessage({
+      title: '收益中心',
+      type: 'info',
+      message: '查询结束'
+    })
+  }
 }
 
 // 获取数据库中的数据
@@ -52,9 +57,13 @@ const getDatabaseData = async () => {
 }
 
 onMounted(() => {
-  itemList.value = []
+  globalItemListRef = itemList
+  isProcessing.value = false
   totalMoney.value = bilibiliStore.totalMoney
   balance.value = bilibiliStore.balance
+
+  window.electronAPI.removeEarningsCenterProgressListener(handleProgress)
+  window.electronAPI.removeEarningsCenterFinishListener(handleFinish)
 
   window.electronAPI.earningsCenterProgress(handleProgress)
   window.electronAPI.earningsCenterFinish(handleFinish)
@@ -63,6 +72,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  globalItemListRef = null
   window.electronAPI.removeEarningsCenterProgressListener(handleProgress)
   window.electronAPI.removeEarningsCenterFinishListener(handleFinish)
 })

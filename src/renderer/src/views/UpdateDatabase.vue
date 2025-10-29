@@ -7,6 +7,7 @@ import DataTable from '../components/DataTable.vue'
 const itemList = ref([])
 const title = '更新数据库'
 const isProcessing = ref(false)
+let globalItemListRef = null
 
 const columns = [
   {
@@ -20,21 +21,25 @@ const columns = [
 ]
 
 const handleProgress = (event, item) => {
-  itemList.value.push({
-    title: item.title,
-    view: item.view,
-    post_time: item.postTime,
-    tag: item.tag
-  })
+  if (globalItemListRef) {
+    itemList.value.push({
+      title: item.title,
+      view: item.view,
+      post_time: item.postTime,
+      tag: item.tag
+    })
+  }
 }
 
 const handleFinish = () => {
-  isProcessing.value = false
-  window.electronAPI.showMessage({
-    title: '更新数据库',
-    type: 'info',
-    message: '更新数据库成功'
-  })
+  if (globalItemListRef) {
+    isProcessing.value = false
+    window.electronAPI.showMessage({
+      title: '更新数据库',
+      type: 'info',
+      message: '更新数据库成功'
+    })
+  }
 }
 
 // 获取数据库中的数据
@@ -44,13 +49,20 @@ const getDatabaseData = async () => {
 }
 
 onMounted(() => {
-  itemList.value = []
+  globalItemListRef = itemList
+  isProcessing.value = false
+
+  window.electronAPI.removeUpdateDatabaseProgressListener(handleProgress)
+  window.electronAPI.removeUpdateDatabaseFinishListener(handleFinish)
+
   window.electronAPI.updateDatabaseProgress(handleProgress)
   window.electronAPI.updateDatabaseFinish(handleFinish)
+
   getDatabaseData()
 })
 
 onUnmounted(() => {
+  globalItemListRef = null
   window.electronAPI.removeUpdateDatabaseProgressListener(handleProgress)
   window.electronAPI.removeUpdateDatabaseFinishListener(handleFinish)
 })
