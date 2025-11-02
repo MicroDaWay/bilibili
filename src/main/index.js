@@ -180,25 +180,25 @@ const getBilibiliList = async (pageNumber) => {
 }
 
 // 解析数据
-const parseData = async (event, data, conn) => {
+const parseData = async (event, result, conn) => {
   try {
-    for (const item of data.arc_audits || []) {
-      const archive = item.Archive || {}
-      const stat = item.stat || {}
+    for (const item of result?.arc_audits || []) {
+      const archive = item?.Archive || {}
+      const stat = item?.stat || {}
 
-      const title = archive.title
-      const view = stat.view || 0
-      const pubTime = archive.ptime
-      const tag = archive.tag
+      const title = archive?.title
+      const view = stat?.view || 0
+      const pubTime = archive?.ptime
+      const tag = archive?.tag
       const postTime = formatTimestampToDatetime(pubTime)
       console.log(
         `投稿时间 = ${postTime}, 播放量 = ${view.toString().padEnd(5)}, 标题 = ${title}, 投稿标签 = ${tag}`
       )
 
       const sql = `
-      INSERT IGNORE INTO bilibili(title, view, post_time, tag)
-      VALUES (?, ?, ?, ?)
-    `
+        INSERT IGNORE INTO bilibili(title, view, post_time, tag)
+        VALUES (?, ?, ?, ?)
+      `
       await conn.query(sql, [title, view, postTime, tag])
 
       event.sender.send('update-database-progress', {
@@ -230,28 +230,26 @@ const getTopicByTitle = async (titleToFind) => {
     let offset = ''
 
     while (true) {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
-
+      await new Promise((resolve) => setTimeout(resolve, 5000))
       const params = {
         offset,
         host_mid: '506485454'
       }
-
       const response = await axios.get(url, {
         headers,
         params
       })
-
-      const data = response.data
+      const result = response?.data
+      const items = result?.data?.items || []
 
       // 遍历动态列表
-      for (const item of data.data.items) {
+      for (const item of items) {
         const archive = item?.modules?.module_dynamic?.major?.archive || {}
         const topic = item?.modules?.module_dynamic?.topic?.name || ''
-        const title = archive.title || ''
+        const title = archive?.title || ''
         const pub_ts = item?.modules?.module_author?.pub_ts || 0
         const post_time = formatTimestampToDatetime(pub_ts)
-        const play = archive.stat?.play || 0
+        const play = archive?.stat?.play || 0
 
         if (title === titleToFind) {
           console.log(
@@ -265,7 +263,7 @@ const getTopicByTitle = async (titleToFind) => {
       }
 
       // 更新 offset，继续下一页
-      offset = data.data.offset || ''
+      offset = result?.data?.offset || ''
 
       if (!offset) {
         dialog.showMessageBox(mainWindow, {
@@ -282,20 +280,20 @@ const getTopicByTitle = async (titleToFind) => {
       type: 'error',
       message: `根据标题查找投稿标签失败, ${error.message}`
     })
+    return null
   }
 }
 
-// 获取10天前的零点时间
-const getTenDaysAgo = () => {
-  const today = new Date()
-  const tenDaysAgo = new Date(today)
-  tenDaysAgo.setDate(today.getDate() - 10)
-  tenDaysAgo.setHours(0, 0, 0, 0)
-  return tenDaysAgo
+// 获取7天前的零点时间
+const getSevenDaysAgo = () => {
+  const date = new Date()
+  date.setDate(date.getDate() - 7)
+  date.setHours(0, 0, 0, 0)
+  return date
 }
 
 // 获取消息列表
-const getMessageList = async () => {
+const getMessageList = async (end_seqno) => {
   try {
     const url = 'https://api.vc.bilibili.com/svr_sync/v1/svr_sync/fetch_session_msgs'
     const headers = {
@@ -307,7 +305,8 @@ const getMessageList = async () => {
     const params = {
       talker_id: 844424930131966,
       session_type: 1,
-      size: 200
+      size: 20,
+      end_seqno
     }
 
     const response = await axios.get(url, {
@@ -315,14 +314,10 @@ const getMessageList = async () => {
       params
     })
 
-    return response.data?.data?.messages || []
+    return response.data?.data || {}
   } catch (error) {
-    dialog.showMessageBox(mainWindow, {
-      title: '获取消息列表',
-      type: 'error',
-      message: `获取消息列表失败, ${error.message}`
-    })
-    return []
+    console.error('获取消息列表失败', error)
+    return null
   }
 }
 
@@ -484,14 +479,14 @@ app.whenReady().then(async () => {
           source: 'main-fe-header'
         }
       })
-      return response.data || {}
+      return response.data || null
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
         title: '获取登录二维码',
         type: 'error',
         message: `获取登录二维码失败, ${error.message}`
       })
-      return {}
+      return null
     }
   })
 
@@ -512,6 +507,11 @@ app.whenReady().then(async () => {
         type: 'error',
         message: `检查二维码状态失败, ${error.message}`
       })
+
+      return {
+        code: -1,
+        message: '网络请求失败, 请检查网络或重试'
+      }
     }
   })
 
@@ -532,14 +532,14 @@ app.whenReady().then(async () => {
       const response = await axios.get(url, {
         headers
       })
-      return response.data?.data || {}
+      return response.data?.data || null
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
         title: '获取导航栏数据',
         type: 'error',
         message: `获取导航栏数据失败, ${error.message}`
       })
-      return {}
+      return null
     }
   })
 
@@ -558,14 +558,14 @@ app.whenReady().then(async () => {
         headers
       })
       await fs.promises.writeFile(cookieFilePath, '', 'utf8')
-      return response.data || {}
+      return response.data || null
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
         title: '退出登录',
         type: 'error',
         message: `退出登录失败, ${error.message}`
       })
-      return {}
+      return null
     }
   })
 
@@ -592,7 +592,7 @@ app.whenReady().then(async () => {
         type: 'error',
         message: `获取稿件管理数据失败, ${error.message}`
       })
-      return []
+      return null
     }
   })
 
@@ -615,7 +615,7 @@ app.whenReady().then(async () => {
         type: 'error',
         message: `获取打卡挑战数据失败, ${error.message}`
       })
-      return []
+      return null
     }
   })
 
@@ -638,7 +638,7 @@ app.whenReady().then(async () => {
         type: 'error',
         message: `获取热门活动数据失败, ${error.message}`
       })
-      return []
+      return null
     }
   })
 
@@ -724,13 +724,13 @@ app.whenReady().then(async () => {
       let page = 1
       while (true) {
         await new Promise((resolve) => setTimeout(resolve, 1000))
-        const data = await getBilibiliList(page)
-        if (!data) break
+        const result = await getBilibiliList(page)
+        if (!result) break
 
-        const { count, ps } = data.page || {}
+        const { count, ps } = result?.page || {}
         const totalPage = Math.ceil(count / ps)
 
-        await parseData(event, data, conn)
+        await parseData(event, result, conn)
         await conn.commit()
 
         if (page >= totalPage) {
@@ -755,44 +755,57 @@ app.whenReady().then(async () => {
     const conn = await pool.getConnection()
 
     try {
+      let end_seqno
+      let messageTime
       const text = '由于不符合本次征稿活动的规则，故无法参与本次活动的评选'
+      const sevenDaysAgo = getSevenDaysAgo()
 
-      const messages = await getMessageList()
-      const tenDaysAgo = getTenDaysAgo()
+      while (true) {
+        await new Promise((resolve) => setTimeout(resolve, 1000))
+        const result = await getMessageList(end_seqno)
+        const messages = result.messages
+        const has_more = result.has_more
+        const min_seqno = result.min_seqno
 
-      for (const item of messages) {
-        const content = item.content || ''
-        const timestamp = item.timestamp || 0
+        for (const item of messages) {
+          const content = item.content || ''
+          const timestamp = item.timestamp || 0
 
-        if (!content.includes(text)) continue
+          if (!content.includes(text)) continue
 
-        const messageTime = new Date(timestamp * 1000)
-        if (messageTime < tenDaysAgo) break
+          messageTime = new Date(timestamp * 1000)
 
-        let titleStart = content.indexOf('《') + 1
-        let titleEnd = content.indexOf('》')
-        let title =
-          titleStart > 0 && titleEnd > titleStart
-            ? content.substring(titleStart, titleEnd)
-            : '未知标题'
+          let titleStart = content.indexOf('《') + 1
+          let titleEnd = content.indexOf('》')
+          let title =
+            titleStart > 0 && titleEnd > titleStart
+              ? content.substring(titleStart, titleEnd)
+              : '未知标题'
 
-        const { topic, play } = await getTopicByTitle(title)
-        const sql = `
-          INSERT IGNORE INTO disqualification (title, topic, play, post_time)
-          VALUES (?, ?, ?, ?)
-        `
-        const post_time = formatTimestampToDatetime(timestamp)
-        await conn.query(sql, [title, topic, play, post_time])
+          const { topic, play } = await getTopicByTitle(title)
 
-        event.sender.send('cancel-event-qualification-progress', {
-          title,
-          topic,
-          play,
-          post_time
-        })
+          const sql = `
+            INSERT IGNORE INTO disqualification (title, topic, play, post_time)
+            VALUES (?, ?, ?, ?)
+          `
+          const post_time = formatTimestampToDatetime(timestamp)
+          await conn.query(sql, [title, topic, play, post_time])
+
+          event.sender.send('cancel-event-qualification-progress', {
+            title,
+            topic,
+            play,
+            post_time
+          })
+        }
+
+        if (!has_more || messageTime < sevenDaysAgo) {
+          event.sender.send('cancel-event-qualification-finish')
+          break
+        }
+
+        end_seqno = min_seqno
       }
-
-      event.sender.send('cancel-event-qualification-finish')
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
         title: '活动资格取消稿件',
@@ -821,7 +834,7 @@ app.whenReady().then(async () => {
         type: 'error',
         message: `获取播放量<100的稿件失败, ${error.message}`
       })
-      return []
+      return null
     } finally {
       conn.release()
     }
@@ -845,7 +858,7 @@ app.whenReady().then(async () => {
         type: 'error',
         message: `获取每年获得的激励金额失败, ${error.message}`
       })
-      return []
+      return null
     } finally {
       conn.release()
     }
@@ -869,7 +882,7 @@ app.whenReady().then(async () => {
         type: 'error',
         message: `获取每月获得的激励金额失败, ${error.message}`
       })
-      return []
+      return null
     } finally {
       conn.release()
     }
@@ -892,7 +905,7 @@ app.whenReady().then(async () => {
         type: 'error',
         message: `根据标签查询激励金额失败, ${error.message}`
       })
-      return []
+      return null
     } finally {
       conn.release()
     }
@@ -915,7 +928,7 @@ app.whenReady().then(async () => {
         type: 'error',
         message: `根据投稿标签查询稿件失败, ${error.message}`
       })
-      return []
+      return null
     } finally {
       conn.release()
     }
@@ -938,7 +951,7 @@ app.whenReady().then(async () => {
         type: 'error',
         message: `根据标签查询取消稿件失败, ${error.message}`
       })
-      return []
+      return null
     } finally {
       conn.release()
     }
@@ -955,7 +968,7 @@ app.whenReady().then(async () => {
         type: 'error',
         message: `获取bilibili表中的数据失败, ${error.message}`
       })
-      return []
+      return null
     }
   })
 
@@ -970,7 +983,7 @@ app.whenReady().then(async () => {
         type: 'error',
         message: `获取rewards表中的数据失败, ${error.message}`
       })
-      return []
+      return null
     }
   })
 
@@ -985,7 +998,7 @@ app.whenReady().then(async () => {
         type: 'error',
         message: `获取disqualification表中的数据失败, ${error.message}`
       })
-      return []
+      return null
     }
   })
 

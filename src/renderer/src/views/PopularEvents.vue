@@ -11,11 +11,12 @@ const columns = [
   { title: '活动名称', key: 'name' }
 ]
 
-// 获取7天前的日期
+// 获取7天前的零点时间
 const getSevenDaysAgo = () => {
-  const today = dayjs()
-  const sevenDaysAgo = today.subtract(7, 'day')
-  return sevenDaysAgo.startOf('day').toDate()
+  const date = new Date()
+  date.setDate(date.getDate() - 7)
+  date.setHours(0, 0, 0, 0)
+  return date
 }
 
 // 过滤出前一周的活动
