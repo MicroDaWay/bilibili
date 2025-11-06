@@ -30,11 +30,6 @@ const handleProgress = (event, item) => {
 const handleFinish = () => {
   if (globalItemListRef) {
     isProcessing.value = false
-    window.electronAPI.showMessage({
-      title: '活动资格取消稿件',
-      type: 'info',
-      message: '查询结束'
-    })
   }
 }
 

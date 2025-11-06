@@ -152,8 +152,8 @@ const getBalance = async () => {
   }
 }
 
-// 获取bilibili列表
-const getBilibiliList = async (pageNumber) => {
+// 获取稿件列表
+const getManuscriptList = async (pn) => {
   try {
     const url = 'https://member.bilibili.com/x/web/archives'
     const headers = {
@@ -163,7 +163,7 @@ const getBilibiliList = async (pageNumber) => {
     }
     const response = await axios.get(url, {
       params: {
-        pn: pageNumber,
+        pn,
         ps: 10
       },
       headers
@@ -171,26 +171,27 @@ const getBilibiliList = async (pageNumber) => {
     return response.data?.data || null
   } catch (error) {
     dialog.showMessageBox(mainWindow, {
-      title: '获取bilibili列表',
+      title: '获取稿件列表',
       type: 'error',
-      message: `获取bilibili列表失败, ${error.message}`
+      message: `获取稿件列表失败, ${error.message}`
     })
     return null
   }
 }
 
-// 解析数据
-const parseData = async (event, result, conn) => {
+// 处理每一页的数据
+const everyPageData = async (event, result, conn) => {
   try {
-    for (const item of result?.arc_audits || []) {
+    const arc_audits = result?.arc_audits || []
+    for (const item of arc_audits) {
       const archive = item?.Archive || {}
       const stat = item?.stat || {}
-
       const title = archive?.title
       const view = stat?.view || 0
       const pubTime = archive?.ptime
       const tag = archive?.tag
       const postTime = formatTimestampToDatetime(pubTime)
+
       console.log(
         `投稿时间 = ${postTime}, 播放量 = ${view.toString().padEnd(5)}, 标题 = ${title}, 投稿标签 = ${tag}`
       )
@@ -208,6 +209,9 @@ const parseData = async (event, result, conn) => {
         tag
       })
     }
+
+    const lastPostTime = formatTimestampToDatetime(arc_audits.at(-1)?.Archive?.ptime)
+    return lastPostTime
   } catch (error) {
     dialog.showMessageBox(mainWindow, {
       title: '解析数据',
@@ -217,8 +221,8 @@ const parseData = async (event, result, conn) => {
   }
 }
 
-// 根据标题查找投稿标签
-const getTopicByTitle = async (titleToFind) => {
+// 获取动态列表数据
+const getDynamicList = async (offset) => {
   try {
     const url = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space'
     const headers = {
@@ -226,99 +230,83 @@ const getTopicByTitle = async (titleToFind) => {
       Cookie: fs.readFileSync(cookieFilePath, 'utf8'),
       'User-Agent': import.meta.env.VITE_USER_AGENT
     }
-
-    let offset = ''
-
-    while (true) {
-      await new Promise((resolve) => setTimeout(resolve, 5000))
-      const params = {
-        offset,
-        host_mid: '506485454'
-      }
-      const response = await axios.get(url, {
-        headers,
-        params
-      })
-      const result = response?.data
-      const items = result?.data?.items || []
-
-      // 遍历动态列表
-      for (const item of items) {
-        const archive = item?.modules?.module_dynamic?.major?.archive || {}
-        const topic = item?.modules?.module_dynamic?.topic?.name || ''
-        const title = archive?.title || ''
-        const pub_ts = item?.modules?.module_author?.pub_ts || 0
-        const post_time = formatTimestampToDatetime(pub_ts)
-        const play = archive?.stat?.play || 0
-
-        if (title === titleToFind) {
-          console.log(
-            `投稿时间 = ${post_time}, 标题 = ${title}, 播放量 = ${play}, 投稿标签 = ${topic}`
-          )
-          return {
-            topic,
-            play
-          }
-        }
-      }
-
-      // 更新 offset，继续下一页
-      offset = result?.data?.offset || ''
-
-      if (!offset) {
-        dialog.showMessageBox(mainWindow, {
-          title: '查找活动资格取消稿件',
-          type: 'info',
-          message: '未找到匹配的视频'
-        })
-        return null
-      }
+    const params = {
+      offset,
+      host_mid: '506485454'
     }
-  } catch (error) {
-    dialog.showMessageBox(mainWindow, {
-      title: '根据标题查找投稿标签',
-      type: 'error',
-      message: `根据标题查找投稿标签失败, ${error.message}`
+    const response = await axios.get(url, {
+      headers,
+      params
     })
+    return response.data?.data || null
+  } catch (error) {
+    console.error(`获取动态列表数据失败, ${error.message}`)
     return null
   }
 }
 
-// 获取7天前的零点时间
-const getSevenDaysAgo = () => {
+// 根据标题查找投稿标签
+const getTopicByTitle = async (titleToFind) => {
+  let offset
+
+  while (true) {
+    await new Promise((resolve) => setTimeout(resolve, 10000))
+    const { items, offset: nextOffset } = await getDynamicList(offset)
+
+    // 遍历动态列表
+    for (const item of items) {
+      const archive = item?.modules?.module_dynamic?.major?.archive || {}
+      const topic = item?.modules?.module_dynamic?.topic?.name || ''
+      const title = archive?.title || ''
+      const pub_ts = item?.modules?.module_author?.pub_ts || 0
+      const post_time = formatTimestampToDatetime(pub_ts)
+      const play = archive?.stat?.play || 0
+
+      if (title === titleToFind) {
+        console.log(
+          `投稿时间 = ${post_time}, 标题 = ${title}, 播放量 = ${play}, 投稿标签 = ${topic}`
+        )
+        return {
+          topic,
+          play
+        }
+      }
+    }
+
+    offset = nextOffset
+    if (!offset) break
+  }
+
+  return null
+}
+
+// 获取10天前的零点时间
+const getTenDaysAgo = () => {
   const date = new Date()
   date.setDate(date.getDate() - 7)
   date.setHours(0, 0, 0, 0)
   return date
 }
 
-// 获取消息列表
+// 获取消息列表数据
 const getMessageList = async (end_seqno) => {
-  try {
-    const url = 'https://api.vc.bilibili.com/svr_sync/v1/svr_sync/fetch_session_msgs'
-    const headers = {
-      Referer: 'https://text.bilibili.com/',
-      Cookie: fs.readFileSync(cookieFilePath, 'utf8'),
-      'User-Agent': import.meta.env.VITE_USER_AGENT
-    }
-
-    const params = {
-      talker_id: 844424930131966,
-      session_type: 1,
-      size: 20,
-      end_seqno
-    }
-
-    const response = await axios.get(url, {
-      headers,
-      params
-    })
-
-    return response.data?.data || {}
-  } catch (error) {
-    console.error('获取消息列表失败', error)
-    return null
+  const url = 'https://api.vc.bilibili.com/svr_sync/v1/svr_sync/fetch_session_msgs'
+  const headers = {
+    Referer: 'https://text.bilibili.com/',
+    Cookie: fs.readFileSync(cookieFilePath, 'utf8'),
+    'User-Agent': import.meta.env.VITE_USER_AGENT
   }
+  const params = {
+    talker_id: 844424930131966,
+    session_type: 1,
+    size: 20,
+    end_seqno
+  }
+  const response = await axios.get(url, {
+    headers,
+    params
+  })
+  return response.data?.data || null
 }
 
 // 导入Excel文件的处理函数
@@ -649,12 +637,10 @@ app.whenReady().then(async () => {
       let currentPage = 1
       let totalPage = 1
       let totalMoney = 0
-
       const balance = await getBalance()
 
       while (currentPage <= totalPage) {
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-
+        await new Promise((resolve) => setTimeout(resolve, 3000))
         const url = 'https://pay.bilibili.com/payplatform/cashier/bk/trans/list'
         const payload = {
           currentPage,
@@ -672,8 +658,8 @@ app.whenReady().then(async () => {
           headers
         })
         const data = response.data?.data || {}
-        const records = data.result || []
-        totalPage = data.page?.totalPage || 1
+        const records = data?.result || []
+        totalPage = data?.page?.totalPage || 1
 
         for (const item of records) {
           const money = item.brokerage || 0
@@ -688,9 +674,9 @@ app.whenReady().then(async () => {
           )
 
           const sql = `
-          INSERT IGNORE INTO rewards (product_name, money, create_time)
-          VALUES (?, ?, ?)
-        `
+            INSERT IGNORE INTO rewards (product_name, money, create_time)
+            VALUES (?, ?, ?)
+          `
 
           await conn.query(sql, [product_name, money, create_time])
 
@@ -722,18 +708,18 @@ app.whenReady().then(async () => {
     const conn = await pool.getConnection()
     try {
       let page = 1
+      const tenDaysAgo = getTenDaysAgo()
+
       while (true) {
-        await new Promise((resolve) => setTimeout(resolve, 1000))
-        const result = await getBilibiliList(page)
+        await new Promise((resolve) => setTimeout(resolve, 3000))
+        const result = await getManuscriptList(page)
         if (!result) break
 
         const { count, ps } = result?.page || {}
         const totalPage = Math.ceil(count / ps)
+        const lastPostTime = await everyPageData(event, result, conn)
 
-        await parseData(event, result, conn)
-        await conn.commit()
-
-        if (page >= totalPage) {
+        if (page >= totalPage || lastPostTime < tenDaysAgo) {
           event.sender.send('update-database-finish')
           break
         }
@@ -753,26 +739,28 @@ app.whenReady().then(async () => {
   // 活动资格取消稿件
   ipcMain.on('cancel-event-qualification', async (event) => {
     const conn = await pool.getConnection()
-
     try {
       let end_seqno
       let messageTime
+      const tenDaysAgo = getTenDaysAgo()
       const text = '由于不符合本次征稿活动的规则，故无法参与本次活动的评选'
-      const sevenDaysAgo = getSevenDaysAgo()
 
       while (true) {
-        await new Promise((resolve) => setTimeout(resolve, 1000))
+        await new Promise((resolve) => setTimeout(resolve, 3000))
         const result = await getMessageList(end_seqno)
-        const messages = result.messages
-        const has_more = result.has_more
-        const min_seqno = result.min_seqno
+        if (!result) {
+          dialog.showMessageBox(mainWindow, {
+            title: '获取消息列表数据',
+            type: 'error',
+            message: `获取消息列表数据失败`
+          })
+          break
+        }
+        const { messages, has_more, min_seqno } = result
 
         for (const item of messages) {
-          const content = item.content || ''
-          const timestamp = item.timestamp || 0
-
+          const { content, timestamp } = item
           if (!content.includes(text)) continue
-
           messageTime = new Date(timestamp * 1000)
 
           let titleStart = content.indexOf('《') + 1
@@ -782,7 +770,15 @@ app.whenReady().then(async () => {
               ? content.substring(titleStart, titleEnd)
               : '未知标题'
 
-          const { topic, play } = await getTopicByTitle(title)
+          const result2 = await getTopicByTitle(title)
+          if (!result2) {
+            dialog.showMessageBox(mainWindow, {
+              title: '根据标题查找投稿标签',
+              type: 'error',
+              message: `根据标题查找投稿标签失败`
+            })
+          }
+          const { topic, play } = result2
 
           const sql = `
             INSERT IGNORE INTO disqualification (title, topic, play, post_time)
@@ -799,8 +795,13 @@ app.whenReady().then(async () => {
           })
         }
 
-        if (!has_more || messageTime < sevenDaysAgo) {
+        if (!has_more || messageTime < tenDaysAgo) {
           event.sender.send('cancel-event-qualification-finish')
+          dialog.showMessageBox(mainWindow, {
+            title: '活动资格取消稿件',
+            type: 'info',
+            message: '查询结束'
+          })
           break
         }
 
@@ -810,7 +811,7 @@ app.whenReady().then(async () => {
       dialog.showMessageBox(mainWindow, {
         title: '活动资格取消稿件',
         type: 'error',
-        message: `获取活动资格取消稿件失败, ${error.message}`
+        message: `查找活动资格取消稿件失败, ${error.message}`
       })
     } finally {
       conn.release()
