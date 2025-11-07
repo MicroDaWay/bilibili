@@ -34,11 +34,6 @@ const handleProgress = (event, item) => {
 const handleFinish = () => {
   if (globalItemListRef) {
     isProcessing.value = false
-    window.electronAPI.showMessage({
-      title: '更新数据库',
-      type: 'info',
-      message: '更新数据库成功'
-    })
   }
 }
 

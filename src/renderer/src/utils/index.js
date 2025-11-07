@@ -14,9 +14,12 @@ const formatDatetimeToTimestamp = (year, month, day, hour = 0, minute = 0, secon
 }
 
 const formatTimestampToDatetime = (timestamp) => {
-  if (timestamp == null) return null
+  if (typeof timestamp !== 'number' || timestamp <= 0) return null
   const dt = new Date(timestamp * 1000)
-  return dt.toISOString().slice(0, 19).replace('T', ' ')
+  if (isNaN(dt.getTime())) return null
+
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())} ${pad(dt.getHours())}:${pad(dt.getMinutes())}:${pad(dt.getSeconds())}`
 }
 
 export {

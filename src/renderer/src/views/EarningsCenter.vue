@@ -28,9 +28,9 @@ const bilibiliStore = useBilibiliStore()
 const handleProgress = (event, item) => {
   if (globalItemListRef) {
     itemList.value.push({
-      create_time: item.create_time,
+      create_time: item.createTime,
       money: item.money,
-      product_name: item.product_name
+      product_name: item.productName
     })
     totalMoney.value = item.totalMoney
     balance.value = item.balance
@@ -42,11 +42,6 @@ const handleProgress = (event, item) => {
 const handleFinish = () => {
   if (globalItemListRef) {
     isProcessing.value = false
-    window.electronAPI.showMessage({
-      title: '收益中心',
-      type: 'info',
-      message: '查询结束'
-    })
   }
 }
 

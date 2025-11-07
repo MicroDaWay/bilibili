@@ -125,124 +125,81 @@ const initTable = async () => {
 
 // 获取余额
 const getBalance = async () => {
-  try {
-    const url = 'https://pay.bilibili.com/bk/brokerage/getUserBrokerage'
-    const payload = {
-      sdkVersion: '1.1.7',
-      timestamp: Math.floor(Date.now() / 1000),
-      traceId: Math.floor(Date.now() / 1000)
-    }
-    const headers = {
-      Referer: 'https://pay.bilibili.com/pay-v2/shell/index',
-      Cookie: fs.readFileSync(cookieFilePath, 'utf8').replace(/,/g, '%2C'),
-      'User-Agent': import.meta.env.VITE_USER_AGENT,
-      'Content-Type': 'application/json'
-    }
-    const response = await axios.post(url, payload, {
-      headers
-    })
-    return response.data?.data?.brokerage || 0
-  } catch (error) {
-    dialog.showMessageBox(mainWindow, {
-      title: '获取余额',
-      type: 'error',
-      message: `获取余额失败, ${error.message}`
-    })
-    return 0
+  const url = 'https://pay.bilibili.com/bk/brokerage/getUserBrokerage'
+  const payload = {
+    sdkVersion: '1.1.7',
+    timestamp: Math.floor(Date.now() / 1000),
+    traceId: Math.floor(Date.now() / 1000)
   }
+  const headers = {
+    Referer: 'https://pay.bilibili.com/pay-v2/shell/index',
+    Cookie: fs.readFileSync(cookieFilePath, 'utf8').replace(/,/g, '%2C'),
+    'User-Agent': import.meta.env.VITE_USER_AGENT,
+    'Content-Type': 'application/json'
+  }
+  const response = await axios.post(url, payload, {
+    headers
+  })
+  return response.data?.data || null
 }
 
 // 获取稿件列表
 const getManuscriptList = async (pn) => {
-  try {
-    const url = 'https://member.bilibili.com/x/web/archives'
-    const headers = {
-      Referer: 'https://member.bilibili.com/platform/upload-manager/article',
-      Cookie: fs.readFileSync(cookieFilePath, 'utf8'),
-      'User-Agent': import.meta.env.VITE_USER_AGENT
-    }
-    const response = await axios.get(url, {
-      params: {
-        pn,
-        ps: 10
-      },
-      headers
-    })
-    return response.data?.data || null
-  } catch (error) {
-    dialog.showMessageBox(mainWindow, {
-      title: '获取稿件列表',
-      type: 'error',
-      message: `获取稿件列表失败, ${error.message}`
-    })
-    return null
+  const url = 'https://member.bilibili.com/x/web/archives'
+  const headers = {
+    Referer: 'https://member.bilibili.com/platform/upload-manager/article',
+    Cookie: fs.readFileSync(cookieFilePath, 'utf8'),
+    'User-Agent': import.meta.env.VITE_USER_AGENT
   }
+  const response = await axios.get(url, {
+    params: {
+      pn,
+      ps: 10
+    },
+    headers
+  })
+  return response.data?.data || null
 }
 
-// 处理每一页的数据
-const everyPageData = async (event, result, conn) => {
-  try {
-    const arc_audits = result?.arc_audits || []
-    for (const item of arc_audits) {
-      const archive = item?.Archive || {}
-      const stat = item?.stat || {}
-      const title = archive?.title
-      const view = stat?.view || 0
-      const pubTime = archive?.ptime
-      const tag = archive?.tag
-      const postTime = formatTimestampToDatetime(pubTime)
-
-      console.log(
-        `投稿时间 = ${postTime}, 播放量 = ${view.toString().padEnd(5)}, 标题 = ${title}, 投稿标签 = ${tag}`
-      )
-
-      const sql = `
-        INSERT IGNORE INTO bilibili(title, view, post_time, tag)
-        VALUES (?, ?, ?, ?)
-      `
-      await conn.query(sql, [title, view, postTime, tag])
-
-      event.sender.send('update-database-progress', {
-        title,
-        view,
-        postTime,
-        tag
-      })
-    }
-
-    const lastPostTime = formatTimestampToDatetime(arc_audits.at(-1)?.Archive?.ptime)
-    return lastPostTime
-  } catch (error) {
-    dialog.showMessageBox(mainWindow, {
-      title: '解析数据',
-      type: 'error',
-      message: `解析数据失败, ${error.message}`
-    })
+// 获取收益列表
+const getEarningsList = async (currentPage) => {
+  const url = 'https://pay.bilibili.com/payplatform/cashier/bk/trans/list'
+  const payload = {
+    currentPage,
+    pageSize: 20,
+    sdkVersion: '1.1.7',
+    traceId: Math.floor(Date.now() / 1000)
   }
+  const headers = {
+    Referer: 'https://pay.bilibili.com/pay-v2/shell/bill',
+    Cookie: fs.readFileSync(cookieFilePath, 'utf8').replace(/,/g, '%2C'),
+    'User-Agent': import.meta.env.VITE_USER_AGENT,
+    'Content-Type': 'application/json'
+  }
+  const response = await axios.post(url, payload, {
+    headers
+  })
+
+  return response.data?.data || null
 }
 
 // 获取动态列表数据
 const getDynamicList = async (offset) => {
-  try {
-    const url = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space'
-    const headers = {
-      Referer: 'https://space.bilibili.com/506485454/dynamic',
-      Cookie: fs.readFileSync(cookieFilePath, 'utf8'),
-      'User-Agent': import.meta.env.VITE_USER_AGENT
-    }
-    const params = {
-      offset,
-      host_mid: '506485454'
-    }
-    const response = await axios.get(url, {
-      headers,
-      params
-    })
-    return response.data?.data || null
-  } catch (error) {
-    console.error(`获取动态列表数据失败, ${error.message}`)
-    return null
+  const url = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space'
+  const headers = {
+    Referer: 'https://space.bilibili.com/506485454/dynamic',
+    Cookie: fs.readFileSync(cookieFilePath, 'utf8'),
+    'User-Agent': import.meta.env.VITE_USER_AGENT
   }
+  const params = {
+    offset,
+    host_mid: '506485454'
+  }
+  const response = await axios.get(url, {
+    headers,
+    params
+  })
+  return response.data?.data || null
 }
 
 // 根据标题查找投稿标签
@@ -251,7 +208,9 @@ const getTopicByTitle = async (titleToFind) => {
 
   while (true) {
     await new Promise((resolve) => setTimeout(resolve, 10000))
-    const { items, offset: nextOffset } = await getDynamicList(offset)
+    const result = await getDynamicList(offset)
+    if (!result) break
+    const { items, offset: nextOffset } = result
 
     // 遍历动态列表
     for (const item of items) {
@@ -283,7 +242,7 @@ const getTopicByTitle = async (titleToFind) => {
 // 获取10天前的零点时间
 const getTenDaysAgo = () => {
   const date = new Date()
-  date.setDate(date.getDate() - 7)
+  date.setDate(date.getDate() - 10)
   date.setHours(0, 0, 0, 0)
   return date
 }
@@ -329,18 +288,18 @@ const importExcelHandler = async () => {
       const excelData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetNames[0]])
       if (excelData) {
         dialog.showMessageBox(mainWindow, {
-          title: '导入Excel',
+          title: '导入Excel表',
           type: 'info',
-          message: '导入Excel成功'
+          message: '导入Excel表成功'
         })
 
         BrowserWindow.getFocusedWindow().webContents.send('save-excel-data', excelData)
       }
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
-        title: '导入Excel',
+        title: '导入Excel表',
         type: 'error',
-        message: `导入Excel失败, ${error.message}`
+        message: `导入Excel表失败, ${error.message}`
       })
     }
   }
@@ -370,7 +329,7 @@ const startServer = () => {
       dialog.showMessageBox(mainWindow, {
         title: '开启图片代理服务器',
         type: 'error',
-        text: `代理错误, ${error.message}`
+        message: `开启图片代理服务器失败, ${error.message}`
       })
       res.status(500).send('代理错误')
     }
@@ -420,7 +379,7 @@ if (!gotTheLock) {
   // 如果没拿到锁，说明已有实例在运行，直接退出当前进程
   app.quit()
 } else {
-  // 如果拿到了锁，监听 second-instance 事件
+  // 如果拿到了锁，监听second-instance事件
   app.on('second-instance', () => {
     // 当用户再次尝试启动应用时，聚焦到已有窗口
     if (mainWindow) {
@@ -431,12 +390,9 @@ if (!gotTheLock) {
 }
 
 app.whenReady().then(async () => {
-  const ok = await checkDatabaseConnection()
+  const result = await checkDatabaseConnection()
   // 如果连不上数据库，直接退出应用
-  if (!ok) {
-    return
-  }
-
+  if (!result) return
   electronApp.setAppUserModelId('com.electron')
 
   app.on('browser-window-created', (_, window) => {
@@ -495,11 +451,6 @@ app.whenReady().then(async () => {
         type: 'error',
         message: `检查二维码状态失败, ${error.message}`
       })
-
-      return {
-        code: -1,
-        message: '网络请求失败, 请检查网络或重试'
-      }
     }
   })
 
@@ -557,7 +508,7 @@ app.whenReady().then(async () => {
     }
   })
 
-  // 获取稿件管理数据
+  // 稿件管理
   ipcMain.handle('manuscript-management', async (e, pn) => {
     try {
       const url = 'https://member.bilibili.com/x/web/archives'
@@ -584,7 +535,7 @@ app.whenReady().then(async () => {
     }
   })
 
-  // 获取打卡挑战数据
+  // 打卡挑战
   ipcMain.handle('check-in-challenge', async () => {
     try {
       const url = 'https://member.bilibili.com/x2/creative/h5/clock/v4/activity/list'
@@ -607,7 +558,7 @@ app.whenReady().then(async () => {
     }
   })
 
-  // 获取热门活动数据
+  // 热门活动
   ipcMain.handle('popular-events', async () => {
     try {
       const url = 'https://member.bilibili.com/x/web/activity/videoall'
@@ -630,68 +581,72 @@ app.whenReady().then(async () => {
     }
   })
 
-  // 获取收益中心数据
+  // 收益中心
   ipcMain.on('earnings-center', async (event) => {
     const conn = await pool.getConnection()
     try {
       let currentPage = 1
       let totalPage = 1
       let totalMoney = 0
-      const balance = await getBalance()
-
-      while (currentPage <= totalPage) {
-        await new Promise((resolve) => setTimeout(resolve, 3000))
-        const url = 'https://pay.bilibili.com/payplatform/cashier/bk/trans/list'
-        const payload = {
-          currentPage,
-          pageSize: 20,
-          sdkVersion: '1.1.7',
-          traceId: Math.floor(Date.now() / 1000)
-        }
-        const headers = {
-          Referer: 'https://pay.bilibili.com/pay-v2/shell/bill',
-          Cookie: fs.readFileSync(cookieFilePath, 'utf8').replace(/,/g, '%2C'),
-          'User-Agent': import.meta.env.VITE_USER_AGENT,
-          'Content-Type': 'application/json'
-        }
-        const response = await axios.post(url, payload, {
-          headers
+      const result = await getBalance()
+      if (!result) {
+        dialog.showMessageBox(mainWindow, {
+          title: '获取余额',
+          type: 'error',
+          message: '获取余额失败'
         })
-        const data = response.data?.data || {}
-        const records = data?.result || []
-        totalPage = data?.page?.totalPage || 1
+      }
+      const { brokerage } = result
+
+      while (true) {
+        await new Promise((resolve) => setTimeout(resolve, 3000))
+        const result2 = await getEarningsList(currentPage)
+        if (!result2) {
+          dialog.showMessageBox(mainWindow, {
+            title: '获取收益列表数据',
+            type: 'error',
+            message: '获取收益列表数据失败'
+          })
+          break
+        }
+
+        const records = result2?.result || []
+        totalPage = result2?.page?.totalPage || 1
 
         for (const item of records) {
-          const money = item.brokerage || 0
-          const product_name = item.title || ''
-          const create_time = item.ctime || ''
-
-          if (product_name === '银行卡提现' || product_name === '支付宝提现') continue
-
+          const { brokerage: money, title: productName, ctime: createTime } = item
+          if (productName === '银行卡提现' || productName === '支付宝提现') continue
           totalMoney += money
           console.log(
-            `发放时间 = ${create_time}, 发放金额 = ${money.toFixed(2).padEnd(6)}, 活动名称 = ${product_name}`
+            `发放时间 = ${createTime}, 发放金额 = ${money.toFixed(2).padEnd(6)}, 活动名称 = ${productName}`
           )
 
           const sql = `
             INSERT IGNORE INTO rewards (product_name, money, create_time)
             VALUES (?, ?, ?)
           `
-
-          await conn.query(sql, [product_name, money, create_time])
+          await conn.query(sql, [productName, money, createTime])
 
           event.sender.send('earnings-center-progress', {
-            product_name,
+            productName,
             money,
-            create_time,
+            createTime,
             totalMoney: totalMoney.toFixed(2),
-            balance: balance.toFixed(2)
+            balance: brokerage.toFixed(2)
           })
+        }
+
+        if (currentPage >= totalPage) {
+          event.sender.send('earnings-center-finish')
+          dialog.showMessageBox(mainWindow, {
+            title: '获取收益中心数据',
+            type: 'info',
+            message: '查询结束'
+          })
+          break
         }
         currentPage++
       }
-
-      event.sender.send('earnings-center-finish')
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
         title: '获取收益中心数据',
@@ -708,19 +663,57 @@ app.whenReady().then(async () => {
     const conn = await pool.getConnection()
     try {
       let page = 1
-      const tenDaysAgo = getTenDaysAgo()
 
       while (true) {
         await new Promise((resolve) => setTimeout(resolve, 3000))
         const result = await getManuscriptList(page)
-        if (!result) break
+        if (!result) {
+          dialog.showMessageBox(mainWindow, {
+            title: '获取稿件列表数据',
+            type: 'error',
+            message: '获取稿件列表数据失败'
+          })
+          break
+        }
 
         const { count, ps } = result?.page || {}
         const totalPage = Math.ceil(count / ps)
-        const lastPostTime = await everyPageData(event, result, conn)
+        const arc_audits = result?.arc_audits || []
 
-        if (page >= totalPage || lastPostTime < tenDaysAgo) {
+        for (const item of arc_audits) {
+          const archive = item?.Archive || {}
+          const stat = item?.stat || {}
+          const title = archive?.title
+          const view = stat?.view || 0
+          const pubTime = archive?.ptime
+          const tag = archive?.tag
+          const postTime = formatTimestampToDatetime(pubTime)
+
+          console.log(
+            `投稿时间 = ${postTime}, 播放量 = ${view.toString().padEnd(5)}, 标题 = ${title}, 投稿标签 = ${tag}`
+          )
+
+          const sql = `
+            INSERT IGNORE INTO bilibili(title, view, post_time, tag)
+            VALUES (?, ?, ?, ?)
+          `
+          await conn.query(sql, [title, view, postTime, tag])
+
+          event.sender.send('update-database-progress', {
+            title,
+            view,
+            postTime,
+            tag
+          })
+        }
+
+        if (page >= totalPage) {
           event.sender.send('update-database-finish')
+          dialog.showMessageBox(mainWindow, {
+            title: '更新数据库',
+            type: 'info',
+            message: '更新数据库成功'
+          })
           break
         }
         page++
@@ -752,7 +745,7 @@ app.whenReady().then(async () => {
           dialog.showMessageBox(mainWindow, {
             title: '获取消息列表数据',
             type: 'error',
-            message: `获取消息列表数据失败`
+            message: '获取消息列表数据失败'
           })
           break
         }
@@ -775,7 +768,7 @@ app.whenReady().then(async () => {
             dialog.showMessageBox(mainWindow, {
               title: '根据标题查找投稿标签',
               type: 'error',
-              message: `根据标题查找投稿标签失败`
+              message: '根据标题查找投稿标签失败'
             })
           }
           const { topic, play } = result2
@@ -784,21 +777,21 @@ app.whenReady().then(async () => {
             INSERT IGNORE INTO disqualification (title, topic, play, post_time)
             VALUES (?, ?, ?, ?)
           `
-          const post_time = formatTimestampToDatetime(timestamp)
-          await conn.query(sql, [title, topic, play, post_time])
+          const postTime = formatTimestampToDatetime(timestamp)
+          await conn.query(sql, [title, topic, play, postTime])
 
           event.sender.send('cancel-event-qualification-progress', {
             title,
             topic,
             play,
-            post_time
+            postTime
           })
         }
 
         if (!has_more || messageTime < tenDaysAgo) {
           event.sender.send('cancel-event-qualification-finish')
           dialog.showMessageBox(mainWindow, {
-            title: '活动资格取消稿件',
+            title: '查询活动资格取消稿件',
             type: 'info',
             message: '查询结束'
           })
