@@ -16,7 +16,6 @@ const filterData = ref({
   eventStartTime: '',
   eventEndTime: '',
   eventRules: '',
-  postCategory: '',
   postCount: 0,
   postTopic: ''
 })
@@ -60,49 +59,6 @@ onBeforeUnmount(() => {
   window.removeEventListener('resize', checkScrollbar)
 })
 
-// 获取指定页码的数据
-const getItemListByPageNumber = async (pn) => {
-  const result = await window.electronAPI.manuscriptManagement(pn)
-  return result
-}
-
-// 处理每一页的数据
-const everyPageHandler = (items, startTime) => {
-  for (const item of items) {
-    const archive = item.Archive || {}
-    const stat = item.stat || {}
-    const tag = archive.tag || ''
-    const view = stat.view || 0
-    const ptime = formatTimestampToDatetime(archive.ptime) || 0
-    const title = archive.title || ''
-    const cover = archive.cover || ''
-
-    if (tag.includes(topic.value) && ptime >= startTime) {
-      totalPlay.value += parseInt(view, 10)
-      totalCount.value++
-
-      itemList.value.push({
-        view,
-        ptime,
-        title,
-        cover,
-        topic: topic.value
-      })
-
-      console.log(
-        `投稿话题 = ${topic.value}, ` +
-          `投稿量 = ${String(totalCount.value).padEnd(2, ' ')}, ` +
-          `播放量 = ${String(view).padEnd(5, ' ')}, ` +
-          `总播放量 = ${String(totalPlay.value).padEnd(5, ' ')}, ` +
-          `投稿时间 = ${ptime}, ` +
-          `稿件名称 = ${title}`
-      )
-    }
-  }
-
-  return items.length > 0 ? items[items.length - 1].Archive.ptime : 0
-}
-
 // 主函数
 const main = async () => {
   try {
@@ -114,8 +70,43 @@ const main = async () => {
 
     while (true) {
       await new Promise((resolve) => setTimeout(resolve, 1000))
-      const itemList = await getItemListByPageNumber(pn)
-      const latestPostTime = formatTimestampToDatetime(everyPageHandler(itemList, startTime))
+      const result = await window.electronAPI.manuscriptManagement(pn)
+      const { arc_audits } = result
+
+      for (const item of arc_audits) {
+        const archive = item?.Archive || {}
+        const stat = item?.stat || {}
+        const tag = archive?.tag || ''
+        const view = stat?.view || 0
+        const ptime = formatTimestampToDatetime(archive.ptime) || 0
+        const title = archive?.title || ''
+        const cover = archive?.cover || ''
+
+        if (tag.includes(topic.value) && ptime >= startTime) {
+          totalPlay.value += parseInt(view, 10)
+          totalCount.value++
+
+          itemList.value.push({
+            view,
+            ptime,
+            title,
+            cover,
+            topic: topic.value
+          })
+
+          console.log(
+            `投稿话题 = ${topic.value}, ` +
+              `投稿量 = ${String(totalCount.value).padEnd(2, ' ')}, ` +
+              `播放量 = ${String(view).padEnd(5, ' ')}, ` +
+              `总播放量 = ${String(totalPlay.value).padEnd(5, ' ')}, ` +
+              `投稿时间 = ${ptime}, ` +
+              `稿件名称 = ${title}`
+          )
+        }
+      }
+
+      const latestPostTime = formatTimestampToDatetime(arc_audits.at(-1)?.Archive?.ptime)
+
       if (latestPostTime < startTime) {
         window.electronAPI.showMessage({
           title: '稿件管理',
@@ -130,7 +121,7 @@ const main = async () => {
     window.electronAPI.showMessage({
       title: '稿件管理',
       type: 'error',
-      message: `发生错误：, ${error.message}`
+      message: `查询失败, ${error.message}`
     })
   } finally {
     isSearching.value = false

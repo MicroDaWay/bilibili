@@ -22,9 +22,22 @@ const formatTimestampToDatetime = (timestamp) => {
   return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())} ${pad(dt.getHours())}:${pad(dt.getMinutes())}:${pad(dt.getSeconds())}`
 }
 
+// 下划线命名转驼峰命名
+const rowsToCamel = (rows) => {
+  return rows.map((row) => {
+    const newRow = {}
+    for (const key in row) {
+      const camelKey = key.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase())
+      newRow[camelKey] = row[key]
+    }
+    return newRow
+  })
+}
+
 export {
   excelDateToJSDate,
   jsDateToExcelDate,
   formatDatetimeToTimestamp,
-  formatTimestampToDatetime
+  formatTimestampToDatetime,
+  rowsToCamel
 }

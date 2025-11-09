@@ -25,7 +25,7 @@ const main = async () => {
   const result = await window.electronAPI.moneyByYear()
   itemList.value = result
   window.electronAPI.showMessage({
-    title: '每年获得的激励金额',
+    title: '查询每年获得的激励金额',
     type: 'info',
     message: '查询结束'
   })

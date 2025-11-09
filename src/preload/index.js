@@ -11,13 +11,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   showMessage: (params) => ipcRenderer.invoke('show-message', params),
   // 展示右键菜单
   showContextMenu: () => ipcRenderer.send('show-context-menu'),
-  // 获取登录二维码
+  // 查询登录二维码
   getQRCode: () => ipcRenderer.invoke('get-qrcode'),
   // 检查二维码状态
   checkQRCodeStatus: (params) => ipcRenderer.invoke('check-qrcode-status', params),
   // 保存cookie
   saveCookie: (params) => ipcRenderer.invoke('save-cookie', params),
-  // 获取导航栏数据
+  // 查询导航栏数据
   getNavigationData: () => ipcRenderer.invoke('get-navigation-data'),
   // 退出登录
   logout: () => ipcRenderer.invoke('logout'),
@@ -53,11 +53,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeListener('cancel-event-qualification-progress', callback),
   removeCancelEventQualificationFinishListener: (callback) =>
     ipcRenderer.removeListener('cancel-event-qualification-finish', callback),
-  // 播放量<100的稿件
+  // 查询播放量<100的稿件
   viewLessOneHundred: () => ipcRenderer.invoke('view-less-one-hundred'),
-  // 每年获得的激励金额
+  // 查询每年获得的激励金额
   moneyByYear: () => ipcRenderer.invoke('money-by-year'),
-  // 每月获得的激励金额
+  // 查询每月获得的激励金额
   moneyByMonth: () => ipcRenderer.invoke('money-by-month'),
   // 根据标签查询激励金额
   getMoneyByTag: (params) => ipcRenderer.invoke('get-money-by-tag', params),
@@ -65,10 +65,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getManuscriptByTag: (params) => ipcRenderer.invoke('get-manuscript-by-tag', params),
   // 根据标签查询取消稿件
   getDisqualificationByTag: (params) => ipcRenderer.invoke('get-disqualification-by-tag', params),
-  // 获取bilibili表中的数据
+  // 查询bilibili表中的数据
   getBilibiliData: () => ipcRenderer.invoke('get-bilibili-data'),
-  // 获取rewards表中的数据
+  // 查询rewards表中的数据
   getRewardsData: () => ipcRenderer.invoke('get-rewards-data'),
-  // 获取disqualification表中的数据
+  // 查询disqualification表中的数据
   getDisqualificationData: () => ipcRenderer.invoke('get-disqualification-data')
 })

@@ -15,12 +15,12 @@ let globalItemListRef = null
 const columns = [
   {
     title: '发放时间',
-    key: 'create_time',
+    key: 'createTime',
     width: '20%',
     formatter: (value) => format(value, 'yyyy-MM-dd HH:mm:ss')
   },
   { title: '发放金额', key: 'money', width: '8%' },
-  { title: '活动名称', key: 'product_name' }
+  { title: '活动名称', key: 'productName' }
 ]
 
 const bilibiliStore = useBilibiliStore()
@@ -28,9 +28,9 @@ const bilibiliStore = useBilibiliStore()
 const handleProgress = (event, item) => {
   if (globalItemListRef) {
     itemList.value.push({
-      create_time: item.createTime,
+      createTime: item.createTime,
       money: item.money,
-      product_name: item.productName
+      productName: item.productName
     })
     totalMoney.value = item.totalMoney
     balance.value = item.balance

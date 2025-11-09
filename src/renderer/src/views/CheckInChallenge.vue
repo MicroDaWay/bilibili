@@ -48,7 +48,7 @@ const main = async () => {
   })
 
   window.electronAPI.showMessage({
-    title: '打卡挑战',
+    title: '查询打卡挑战数据',
     type: 'info',
     message: '查询结束'
   })

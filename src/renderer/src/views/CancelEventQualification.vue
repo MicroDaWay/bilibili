@@ -12,7 +12,7 @@ let globalItemListRef = null
 const columns = [
   {
     title: '活动资格取消时间',
-    key: 'post_time',
+    key: 'postTime',
     width: '20%',
     formatter: (value) => format(value, 'yyyy-MM-dd HH:mm:ss')
   },

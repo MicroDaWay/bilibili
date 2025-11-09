@@ -6,9 +6,13 @@ import axios from 'axios'
 import express from 'express'
 import dotenv from 'dotenv'
 import mysql from 'mysql2/promise'
-import { formatTimestampToDatetime } from '../renderer/src/utils/index'
+import { formatTimestampToDatetime, rowsToCamel } from '../renderer/src/utils/index'
 import fs from 'fs'
 import path from 'node:path'
+
+let server
+let mainWindow
+let isQuitting = false
 
 // 加载环境变量
 dotenv.config()
@@ -17,15 +21,12 @@ dotenv.config()
 const userDataPath = app.getPath('userData')
 const cookieFilePath = path.join(userDataPath, 'cookie.txt')
 
-// 确保文件存在，如果不存在则创建空文件
+// 如果cookie.txt不存在则创建空文件
 if (!fs.existsSync(cookieFilePath)) {
   fs.writeFileSync(cookieFilePath, '', 'utf8')
 }
 
-let server
-let mainWindow
-
-// 创建自定义右键菜单项
+// 自定义右键菜单项
 const createMenuItem = (label, role, shortcut) => {
   const paddingLength = 20
   const paddedLabel = label.padEnd(paddingLength)
@@ -68,7 +69,6 @@ const checkDatabaseConnection = async () => {
       type: 'error',
       message: `数据库连接失败, ${error.message}`
     })
-
     app.quit()
     return false
   }
@@ -123,7 +123,33 @@ const initTable = async () => {
   }
 }
 
-// 获取余额
+// 查询10天前的零点时间
+const getTenDaysAgo = () => {
+  const date = new Date()
+  date.setDate(date.getDate() - 10)
+  date.setHours(0, 0, 0, 0)
+  return date
+}
+
+// 查询稿件数据
+const getManuscriptList = async (pn) => {
+  const url = 'https://member.bilibili.com/x/web/archives'
+  const headers = {
+    Referer: 'https://member.bilibili.com/platform/upload-manager/article',
+    Cookie: fs.readFileSync(cookieFilePath, 'utf8'),
+    'User-Agent': import.meta.env.VITE_USER_AGENT
+  }
+  const response = await axios.get(url, {
+    params: {
+      pn,
+      ps: 10
+    },
+    headers
+  })
+  return response.data?.data || null
+}
+
+// 查询余额
 const getBalance = async () => {
   const url = 'https://pay.bilibili.com/bk/brokerage/getUserBrokerage'
   const payload = {
@@ -143,25 +169,7 @@ const getBalance = async () => {
   return response.data?.data || null
 }
 
-// 获取稿件列表
-const getManuscriptList = async (pn) => {
-  const url = 'https://member.bilibili.com/x/web/archives'
-  const headers = {
-    Referer: 'https://member.bilibili.com/platform/upload-manager/article',
-    Cookie: fs.readFileSync(cookieFilePath, 'utf8'),
-    'User-Agent': import.meta.env.VITE_USER_AGENT
-  }
-  const response = await axios.get(url, {
-    params: {
-      pn,
-      ps: 10
-    },
-    headers
-  })
-  return response.data?.data || null
-}
-
-// 获取收益列表
+// 查询收益数据
 const getEarningsList = async (currentPage) => {
   const url = 'https://pay.bilibili.com/payplatform/cashier/bk/trans/list'
   const payload = {
@@ -183,7 +191,7 @@ const getEarningsList = async (currentPage) => {
   return response.data?.data || null
 }
 
-// 获取动态列表数据
+// 查询动态数据
 const getDynamicList = async (offset) => {
   const url = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space'
   const headers = {
@@ -202,7 +210,7 @@ const getDynamicList = async (offset) => {
   return response.data?.data || null
 }
 
-// 根据标题查找投稿标签
+// 根据标题查询投稿标签
 const getTopicByTitle = async (titleToFind) => {
   let offset
 
@@ -212,7 +220,6 @@ const getTopicByTitle = async (titleToFind) => {
     if (!result) break
     const { items, offset: nextOffset } = result
 
-    // 遍历动态列表
     for (const item of items) {
       const archive = item?.modules?.module_dynamic?.major?.archive || {}
       const topic = item?.modules?.module_dynamic?.topic?.name || ''
@@ -239,15 +246,7 @@ const getTopicByTitle = async (titleToFind) => {
   return null
 }
 
-// 获取10天前的零点时间
-const getTenDaysAgo = () => {
-  const date = new Date()
-  date.setDate(date.getDate() - 10)
-  date.setHours(0, 0, 0, 0)
-  return date
-}
-
-// 获取消息列表数据
+// 查询消息数据
 const getMessageList = async (end_seqno) => {
   const url = 'https://api.vc.bilibili.com/svr_sync/v1/svr_sync/fetch_session_msgs'
   const headers = {
@@ -305,7 +304,7 @@ const importExcelHandler = async () => {
   }
 }
 
-// 图片代理服务器
+// 开启图片代理服务器
 const startServer = () => {
   const expressApp = express()
   const port = 3000
@@ -390,14 +389,16 @@ if (!gotTheLock) {
 }
 
 app.whenReady().then(async () => {
+  // 检查数据库连接
   const result = await checkDatabaseConnection()
   // 如果连不上数据库，直接退出应用
   if (!result) return
-  electronApp.setAppUserModelId('com.electron')
 
-  app.on('browser-window-created', (_, window) => {
-    optimizer.watchWindowShortcuts(window)
-  })
+  // 初始化数据库表
+  await initTable()
+
+  // 开启图片代理服务器
+  startServer()
 
   // 消息弹窗
   ipcMain.handle('show-message', (e, params) => {
@@ -414,7 +415,7 @@ app.whenReady().then(async () => {
     })
   })
 
-  // 获取登录二维码
+  // 查询登录二维码
   ipcMain.handle('get-qrcode', async () => {
     try {
       const url = 'https://passport.bilibili.com/x/passport-login/web/qrcode/generate'
@@ -426,9 +427,9 @@ app.whenReady().then(async () => {
       return response.data || null
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
-        title: '获取登录二维码',
+        title: '查询登录二维码',
         type: 'error',
-        message: `获取登录二维码失败, ${error.message}`
+        message: `查询登录二维码失败, ${error.message}`
       })
       return null
     }
@@ -459,7 +460,7 @@ app.whenReady().then(async () => {
     await fs.promises.writeFile(cookieFilePath, cookie, 'utf8')
   })
 
-  // 获取导航栏数据
+  // 查询导航栏数据
   ipcMain.handle('get-navigation-data', async () => {
     try {
       const url = 'https://api.bilibili.com/x/web-interface/nav'
@@ -474,9 +475,9 @@ app.whenReady().then(async () => {
       return response.data?.data || null
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
-        title: '获取导航栏数据',
+        title: '查询导航栏数据',
         type: 'error',
-        message: `获取导航栏数据失败, ${error.message}`
+        message: `查询导航栏数据失败, ${error.message}`
       })
       return null
     }
@@ -508,34 +509,22 @@ app.whenReady().then(async () => {
     }
   })
 
-  // 稿件管理
+  // 查询稿件管理数据
   ipcMain.handle('manuscript-management', async (e, pn) => {
     try {
-      const url = 'https://member.bilibili.com/x/web/archives'
-      const headers = {
-        Referer: 'https://member.bilibili.com/platform/upload-manager/article',
-        Cookie: fs.readFileSync(cookieFilePath, 'utf8'),
-        'User-Agent': import.meta.env.VITE_USER_AGENT
-      }
-      const response = await axios.get(url, {
-        params: {
-          pn,
-          ps: 10
-        },
-        headers
-      })
-      return response.data?.data?.arc_audits || []
+      const result = getManuscriptList(pn)
+      return result
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
-        title: '获取稿件管理数据',
+        title: '查询稿件管理数据',
         type: 'error',
-        message: `获取稿件管理数据失败, ${error.message}`
+        message: `查询稿件管理数据失败, ${error.message}`
       })
       return null
     }
   })
 
-  // 打卡挑战
+  // 查询打卡挑战数据
   ipcMain.handle('check-in-challenge', async () => {
     try {
       const url = 'https://member.bilibili.com/x2/creative/h5/clock/v4/activity/list'
@@ -550,15 +539,15 @@ app.whenReady().then(async () => {
       return response.data?.data?.list || []
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
-        title: '获取打卡挑战数据',
+        title: '查询打卡挑战数据',
         type: 'error',
-        message: `获取打卡挑战数据失败, ${error.message}`
+        message: `查询打卡挑战数据失败, ${error.message}`
       })
       return null
     }
   })
 
-  // 热门活动
+  // 查询热门活动数据
   ipcMain.handle('popular-events', async () => {
     try {
       const url = 'https://member.bilibili.com/x/web/activity/videoall'
@@ -573,15 +562,15 @@ app.whenReady().then(async () => {
       return response.data?.data || []
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
-        title: '获取热门活动数据',
+        title: '查询热门活动数据',
         type: 'error',
-        message: `获取热门活动数据失败, ${error.message}`
+        message: `查询热门活动数据失败, ${error.message}`
       })
       return null
     }
   })
 
-  // 收益中心
+  // 查询收益中心数据
   ipcMain.on('earnings-center', async (event) => {
     const conn = await pool.getConnection()
     try {
@@ -591,9 +580,9 @@ app.whenReady().then(async () => {
       const result = await getBalance()
       if (!result) {
         dialog.showMessageBox(mainWindow, {
-          title: '获取余额',
+          title: '查询余额',
           type: 'error',
-          message: '获取余额失败'
+          message: '查询余额失败'
         })
       }
       const { brokerage } = result
@@ -603,9 +592,9 @@ app.whenReady().then(async () => {
         const result2 = await getEarningsList(currentPage)
         if (!result2) {
           dialog.showMessageBox(mainWindow, {
-            title: '获取收益列表数据',
+            title: '查询收益数据',
             type: 'error',
-            message: '获取收益列表数据失败'
+            message: '查询收益数据失败'
           })
           break
         }
@@ -639,7 +628,7 @@ app.whenReady().then(async () => {
         if (currentPage >= totalPage) {
           event.sender.send('earnings-center-finish')
           dialog.showMessageBox(mainWindow, {
-            title: '获取收益中心数据',
+            title: '查询收益中心数据',
             type: 'info',
             message: '查询结束'
           })
@@ -649,9 +638,9 @@ app.whenReady().then(async () => {
       }
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
-        title: '获取收益中心数据',
+        title: '查询收益中心数据',
         type: 'error',
-        message: `获取收益中心数据失败, ${error.message}`
+        message: `查询收益中心数据失败, ${error.message}`
       })
     } finally {
       conn.release()
@@ -669,9 +658,9 @@ app.whenReady().then(async () => {
         const result = await getManuscriptList(page)
         if (!result) {
           dialog.showMessageBox(mainWindow, {
-            title: '获取稿件列表数据',
+            title: '查询稿件数据',
             type: 'error',
-            message: '获取稿件列表数据失败'
+            message: '查询稿件数据失败'
           })
           break
         }
@@ -712,7 +701,7 @@ app.whenReady().then(async () => {
           dialog.showMessageBox(mainWindow, {
             title: '更新数据库',
             type: 'info',
-            message: '更新数据库成功'
+            message: '查询结束'
           })
           break
         }
@@ -729,7 +718,7 @@ app.whenReady().then(async () => {
     }
   })
 
-  // 活动资格取消稿件
+  // 查询活动资格取消稿件
   ipcMain.on('cancel-event-qualification', async (event) => {
     const conn = await pool.getConnection()
     try {
@@ -743,9 +732,9 @@ app.whenReady().then(async () => {
         const result = await getMessageList(end_seqno)
         if (!result) {
           dialog.showMessageBox(mainWindow, {
-            title: '获取消息列表数据',
+            title: '查询消息数据',
             type: 'error',
-            message: '获取消息列表数据失败'
+            message: '查询消息数据失败'
           })
           break
         }
@@ -766,9 +755,9 @@ app.whenReady().then(async () => {
           const result2 = await getTopicByTitle(title)
           if (!result2) {
             dialog.showMessageBox(mainWindow, {
-              title: '根据标题查找投稿标签',
+              title: '根据标题查询投稿标签',
               type: 'error',
-              message: '根据标题查找投稿标签失败'
+              message: '根据标题查询投稿标签失败'
             })
           }
           const { topic, play } = result2
@@ -802,16 +791,16 @@ app.whenReady().then(async () => {
       }
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
-        title: '活动资格取消稿件',
+        title: '查询活动资格取消稿件',
         type: 'error',
-        message: `查找活动资格取消稿件失败, ${error.message}`
+        message: `查询活动资格取消稿件失败, ${error.message}`
       })
     } finally {
       conn.release()
     }
   })
 
-  // 播放量<100的稿件
+  // 查询播放量<100的稿件
   ipcMain.handle('view-less-one-hundred', async () => {
     const conn = await pool.getConnection()
     try {
@@ -821,12 +810,12 @@ app.whenReady().then(async () => {
         ORDER BY view ASC
       `
       const [rows] = await conn.query(sql)
-      return rows
+      return rowsToCamel(rows)
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
-        title: '播放量<100的稿件',
+        title: '查询播放量<100的稿件',
         type: 'error',
-        message: `获取播放量<100的稿件失败, ${error.message}`
+        message: `查询播放量<100的稿件失败, ${error.message}`
       })
       return null
     } finally {
@@ -834,7 +823,7 @@ app.whenReady().then(async () => {
     }
   })
 
-  // 每年获得的激励金额
+  // 查询每年获得的激励金额
   ipcMain.handle('money-by-year', async () => {
     const conn = await pool.getConnection()
     try {
@@ -845,12 +834,12 @@ app.whenReady().then(async () => {
         ORDER BY year DESC
       `
       const [rows] = await conn.query(sql)
-      return rows
+      return rowsToCamel(rows)
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
-        title: '每年获得的激励金额',
+        title: '查询每年获得的激励金额',
         type: 'error',
-        message: `获取每年获得的激励金额失败, ${error.message}`
+        message: `查询每年获得的激励金额失败, ${error.message}`
       })
       return null
     } finally {
@@ -858,7 +847,7 @@ app.whenReady().then(async () => {
     }
   })
 
-  // 每月获得的激励金额
+  // 查询每月获得的激励金额
   ipcMain.handle('money-by-month', async () => {
     const conn = await pool.getConnection()
     try {
@@ -869,12 +858,12 @@ app.whenReady().then(async () => {
         ORDER BY year DESC, month DESC
       `
       const [rows] = await conn.query(sql)
-      return rows
+      return rowsToCamel(rows)
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
-        title: '每月获得的激励金额',
+        title: '查询每月获得的激励金额',
         type: 'error',
-        message: `获取每月获得的激励金额失败, ${error.message}`
+        message: `查询每月获得的激励金额失败, ${error.message}`
       })
       return null
     } finally {
@@ -883,16 +872,17 @@ app.whenReady().then(async () => {
   })
 
   // 根据标签查询激励金额
-  ipcMain.handle('get-money-by-tag', async (e, product_name) => {
+  ipcMain.handle('get-money-by-tag', async (e, productName) => {
     const conn = await pool.getConnection()
     try {
       const sql = `
         SELECT product_name AS productName, money, create_time AS createTime, SUM(money) OVER () AS totalMoney
         FROM rewards
         WHERE product_name LIKE ?
+        ORDER BY create_time DESC
       `
-      const [rows] = await conn.query(sql, [`%${product_name}%`])
-      return rows
+      const [rows] = await conn.query(sql, [`%${productName}%`])
+      return rowsToCamel(rows)
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
         title: '根据标签查询激励金额',
@@ -915,7 +905,7 @@ app.whenReady().then(async () => {
         WHERE tag LIKE ?
       `
       const [rows] = await conn.query(sql, [`%${tag}%`])
-      return rows
+      return rowsToCamel(rows)
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
         title: '根据投稿标签查询稿件',
@@ -938,7 +928,7 @@ app.whenReady().then(async () => {
         WHERE topic LIKE ?
       `
       const [rows] = await conn.query(sql, [`%${tag}%`])
-      return rows
+      return rowsToCamel(rows)
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
         title: '根据标签查询取消稿件',
@@ -951,54 +941,50 @@ app.whenReady().then(async () => {
     }
   })
 
-  // 获取bilibili表中的数据
+  // 查询bilibili表中的数据
   ipcMain.handle('get-bilibili-data', async () => {
     try {
       const [rows] = await pool.query('SELECT * FROM bilibili ORDER BY post_time DESC')
-      return rows
+      return rowsToCamel(rows)
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
-        title: '获取bilibili表中的数据',
+        title: '查询bilibili表中的数据',
         type: 'error',
-        message: `获取bilibili表中的数据失败, ${error.message}`
+        message: `查询bilibili表中的数据失败, ${error.message}`
       })
       return null
     }
   })
 
-  // 获取rewards表中的数据
+  // 查询rewards表中的数据
   ipcMain.handle('get-rewards-data', async () => {
     try {
       const [rows] = await pool.query('SELECT * FROM rewards ORDER BY create_time DESC')
-      return rows
+      return rowsToCamel(rows)
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
-        title: '获取rewards表中的数据',
+        title: '查询rewards表中的数据',
         type: 'error',
-        message: `获取rewards表中的数据失败, ${error.message}`
+        message: `查询rewards表中的数据失败, ${error.message}`
       })
       return null
     }
   })
 
-  // 获取disqualification表中的数据
+  // 查询disqualification表中的数据
   ipcMain.handle('get-disqualification-data', async () => {
     try {
       const [rows] = await pool.query('SELECT * FROM disqualification ORDER BY post_time DESC')
-      return rows
+      return rowsToCamel(rows)
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
-        title: '获取disqualification表中的数据',
+        title: '查询disqualification表中的数据',
         type: 'error',
-        message: `获取disqualification表中的数据失败, ${error.message}`
+        message: `查询disqualification表中的数据失败, ${error.message}`
       })
       return null
     }
   })
-
-  await initTable()
-  createWindow()
-  startServer()
 
   // 菜单栏
   const myMenu = [
@@ -1017,15 +1003,30 @@ app.whenReady().then(async () => {
 
   const menu = Menu.buildFromTemplate(myMenu)
   Menu.setApplicationMenu(menu)
+  createWindow()
+  electronApp.setAppUserModelId('com.electron')
+
+  app.on('browser-window-created', (_, window) => {
+    optimizer.watchWindowShortcuts(window)
+  })
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
-})
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
+  app.on('window-all-closed', () => {
+    if (process.platform !== 'darwin') app.quit()
+  })
+
+  app.on('before-quit', async (e) => {
+    if (isQuitting) return
+    e.preventDefault()
+    isQuitting = true
+
+    if (server && server.listening) {
+      await new Promise((resolve) => server.close(resolve))
+    }
+
     app.quit()
-    server.close()
-  }
+  })
 })

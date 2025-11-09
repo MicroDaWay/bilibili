@@ -9,7 +9,7 @@ const title = '播放量<100的稿件'
 const columns = [
   {
     title: '投稿时间',
-    key: 'post_time',
+    key: 'postTime',
     width: '20%',
     formatter: (value) => format(value, 'yyyy-MM-dd HH:mm:ss')
   },
@@ -32,7 +32,7 @@ const main = async () => {
   const result = await window.electronAPI.viewLessOneHundred()
   itemList.value = result
   window.electronAPI.showMessage({
-    title: '播放量<100的稿件',
+    title: '查询播放量<100的稿件',
     type: 'info',
     message: '查询结束'
   })

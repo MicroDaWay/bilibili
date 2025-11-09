@@ -48,7 +48,7 @@ const main = async () => {
   })
 
   window.electronAPI.showMessage({
-    title: '热门活动',
+    title: '查询热门活动数据',
     type: 'info',
     message: '查询结束'
   })
