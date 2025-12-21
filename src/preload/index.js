@@ -23,8 +23,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   logout: () => ipcRenderer.invoke('logout'),
   // 稿件管理
   manuscriptManagement: (params) => ipcRenderer.invoke('manuscript-management', params),
-  // 打卡挑战
-  checkInChallenge: () => ipcRenderer.invoke('check-in-challenge'),
   // 热门活动
   popularEvents: () => ipcRenderer.invoke('popular-events'),
   // 收益中心
@@ -56,19 +54,23 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 查询播放量<100的稿件
   viewLessOneHundred: () => ipcRenderer.invoke('view-less-one-hundred'),
   // 查询每年获得的激励金额
-  moneyByYear: () => ipcRenderer.invoke('money-by-year'),
+  getMoneyByYear: () => ipcRenderer.invoke('get-money-by-year'),
   // 查询每月获得的激励金额
-  moneyByMonth: () => ipcRenderer.invoke('money-by-month'),
+  getMoneyByMonth: () => ipcRenderer.invoke('get-money-by-month'),
   // 根据标签查询激励金额
   getMoneyByTag: (params) => ipcRenderer.invoke('get-money-by-tag', params),
   // 根据投稿标签查询稿件
   getManuscriptByTag: (params) => ipcRenderer.invoke('get-manuscript-by-tag', params),
   // 根据标签查询取消稿件
   getDisqualificationByTag: (params) => ipcRenderer.invoke('get-disqualification-by-tag', params),
-  // 查询bilibili表中的数据
-  getBilibiliData: () => ipcRenderer.invoke('get-bilibili-data'),
+  // 查询manuscript表中的数据
+  getManuscriptData: () => ipcRenderer.invoke('get-manuscript-data'),
   // 查询rewards表中的数据
   getRewardsData: () => ipcRenderer.invoke('get-rewards-data'),
   // 查询disqualification表中的数据
-  getDisqualificationData: () => ipcRenderer.invoke('get-disqualification-data')
+  getDisqualificationData: () => ipcRenderer.invoke('get-disqualification-data'),
+  // 查询每月的工资
+  getSalaryByMonth: () => ipcRenderer.invoke('get-salary-by-month'),
+  // 查询每年的工资
+  getSalaryByYear: () => ipcRenderer.invoke('get-salary-by-year')
 })

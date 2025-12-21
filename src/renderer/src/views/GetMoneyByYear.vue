@@ -12,7 +12,7 @@ const columns = [
 
 // 获取数据库中的数据
 const getDatabaseData = async () => {
-  const result = await window.electronAPI.moneyByYear()
+  const result = await window.electronAPI.getMoneyByYear()
   itemList.value = result
 }
 
@@ -22,7 +22,7 @@ onMounted(() => {
 
 // 主函数
 const main = async () => {
-  const result = await window.electronAPI.moneyByYear()
+  const result = await window.electronAPI.getMoneyByYear()
   itemList.value = result
   window.electronAPI.showMessage({
     title: '查询每年获得的激励金额',

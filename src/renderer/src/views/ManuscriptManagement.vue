@@ -6,18 +6,14 @@ import { useBilibiliStore } from '../stores/bilibiliStore'
 import { excelDateToJSDate, formatTimestampToDatetime } from '../utils'
 import ContentCard from '../components/ContentCard.vue'
 
-// 投稿话题
-const topic = ref('')
+// 投稿标签
+const postTag = ref('')
 const isSearching = ref(false)
 
 // 过滤后的数据
 const filterData = ref({
-  eventName: '',
   eventStartTime: '',
-  eventEndTime: '',
-  eventRules: '',
-  postCount: 0,
-  postTopic: ''
+  eventEndTime: ''
 })
 
 const totalPlay = ref(0)
@@ -74,15 +70,13 @@ const main = async () => {
       const { arc_audits } = result
 
       for (const item of arc_audits) {
-        const archive = item?.Archive || {}
-        const stat = item?.stat || {}
-        const tag = archive?.tag || ''
-        const view = stat?.view || 0
-        const ptime = formatTimestampToDatetime(archive.ptime) || 0
-        const title = archive?.title || ''
-        const cover = archive?.cover || ''
+        const tag = item?.Archive?.tag || ''
+        const view = item?.stat?.view || 0
+        const ptime = formatTimestampToDatetime(item?.Archive?.ptime) || 0
+        const title = item?.Archive?.title || ''
+        const cover = item?.Archive?.cover || ''
 
-        if (tag.includes(topic.value) && ptime >= startTime) {
+        if (tag.includes(postTag.value) && ptime >= startTime) {
           totalPlay.value += parseInt(view, 10)
           totalCount.value++
 
@@ -91,11 +85,11 @@ const main = async () => {
             ptime,
             title,
             cover,
-            topic: topic.value
+            tag: postTag.value
           })
 
           console.log(
-            `投稿话题 = ${topic.value}, ` +
+            `投稿标签 = ${postTag.value}, ` +
               `投稿量 = ${String(totalCount.value).padEnd(2, ' ')}, ` +
               `播放量 = ${String(view).padEnd(5, ' ')}, ` +
               `总播放量 = ${String(totalPlay.value).padEnd(5, ' ')}, ` +
@@ -134,7 +128,7 @@ const searchHandler = () => {
   let flag = false
 
   bilibiliStore.excelData.map((item) => {
-    if (item['投稿话题'].includes(topic.value)) {
+    if (item['投稿标签'].includes(postTag.value)) {
       filterData.value = {
         ...item,
         eventStartTime: format(excelDateToJSDate(item['活动开始时间']), 'yyyy-MM-dd'),
@@ -164,11 +158,11 @@ const searchHandler = () => {
     <div ref="inputEl" class="search-input-box">
       <div class="input-container">
         <input
-          v-model.trim="topic"
+          v-model.trim="postTag"
           class="search-input"
           type="text"
           :class="{ 'input-focus': isInputFocus }"
-          placeholder="请输入投稿话题"
+          placeholder="请输入投稿标签"
           @focus="isInputFocus = true"
           @blur="isInputFocus = false"
           @keyup.enter="searchHandler"
@@ -191,7 +185,7 @@ const searchHandler = () => {
     </div>
     <div ref="eventRulesEl" class="event-rules">
       <div>活动规则：{{ filterData['活动规则'] }}</div>
-      <div>当前话题：投稿量={{ totalCount }}, 播放量={{ totalPlay }}</div>
+      <div>当前投稿：投稿量={{ totalCount }}, 播放量={{ totalPlay }}</div>
     </div>
     <div class="content-box">
       <ContentCard

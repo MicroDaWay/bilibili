@@ -14,7 +14,7 @@ const columns = [
     width: '20%',
     formatter: (value) => format(value, 'yyyy-MM-dd HH:mm:ss')
   },
-  { title: '投稿话题', key: 'tag' }
+  { title: '投稿标签', key: 'tag' }
 ]
 
 // 点击搜索的处理函数

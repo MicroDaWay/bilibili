@@ -7,8 +7,8 @@ import { format } from 'date-fns'
 const itemList = ref([])
 const columns = [
   { title: '标题', key: 'title' },
-  { title: '投稿话题', key: 'topic', width: '20%' },
-  { title: '播放量', key: 'play', width: '8%' },
+  { title: '投稿标签', key: 'tag', width: '20%' },
+  { title: '播放量', key: 'view', width: '8%' },
   {
     title: '投稿时间',
     key: 'postTime',

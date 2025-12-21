@@ -22,9 +22,9 @@ const proxyImage = (url) => {
       <img :src="proxyImage(item.cover)" :alt="props.item.title" />
     </div>
     <div class="details">
-      <div class="title">{{ props.item.title }}</div>
+      <div class="title">标题：{{ props.item.title }}</div>
       <div class="ptime">投稿时间：{{ props.item.ptime }}</div>
-      <div class="topic">投稿话题：{{ props.item.topic }}</div>
+      <div class="tag">投稿标签：{{ props.item.tag }}</div>
       <div :class="['view', { 'high-view': props.item.view >= 100 }]">
         播放量：{{ props.item.view }}
       </div>

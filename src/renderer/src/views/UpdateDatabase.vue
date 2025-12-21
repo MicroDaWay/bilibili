@@ -39,7 +39,7 @@ const handleFinish = () => {
 
 // 获取数据库中的数据
 const getDatabaseData = async () => {
-  const result = await window.electronAPI.getBilibiliData()
+  const result = await window.electronAPI.getManuscriptData()
   itemList.value = result
 }
 

@@ -12,10 +12,6 @@ const itemList = [
     url: '/manuscript-management'
   },
   {
-    text: '打卡挑战',
-    url: '/check-in-challenge'
-  },
-  {
     text: '热门活动',
     url: '/popular-events'
   },
@@ -36,12 +32,12 @@ const itemList = [
     url: '/view-less-one-hundred'
   },
   {
-    text: '每年获得的激励金额',
-    url: '/money-by-year'
+    text: '每月获得的激励金额',
+    url: '/get-money-by-month'
   },
   {
-    text: '每月获得的激励金额',
-    url: '/money-by-month'
+    text: '每年获得的激励金额',
+    url: '/get-money-by-year'
   },
   {
     text: '根据标签查询激励金额',
@@ -54,6 +50,14 @@ const itemList = [
   {
     text: '根据标签查询取消稿件',
     url: '/get-disqualified-by-tag'
+  },
+  {
+    text: '查询每月的工资',
+    url: '/get-salary-by-month'
+  },
+  {
+    text: '查询每年的工资',
+    url: '/get-salary-by-year'
   }
 ]
 
@@ -113,6 +117,7 @@ onMounted(() => {
   width: 85%;
   height: 100vh;
   overflow-y: auto;
+  border-top: 1px solid #ccc;
 
   &::-webkit-scrollbar {
     width: 12px;

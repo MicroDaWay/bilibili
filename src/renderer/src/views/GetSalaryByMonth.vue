@@ -1,0 +1,47 @@
+<!-- 每月的工资 -->
+<script setup>
+import { ref, onMounted } from 'vue'
+import DataTable from '../components/DataTable.vue'
+
+const itemList = ref([])
+const title = '每月的工资'
+const columns = [
+  { title: '年份', key: 'year', width: '20%' },
+  { title: '月份', key: 'month', width: '20%' },
+  { title: '工资', key: 'salary', width: '20%' },
+  { title: '时长', key: 'workingHours', width: '20%' },
+  { title: '时薪', key: 'hourlyWage', width: '20%' }
+]
+
+// 获取数据库中的数据
+const getDatabaseData = async () => {
+  const result = await window.electronAPI.getSalaryByMonth()
+  itemList.value = result
+}
+
+onMounted(() => {
+  getDatabaseData()
+})
+
+// 主函数
+const main = async () => {
+  const result = await window.electronAPI.getSalaryByMonth()
+  itemList.value = result
+  window.electronAPI.showMessage({
+    title: '查询每月的工资',
+    type: 'info',
+    message: '查询结束'
+  })
+}
+</script>
+
+<template>
+  <DataTable
+    :title="title"
+    :item-list="itemList"
+    :columns="columns"
+    @main-handler="main"
+  ></DataTable>
+</template>
+
+<style scoped lang="scss"></style>

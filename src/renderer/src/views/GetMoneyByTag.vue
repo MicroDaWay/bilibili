@@ -6,7 +6,7 @@ import { format } from 'date-fns'
 
 const itemList = ref([])
 const columns = [
-  { title: '投稿话题', key: 'productName' },
+  { title: '投稿标签', key: 'productName' },
   { title: '金额', key: 'money', width: '8%' },
   {
     title: '奖励时间',

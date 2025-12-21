@@ -78,40 +78,50 @@ const checkDatabaseConnection = async () => {
 const initTable = async () => {
   const conn = await pool.getConnection()
   try {
-    // 初始化bilibili表
+    // 初始化manuscript表
     await conn.query(`
-    CREATE TABLE IF NOT EXISTS bilibili (
-      id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'id',
-      title VARCHAR(255) COMMENT '标题',
-      view INT COMMENT '播放量',
-      post_time DATETIME COMMENT '投稿时间',
-      tag VARCHAR(255) COMMENT '投稿标签',
-      UNIQUE KEY UK_title_post_time(title, post_time)
-    ) COMMENT '稿件管理'
-  `)
+      CREATE TABLE IF NOT EXISTS manuscript (
+        id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'id',
+        title VARCHAR(255) COMMENT '标题',
+        view INT COMMENT '播放量',
+        post_time DATETIME COMMENT '投稿时间',
+        tag VARCHAR(255) COMMENT '投稿标签'
+      ) COMMENT '稿件管理'
+    `)
 
     // 初始化rewards表
     await conn.query(`
-    CREATE TABLE IF NOT EXISTS rewards (
-      id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'id',
-      product_name VARCHAR(100) COMMENT '活动名称',
-      money DECIMAL(10,2) COMMENT '发放金额',
-      create_time DATETIME COMMENT '发放时间',
-      UNIQUE KEY UK_product_name_money_create_time(product_name, money, create_time)
-    ) COMMENT '收益中心'
-  `)
+      CREATE TABLE IF NOT EXISTS rewards (
+        id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'id',
+        product_name VARCHAR(100) COMMENT '活动名称',
+        money DECIMAL(10,2) COMMENT '发放金额',
+        create_time DATETIME COMMENT '发放时间'
+      ) COMMENT '收益中心'
+    `)
 
     // 初始化disqualification表
     await conn.query(`
-    CREATE TABLE IF NOT EXISTS disqualification (
-      id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'id',
-      title VARCHAR(255) COMMENT '标题',
-      topic VARCHAR(255) COMMENT '投稿标签',
-      play INT COMMENT '播放量',
-      post_time DATETIME COMMENT '投稿时间',
-      UNIQUE KEY UK_title_post_time(title, post_time)
-    ) COMMENT '活动资格取消稿件'
-  `)
+      CREATE TABLE IF NOT EXISTS disqualification (
+        id INT AUTO_INCREMENT PRIMARY KEY COMMENT 'id',
+        title VARCHAR(255) COMMENT '标题',
+        tag VARCHAR(255) COMMENT '投稿标签',
+        view INT COMMENT '播放量',
+        post_time DATETIME COMMENT '投稿时间',
+        UNIQUE KEY UK_title_post_time(title, post_time)
+      ) COMMENT '活动资格取消稿件'
+    `)
+
+    // 初始化salary表
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS salary (
+        year INT COMMENT '年份',
+        month INT COMMENT '月份',
+        salary DECIMAL(10,2) COMMENT '工资',
+        working_hours DECIMAL(4,1) COMMENT '工时',
+        hourly_wage DECIMAL(4,2) COMMENT '时薪',
+        UNIQUE KEY UK_year_month(year, month)
+      ) COMMENT '每月工资'
+    `)
   } catch (error) {
     dialog.showMessageBox(mainWindow, {
       title: '初始化数据库表',
@@ -126,7 +136,7 @@ const initTable = async () => {
 // 查询10天前的零点时间
 const getTenDaysAgo = () => {
   const date = new Date()
-  date.setDate(date.getDate() - 10)
+  date.setDate(date.getDate() - 10000)
   date.setHours(0, 0, 0, 0)
   return date
 }
@@ -139,12 +149,13 @@ const getManuscriptList = async (pn) => {
     Cookie: fs.readFileSync(cookieFilePath, 'utf8'),
     'User-Agent': import.meta.env.VITE_USER_AGENT
   }
+  const params = {
+    pn,
+    ps: 10
+  }
   const response = await axios.get(url, {
-    params: {
-      pn,
-      ps: 10
-    },
-    headers
+    headers,
+    params
   })
   return response.data?.data || null
 }
@@ -191,56 +202,41 @@ const getEarningsList = async (currentPage) => {
   return response.data?.data || null
 }
 
-// 查询动态数据
-const getDynamicList = async (offset) => {
-  const url = 'https://api.bilibili.com/x/polymer/web-dynamic/v1/feed/space'
-  const headers = {
-    Referer: 'https://space.bilibili.com/506485454/dynamic',
-    Cookie: fs.readFileSync(cookieFilePath, 'utf8'),
-    'User-Agent': import.meta.env.VITE_USER_AGENT
-  }
-  const params = {
-    offset,
-    host_mid: '506485454'
-  }
-  const response = await axios.get(url, {
-    headers,
-    params
-  })
-  return response.data?.data || null
-}
-
 // 根据标题查询投稿标签
-const getTopicByTitle = async (titleToFind) => {
-  let offset
+const getTagByTitle = async (targetTitle) => {
+  let pn = 1
+  let totalPage = 1
 
   while (true) {
     await new Promise((resolve) => setTimeout(resolve, 10000))
-    const result = await getDynamicList(offset)
+    const result = await getManuscriptList(pn)
     if (!result) break
-    const { items, offset: nextOffset } = result
+    const { arc_audits, page } = result
+    const count = page?.count || 0
+    const ps = page?.ps || 10
+    totalPage = Math.ceil(count / ps)
 
-    for (const item of items) {
-      const archive = item?.modules?.module_dynamic?.major?.archive || {}
-      const topic = item?.modules?.module_dynamic?.topic?.name || ''
-      const title = archive?.title || ''
-      const pub_ts = item?.modules?.module_author?.pub_ts || 0
-      const post_time = formatTimestampToDatetime(pub_ts)
-      const play = archive?.stat?.play || 0
+    for (const item of arc_audits) {
+      const title = item?.Archive?.title || ''
+      const tag = item?.Archive?.tag || ''
+      const ptime = item?.Archive?.ptime || 0
+      const view = item?.stat?.view || 0
 
-      if (title === titleToFind) {
+      console.log(title)
+
+      if (title === targetTitle) {
         console.log(
-          `投稿时间 = ${post_time}, 标题 = ${title}, 播放量 = ${play}, 投稿标签 = ${topic}`
+          `投稿时间 = ${formatTimestampToDatetime(ptime)}, 标题 = ${title}, 播放量 = ${view}, 投稿标签 = ${tag}`
         )
         return {
-          topic,
-          play
+          tag,
+          view
         }
       }
     }
 
-    offset = nextOffset
-    if (!offset) break
+    if (pn >= totalPage) break
+    pn++
   }
 
   return null
@@ -255,9 +251,9 @@ const getMessageList = async (end_seqno) => {
     'User-Agent': import.meta.env.VITE_USER_AGENT
   }
   const params = {
-    talker_id: 844424930131966,
-    session_type: 1,
     size: 20,
+    session_type: 1,
+    talker_id: 844424930131966,
     end_seqno
   }
   const response = await axios.get(url, {
@@ -266,6 +262,22 @@ const getMessageList = async (end_seqno) => {
   })
   return response.data?.data || null
 }
+
+// 根据标题查询投稿标签和播放量
+// const getTagAndViewByTitle = async (conn, title) => {
+//   const sql = `
+//     SELECT tag, view
+//     FROM manuscript
+//     WHERE title = ?
+//     LIMIT 1
+//   `
+//   const [rows] = await conn.query(sql, [title])
+//   if (rows.length === 0) return null
+//   return {
+//     tag: rows[0].tag || '',
+//     view: rows[0].view || 0
+//   }
+// }
 
 // 导入Excel文件的处理函数
 const importExcelHandler = async () => {
@@ -524,29 +536,6 @@ app.whenReady().then(async () => {
     }
   })
 
-  // 查询打卡挑战数据
-  ipcMain.handle('check-in-challenge', async () => {
-    try {
-      const url = 'https://member.bilibili.com/x2/creative/h5/clock/v4/activity/list'
-      const headers = {
-        Referer: 'https://member.bilibili.com/york/platform-punch-card/personal',
-        Cookie: fs.readFileSync(cookieFilePath, 'utf8'),
-        'User-Agent': import.meta.env.VITE_USER_AGENT
-      }
-      const response = await axios.get(url, {
-        headers
-      })
-      return response.data?.data?.list || []
-    } catch (error) {
-      dialog.showMessageBox(mainWindow, {
-        title: '查询打卡挑战数据',
-        type: 'error',
-        message: `查询打卡挑战数据失败, ${error.message}`
-      })
-      return null
-    }
-  })
-
   // 查询热门活动数据
   ipcMain.handle('popular-events', async () => {
     try {
@@ -573,6 +562,7 @@ app.whenReady().then(async () => {
   // 查询收益中心数据
   ipcMain.on('earnings-center', async (event) => {
     const conn = await pool.getConnection()
+    await conn.query('DELETE FROM rewards')
     try {
       let currentPage = 1
       let totalPage = 1
@@ -588,7 +578,7 @@ app.whenReady().then(async () => {
       const { brokerage } = result
 
       while (true) {
-        await new Promise((resolve) => setTimeout(resolve, 3000))
+        await new Promise((resolve) => setTimeout(resolve, 5000))
         const result2 = await getEarningsList(currentPage)
         if (!result2) {
           dialog.showMessageBox(mainWindow, {
@@ -603,16 +593,21 @@ app.whenReady().then(async () => {
         totalPage = result2?.page?.totalPage || 1
 
         for (const item of records) {
-          const { brokerage: money, title: productName, ctime: createTime } = item
-          if (productName === '银行卡提现' || productName === '支付宝提现') continue
+          const { brokerage: money, title: productName, ctime: createTime, statusDesc } = item
+          if (
+            productName === '银行卡提现' ||
+            productName === '支付宝提现' ||
+            statusDesc === '撤销转入'
+          )
+            continue
           totalMoney += money
           console.log(
             `发放时间 = ${createTime}, 发放金额 = ${money.toFixed(2).padEnd(6)}, 活动名称 = ${productName}`
           )
 
           const sql = `
-            INSERT IGNORE INTO rewards (product_name, money, create_time)
-            VALUES (?, ?, ?)
+            INSERT INTO rewards(product_name, money, create_time)
+            VALUES(?, ?, ?)
           `
           await conn.query(sql, [productName, money, createTime])
 
@@ -650,11 +645,12 @@ app.whenReady().then(async () => {
   // 更新数据库
   ipcMain.on('update-database', async (event) => {
     const conn = await pool.getConnection()
+    await conn.query('DELETE FROM manuscript')
     try {
       let page = 1
 
       while (true) {
-        await new Promise((resolve) => setTimeout(resolve, 3000))
+        await new Promise((resolve) => setTimeout(resolve, 5000))
         const result = await getManuscriptList(page)
         if (!result) {
           dialog.showMessageBox(mainWindow, {
@@ -683,8 +679,8 @@ app.whenReady().then(async () => {
           )
 
           const sql = `
-            INSERT IGNORE INTO bilibili(title, view, post_time, tag)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO manuscript(title, view, post_time, tag)
+            VALUES(?, ?, ?, ?)
           `
           await conn.query(sql, [title, view, postTime, tag])
 
@@ -724,11 +720,12 @@ app.whenReady().then(async () => {
     try {
       let end_seqno
       let messageTime
+      let isExit = false
       const tenDaysAgo = getTenDaysAgo()
-      const text = '由于不符合本次征稿活动的规则，故无法参与本次活动的评选'
+      const text = '由于不符合本次征稿活动的规则'
 
       while (true) {
-        await new Promise((resolve) => setTimeout(resolve, 3000))
+        await new Promise((resolve) => setTimeout(resolve, 5000))
         const result = await getMessageList(end_seqno)
         if (!result) {
           dialog.showMessageBox(mainWindow, {
@@ -738,12 +735,19 @@ app.whenReady().then(async () => {
           })
           break
         }
-        const { messages, has_more, min_seqno } = result
+
+        const { has_more, messages, min_seqno } = result
 
         for (const item of messages) {
           const { content, timestamp } = item
+          console.log(content)
           if (!content.includes(text)) continue
           messageTime = new Date(timestamp * 1000)
+
+          if (messageTime < tenDaysAgo) {
+            isExit = true
+            break
+          }
 
           let titleStart = content.indexOf('《') + 1
           let titleEnd = content.indexOf('》')
@@ -752,32 +756,37 @@ app.whenReady().then(async () => {
               ? content.substring(titleStart, titleEnd)
               : '未知标题'
 
-          const result2 = await getTopicByTitle(title)
+          if (!/[\u4e00-\u9fa5]/.test(title)) continue
+          const result2 = await getTagByTitle(title)
+          // const result2 = await getTagAndViewByTitle(conn, title)
           if (!result2) {
             dialog.showMessageBox(mainWindow, {
               title: '根据标题查询投稿标签',
               type: 'error',
               message: '根据标题查询投稿标签失败'
             })
+            isExit = true
+            break
           }
-          const { topic, play } = result2
+
+          const { tag, view } = result2
 
           const sql = `
-            INSERT IGNORE INTO disqualification (title, topic, play, post_time)
-            VALUES (?, ?, ?, ?)
+            INSERT IGNORE INTO disqualification(title, tag, view, post_time)
+            VALUES(?, ?, ?, ?)
           `
           const postTime = formatTimestampToDatetime(timestamp)
-          await conn.query(sql, [title, topic, play, postTime])
+          await conn.query(sql, [title, tag, view, postTime])
 
           event.sender.send('cancel-event-qualification-progress', {
             title,
-            topic,
-            play,
+            tag,
+            view,
             postTime
           })
         }
 
-        if (!has_more || messageTime < tenDaysAgo) {
+        if (isExit || !has_more) {
           event.sender.send('cancel-event-qualification-finish')
           dialog.showMessageBox(mainWindow, {
             title: '查询活动资格取消稿件',
@@ -805,8 +814,8 @@ app.whenReady().then(async () => {
     const conn = await pool.getConnection()
     try {
       const sql = `
-        SELECT * FROM bilibili
-        WHERE view < 100 AND post_time <= DATE_SUB(CURDATE(),INTERVAL 180 DAY)
+        SELECT * FROM manuscript
+        WHERE view < 100 AND post_time <= DATE_SUB(CURDATE(), INTERVAL 180 DAY)
         ORDER BY view ASC
       `
       const [rows] = await conn.query(sql)
@@ -824,7 +833,7 @@ app.whenReady().then(async () => {
   })
 
   // 查询每年获得的激励金额
-  ipcMain.handle('money-by-year', async () => {
+  ipcMain.handle('get-money-by-year', async () => {
     const conn = await pool.getConnection()
     try {
       const sql = `
@@ -848,7 +857,7 @@ app.whenReady().then(async () => {
   })
 
   // 查询每月获得的激励金额
-  ipcMain.handle('money-by-month', async () => {
+  ipcMain.handle('get-money-by-month', async () => {
     const conn = await pool.getConnection()
     try {
       const sql = `
@@ -901,7 +910,7 @@ app.whenReady().then(async () => {
     try {
       const sql = `
         SELECT title, view, post_time AS postTime, tag
-        FROM bilibili
+        FROM manuscript
         WHERE tag LIKE ?
       `
       const [rows] = await conn.query(sql, [`%${tag}%`])
@@ -923,9 +932,9 @@ app.whenReady().then(async () => {
     const conn = await pool.getConnection()
     try {
       const sql = `
-        SELECT title, topic, play, post_time AS postTime
+        SELECT title, tag, view, post_time AS postTime
         FROM disqualification
-        WHERE topic LIKE ?
+        WHERE tag LIKE ?
       `
       const [rows] = await conn.query(sql, [`%${tag}%`])
       return rowsToCamel(rows)
@@ -941,16 +950,68 @@ app.whenReady().then(async () => {
     }
   })
 
-  // 查询bilibili表中的数据
-  ipcMain.handle('get-bilibili-data', async () => {
+  // 查询每月的工资
+  ipcMain.handle('get-salary-by-month', async () => {
+    const conn = await pool.getConnection()
     try {
-      const [rows] = await pool.query('SELECT * FROM bilibili ORDER BY post_time DESC')
+      const sql = `
+        SELECT year, month, salary, working_hours, hourly_wage
+        FROM salary
+        ORDER BY year DESC, month DESC
+      `
+      const [rows] = await conn.query(sql)
       return rowsToCamel(rows)
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
-        title: '查询bilibili表中的数据',
+        title: '查询每月的工资',
         type: 'error',
-        message: `查询bilibili表中的数据失败, ${error.message}`
+        message: `查询每月的工资失败, ${error.message}`
+      })
+      return null
+    } finally {
+      conn.release()
+    }
+  })
+
+  // 查询每年的工资
+  ipcMain.handle('get-salary-by-year', async () => {
+    const conn = await pool.getConnection()
+    try {
+      const sql = `
+        SELECT year, SUM(salary) AS totalSalary
+        FROM salary
+        GROUP BY year
+        ORDER BY year DESC
+      `
+      const [rows] = await conn.query(sql)
+      return rowsToCamel(rows)
+    } catch (error) {
+      dialog.showMessageBox(mainWindow, {
+        title: '查询每年的工资',
+        type: 'error',
+        message: `查询每年的工资失败, ${error.message}`
+      })
+      return null
+    } finally {
+      conn.release()
+    }
+  })
+
+  // 查询manuscript表中的数据
+  ipcMain.handle('get-manuscript-data', async () => {
+    try {
+      const sql = `
+        SELECT title, view, post_time, tag
+        FROM manuscript
+        ORDER BY post_time DESC
+      `
+      const [rows] = await pool.query(sql)
+      return rowsToCamel(rows)
+    } catch (error) {
+      dialog.showMessageBox(mainWindow, {
+        title: '查询manuscript表中的数据',
+        type: 'error',
+        message: `查询manuscript表中的数据失败, ${error.message}`
       })
       return null
     }
@@ -959,7 +1020,12 @@ app.whenReady().then(async () => {
   // 查询rewards表中的数据
   ipcMain.handle('get-rewards-data', async () => {
     try {
-      const [rows] = await pool.query('SELECT * FROM rewards ORDER BY create_time DESC')
+      const sql = `
+        SELECT product_name, money, create_time
+        FROM rewards
+        ORDER BY create_time DESC
+      `
+      const [rows] = await pool.query(sql)
       return rowsToCamel(rows)
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
@@ -974,7 +1040,12 @@ app.whenReady().then(async () => {
   // 查询disqualification表中的数据
   ipcMain.handle('get-disqualification-data', async () => {
     try {
-      const [rows] = await pool.query('SELECT * FROM disqualification ORDER BY post_time DESC')
+      const sql = `
+        SELECT title, tag, view, post_time
+        FROM disqualification
+        ORDER BY post_time DESC
+      `
+      const [rows] = await pool.query(sql)
       return rowsToCamel(rows)
     } catch (error) {
       dialog.showMessageBox(mainWindow, {
