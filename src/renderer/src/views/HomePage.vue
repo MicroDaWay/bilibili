@@ -32,11 +32,11 @@ const itemList = [
     url: '/view-less-one-hundred'
   },
   {
-    text: '每月获得的激励金额',
+    text: '查询每月的激励金额',
     url: '/get-money-by-month'
   },
   {
-    text: '每年获得的激励金额',
+    text: '查询每年的激励金额',
     url: '/get-money-by-year'
   },
   {
@@ -44,7 +44,7 @@ const itemList = [
     url: '/get-money-by-tag'
   },
   {
-    text: '根据投稿标签查询稿件',
+    text: '根据标签查询投稿稿件',
     url: '/get-manuscript-by-tag'
   },
   {
@@ -58,6 +58,14 @@ const itemList = [
   {
     text: '查询每年的工资',
     url: '/get-salary-by-year'
+  },
+  {
+    text: '查询每月的提现金额',
+    url: '/get-withdraw-by-month'
+  },
+  {
+    text: '查询每年的提现金额',
+    url: '/get-withdraw-by-year'
   }
 ]
 
@@ -86,16 +94,19 @@ onMounted(() => {
   width: 15%;
   height: 100vh;
   border-right: 1px solid #ccc;
-  border-top: 1px solid #ccc;
 
   .item {
-    height: 6.25vh;
-    line-height: 6.25vh;
+    height: 5vh;
+    line-height: 5vh;
     font-size: 1.3vw;
     border-bottom: 1px solid #ccc;
     cursor: pointer;
     text-indent: 1em;
     user-select: none;
+
+    &:first-child {
+      border-top: 1px solid #ccc;
+    }
 
     &:hover {
       background-color: orange;

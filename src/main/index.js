@@ -119,8 +119,19 @@ const initTable = async () => {
         salary DECIMAL(10,2) COMMENT '工资',
         working_hours DECIMAL(4,1) COMMENT '工时',
         hourly_wage DECIMAL(4,2) COMMENT '时薪',
-        UNIQUE KEY UK_year_month(year, month)
+        UNIQUE KEY UK_salary_year_month(year, month)
       ) COMMENT '每月工资'
+    `)
+
+    // 初始化withdraw表
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS withdraw (
+        year INT COMMENT '年份',
+        month INT COMMENT '月份',
+        brokerage DECIMAL(10,2) COMMENT '提现金额',
+        type INT COMMENT '提现类型',
+        UNIQUE KEY UK_withdraw_year_month(year, month)
+      ) COMMENT '提现表'
     `)
   } catch (error) {
     dialog.showMessageBox(mainWindow, {
@@ -594,12 +605,31 @@ app.whenReady().then(async () => {
 
         for (const item of records) {
           const { brokerage: money, title: productName, ctime: createTime, statusDesc } = item
+          const year = new Date(createTime).getFullYear()
+          const month = new Date(createTime).getMonth() + 1
+
+          if (productName === '银行卡提现') {
+            const sql = `
+              INSERT INTO withdraw(year, month, brokerage, type)
+              VALUES(?, ?, ?, ?)
+            `
+            await conn.query(sql, [year, month, money, 0])
+          } else if (productName === '支付宝提现') {
+            const sql = `
+              INSERT INTO withdraw(year, month, brokerage, type)
+              VALUES(?, ?, ?, ?)
+            `
+            await conn.query(sql, [year, month, money, 1])
+          }
+
           if (
             productName === '银行卡提现' ||
             productName === '支付宝提现' ||
             statusDesc === '撤销转入'
-          )
+          ) {
             continue
+          }
+
           totalMoney += money
           console.log(
             `发放时间 = ${createTime}, 发放金额 = ${money.toFixed(2).padEnd(6)}, 活动名称 = ${productName}`
@@ -990,6 +1020,60 @@ app.whenReady().then(async () => {
         title: '查询每年的工资',
         type: 'error',
         message: `查询每年的工资失败, ${error.message}`
+      })
+      return null
+    } finally {
+      conn.release()
+    }
+  })
+
+  // 查询每月提现金额
+  ipcMain.handle('get-withdraw-by-month', async () => {
+    const conn = await pool.getConnection()
+    try {
+      const sql = `
+        SELECT
+          year,
+          month,
+          brokerage,
+          CASE type
+            WHEN 0 THEN '银行卡提现'
+            WHEN 1 THEN '支付宝提现'
+          END AS type
+        FROM withdraw
+        ORDER BY year DESC, month DESC
+      `
+      const [rows] = await conn.query(sql)
+      return rowsToCamel(rows)
+    } catch (error) {
+      dialog.showMessageBox(mainWindow, {
+        title: '查询每月提现金额',
+        type: 'error',
+        message: `查询每月提现金额失败, ${error.message}`
+      })
+      return null
+    } finally {
+      conn.release()
+    }
+  })
+
+  // 查询每年提现金额
+  ipcMain.handle('get-withdraw-by-year', async () => {
+    const conn = await pool.getConnection()
+    try {
+      const sql = `
+        SELECT year, SUM(brokerage) AS totalBrokerage
+        FROM withdraw
+        GROUP BY year
+        ORDER BY year DESC
+      `
+      const [rows] = await conn.query(sql)
+      return rowsToCamel(rows)
+    } catch (error) {
+      dialog.showMessageBox(mainWindow, {
+        title: '查询每年提现金额',
+        type: 'error',
+        message: `查询每年提现金额失败, ${error.message}`
       })
       return null
     } finally {

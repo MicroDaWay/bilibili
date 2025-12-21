@@ -21,7 +21,9 @@ const routes = [
     component: () => import('../views/GetDisqualifiedByTag.vue')
   },
   { path: '/get-salary-by-month', component: () => import('../views/GetSalaryByMonth.vue') },
-  { path: '/get-salary-by-year', component: () => import('../views/GetSalaryByYear.vue') }
+  { path: '/get-salary-by-year', component: () => import('../views/GetSalaryByYear.vue') },
+  { path: '/get-withdraw-by-month', component: () => import('../views/GetWithdrawByMonth.vue') },
+  { path: '/get-withdraw-by-year', component: () => import('../views/GetWithdrawByYear.vue') }
 ]
 
 const router = createRouter({

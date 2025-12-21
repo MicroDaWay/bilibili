@@ -1,4 +1,4 @@
-<!-- 根据投稿标签查询稿件 -->
+<!-- 根据标签查询投稿稿件 -->
 <script setup>
 import { format } from 'date-fns'
 import { ref } from 'vue'
@@ -24,13 +24,13 @@ const searchHandler = async (tag) => {
 
   if (result.length === 0) {
     window.electronAPI.showMessage({
-      title: '根据投稿标签查询稿件',
+      title: '根据标签查询投稿稿件',
       type: 'info',
       message: '未查询到相关数据'
     })
   } else {
     window.electronAPI.showMessage({
-      title: '根据投稿标签查询稿件',
+      title: '根据标签查询投稿稿件',
       type: 'info',
       message: '查询结束'
     })

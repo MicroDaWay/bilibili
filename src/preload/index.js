@@ -72,5 +72,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 查询每月的工资
   getSalaryByMonth: () => ipcRenderer.invoke('get-salary-by-month'),
   // 查询每年的工资
-  getSalaryByYear: () => ipcRenderer.invoke('get-salary-by-year')
+  getSalaryByYear: () => ipcRenderer.invoke('get-salary-by-year'),
+  // 查询每月提现金额
+  getWithdrawByMonth: () => ipcRenderer.invoke('get-withdraw-by-month'),
+  // 查询每年提现金额
+  getWithdrawByYear: () => ipcRenderer.invoke('get-withdraw-by-year')
 })

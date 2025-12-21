@@ -1,10 +1,10 @@
-<!-- 每年获得的激励金额 -->
+<!-- 每年的激励金额 -->
 <script setup>
 import { ref, onMounted } from 'vue'
 import DataTable from '../components/DataTable.vue'
 
 const itemList = ref([])
-const title = '每年获得的激励金额'
+const title = '每年的激励金额'
 const columns = [
   { title: '年份', key: 'year', width: '50%' },
   { title: '累计金额', key: 'totalMoney', width: '50%' }
@@ -25,7 +25,7 @@ const main = async () => {
   const result = await window.electronAPI.getMoneyByYear()
   itemList.value = result
   window.electronAPI.showMessage({
-    title: '查询每年获得的激励金额',
+    title: '查询每年的激励金额',
     type: 'info',
     message: '查询结束'
   })
