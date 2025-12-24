@@ -1,6 +1,6 @@
 <!-- 更新数据库 -->
 <script setup>
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, nextTick } from 'vue'
 import { format } from 'date-fns'
 import DataTable from '../components/DataTable.vue'
 
@@ -8,6 +8,7 @@ const itemList = ref([])
 const title = '更新数据库'
 const isProcessing = ref(false)
 let globalItemListRef = null
+const dataTableContainer = ref(null)
 
 const columns = [
   {
@@ -20,7 +21,7 @@ const columns = [
   { title: '标题', key: 'title' }
 ]
 
-const handleProgress = (event, item) => {
+const handleProgress = async (event, item) => {
   if (globalItemListRef) {
     itemList.value.push({
       title: item.title,
@@ -28,6 +29,12 @@ const handleProgress = (event, item) => {
       postTime: item.postTime,
       tag: item.tag
     })
+
+    await nextTick()
+    const container = dataTableContainer.value
+    if (container) {
+      container.scrollTop = container.scrollHeight
+    }
   }
 }
 
@@ -72,12 +79,19 @@ const main = () => {
 </script>
 
 <template>
-  <DataTable
-    :title="title"
-    :item-list="itemList"
-    :columns="columns"
-    @main-handler="main"
-  ></DataTable>
+  <div ref="dataTableContainer" class="data-table-container">
+    <DataTable
+      :title="title"
+      :item-list="itemList"
+      :columns="columns"
+      @main-handler="main"
+    ></DataTable>
+  </div>
 </template>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.data-table-container {
+  height: 100%;
+  overflow-y: auto;
+}
+</style>

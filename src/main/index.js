@@ -119,7 +119,7 @@ const initTable = async () => {
         salary DECIMAL(10,2) COMMENT '工资',
         working_hours DECIMAL(4,1) COMMENT '工时',
         hourly_wage DECIMAL(4,2) COMMENT '时薪',
-        UNIQUE KEY UK_salary_year_month(year, month)
+        PRIMARY KEY PK_salary_year_month(year, month)
       ) COMMENT '每月工资'
     `)
 
@@ -130,7 +130,7 @@ const initTable = async () => {
         month INT COMMENT '月份',
         brokerage DECIMAL(10,2) COMMENT '提现金额',
         type INT COMMENT '提现类型',
-        UNIQUE KEY UK_withdraw_year_month(year, month)
+        UNIQUE KEY UK_withdraw_year_month_type(year, month, type)
       ) COMMENT '提现表'
     `)
   } catch (error) {
@@ -610,13 +610,13 @@ app.whenReady().then(async () => {
 
           if (productName === '银行卡提现') {
             const sql = `
-              INSERT INTO withdraw(year, month, brokerage, type)
+              INSERT IGNORE INTO withdraw(year, month, brokerage, type)
               VALUES(?, ?, ?, ?)
             `
             await conn.query(sql, [year, month, money, 0])
           } else if (productName === '支付宝提现') {
             const sql = `
-              INSERT INTO withdraw(year, month, brokerage, type)
+              INSERT IGNORE INTO withdraw(year, month, brokerage, type)
               VALUES(?, ?, ?, ?)
             `
             await conn.query(sql, [year, month, money, 1])

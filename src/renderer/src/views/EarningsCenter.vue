@@ -1,6 +1,6 @@
 <!-- 收益中心 -->
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { format } from 'date-fns'
 import { useBilibiliStore } from '../stores/bilibiliStore'
 import DataTable from '../components/DataTable.vue'
@@ -11,6 +11,7 @@ const balance = ref('')
 const title = '收益中心'
 const isProcessing = ref(false)
 let globalItemListRef = null
+const dataTableContainer = ref(null)
 
 const columns = [
   {
@@ -25,7 +26,7 @@ const columns = [
 
 const bilibiliStore = useBilibiliStore()
 
-const handleProgress = (event, item) => {
+const handleProgress = async (event, item) => {
   if (globalItemListRef) {
     itemList.value.push({
       createTime: item.createTime,
@@ -36,6 +37,12 @@ const handleProgress = (event, item) => {
     balance.value = item.balance
     bilibiliStore.setTotalMoney(item.totalMoney)
     bilibiliStore.setBalance(item.balance)
+
+    await nextTick()
+    const container = dataTableContainer.value
+    if (container) {
+      container.scrollTop = container.scrollHeight
+    }
   }
 }
 
@@ -82,14 +89,21 @@ const main = () => {
 </script>
 
 <template>
-  <DataTable
-    :title="title"
-    :item-list="itemList"
-    :columns="columns"
-    :total-money="totalMoney"
-    :balance="balance"
-    @main-handler="main"
-  ></DataTable>
+  <div ref="dataTableContainer" class="data-table-container">
+    <DataTable
+      :title="title"
+      :item-list="itemList"
+      :columns="columns"
+      :total-money="totalMoney"
+      :balance="balance"
+      @main-handler="main"
+    ></DataTable>
+  </div>
 </template>
 
-<style scoped lang="scss"></style>
+<style scoped lang="scss">
+.data-table-container {
+  height: 100%;
+  overflow-y: auto;
+}
+</style>
