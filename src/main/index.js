@@ -6,7 +6,7 @@ import axios from 'axios'
 import express from 'express'
 import dotenv from 'dotenv'
 import mysql from 'mysql2/promise'
-import { formatTimestampToDatetime, rowsToCamel } from '../renderer/src/utils/index'
+import { formatTimestampToDatetime, rowsToCamel } from '../renderer/src/utils'
 import fs from 'fs'
 import path from 'node:path'
 
@@ -147,7 +147,7 @@ const initTable = async () => {
 // 查询10天前的零点时间
 const getTenDaysAgo = () => {
   const date = new Date()
-  date.setDate(date.getDate() - 10000)
+  date.setDate(date.getDate() - 10)
   date.setHours(0, 0, 0, 0)
   return date
 }

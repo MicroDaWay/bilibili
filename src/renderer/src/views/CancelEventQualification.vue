@@ -2,7 +2,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { format } from 'date-fns'
-import DataTable from '../components/DataTable.vue'
+import DataTable from '@/components/DataTable.vue'
 
 const itemList = ref([])
 const title = '活动资格取消稿件'

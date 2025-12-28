@@ -2,7 +2,7 @@
 <script setup>
 import dayjs from 'dayjs'
 import { ref } from 'vue'
-import DataTable from '../components/DataTable.vue'
+import DataTable from '@/components/DataTable.vue'
 
 const itemList = ref([])
 const title = '热门活动'

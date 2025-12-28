@@ -2,8 +2,8 @@
 <script setup>
 import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { format } from 'date-fns'
-import { useBilibiliStore } from '../stores/bilibiliStore'
-import DataTable from '../components/DataTable.vue'
+import { useBilibiliStore } from '@/stores/bilibiliStore'
+import DataTable from '@/components/DataTable.vue'
 
 const itemList = ref([])
 const totalMoney = ref('')

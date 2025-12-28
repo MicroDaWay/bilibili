@@ -1,7 +1,7 @@
 <!-- 每年的提现金额 -->
 <script setup>
 import { ref, onMounted } from 'vue'
-import DataTable from '../components/DataTable.vue'
+import DataTable from '@/components/DataTable.vue'
 
 const itemList = ref([])
 const title = '每年的提现金额'

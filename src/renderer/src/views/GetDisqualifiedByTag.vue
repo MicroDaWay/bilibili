@@ -1,7 +1,7 @@
 <!-- 根据标签查询取消稿件 -->
 <script setup>
 import { ref } from 'vue'
-import SearchByTag from '../components/SearchByTag.vue'
+import SearchByTag from '@/components/SearchByTag.vue'
 import { format } from 'date-fns'
 
 const itemList = ref([])

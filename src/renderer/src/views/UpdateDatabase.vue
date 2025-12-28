@@ -2,7 +2,7 @@
 <script setup>
 import { onMounted, onUnmounted, ref, nextTick } from 'vue'
 import { format } from 'date-fns'
-import DataTable from '../components/DataTable.vue'
+import DataTable from '@/components/DataTable.vue'
 
 const itemList = ref([])
 const title = '更新数据库'

@@ -2,9 +2,9 @@
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { format } from 'date-fns'
-import { useBilibiliStore } from '../stores/bilibiliStore'
-import { excelDateToJSDate, formatTimestampToDatetime } from '../utils'
-import ContentCard from '../components/ContentCard.vue'
+import { useBilibiliStore } from '@/stores/bilibiliStore'
+import { excelDateToJSDate, formatTimestampToDatetime } from '@/utils'
+import ContentCard from '@/components/ContentCard.vue'
 
 // 投稿标签
 const postTag = ref('')

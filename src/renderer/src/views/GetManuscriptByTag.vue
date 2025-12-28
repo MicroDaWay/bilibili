@@ -2,7 +2,7 @@
 <script setup>
 import { format } from 'date-fns'
 import { ref } from 'vue'
-import SearchByTag from '../components/SearchByTag.vue'
+import SearchByTag from '@/components/SearchByTag.vue'
 
 const itemList = ref([])
 const columns = [
