@@ -2,7 +2,7 @@
 <script setup>
 import dayjs from 'dayjs'
 import { ref } from 'vue'
-import DataTable from '@/components/DataTable.vue'
+import TableComponent from '@/components/TableComponent.vue'
 
 const itemList = ref([])
 const title = '热门活动'
@@ -56,12 +56,12 @@ const main = async () => {
 </script>
 
 <template>
-  <DataTable
+  <TableComponent
     :title="title"
     :item-list="itemList"
     :columns="columns"
     @main-handler="main"
-  ></DataTable>
+  ></TableComponent>
 </template>
 
 <style scoped lang="scss"></style>

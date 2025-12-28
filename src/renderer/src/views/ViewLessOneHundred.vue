@@ -2,7 +2,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { format } from 'date-fns'
-import DataTable from '@/components/DataTable.vue'
+import TableComponent from '@/components/TableComponent.vue'
 
 const itemList = ref([])
 const title = '播放量<100的稿件'
@@ -40,12 +40,12 @@ const main = async () => {
 </script>
 
 <template>
-  <DataTable
+  <TableComponent
     :title="title"
     :item-list="itemList"
     :columns="columns"
     @main-handler="main"
-  ></DataTable>
+  ></TableComponent>
 </template>
 
 <style scoped lang="scss"></style>

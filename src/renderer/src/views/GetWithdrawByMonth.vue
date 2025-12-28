@@ -1,7 +1,7 @@
 <!-- 每月的提现金额 -->
 <script setup>
 import { ref, onMounted } from 'vue'
-import DataTable from '@/components/DataTable.vue'
+import TableComponent from '@/components/TableComponent.vue'
 
 const itemList = ref([])
 const title = '每月的提现金额'
@@ -35,12 +35,12 @@ const main = async () => {
 </script>
 
 <template>
-  <DataTable
+  <TableComponent
     :title="title"
     :item-list="itemList"
     :columns="columns"
     @main-handler="main"
-  ></DataTable>
+  ></TableComponent>
 </template>
 
 <style scoped lang="scss"></style>

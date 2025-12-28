@@ -1,7 +1,7 @@
 <!-- 根据标签查询激励金额 -->
 <script setup>
 import { ref } from 'vue'
-import SearchByTag from '@/components/SearchByTag.vue'
+import SearchComponent from '@/components/SearchComponent.vue'
 import { format } from 'date-fns'
 
 const itemList = ref([])
@@ -39,12 +39,12 @@ const searchHandler = async (tag) => {
 </script>
 
 <template>
-  <SearchByTag
+  <SearchComponent
     :title="title"
     :item-list="itemList"
     :columns="columns"
     @search-handler="searchHandler"
-  ></SearchByTag>
+  ></SearchComponent>
 </template>
 
 <style scoped lang="scss"></style>

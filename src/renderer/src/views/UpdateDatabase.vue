@@ -2,13 +2,13 @@
 <script setup>
 import { onMounted, onUnmounted, ref, nextTick } from 'vue'
 import { format } from 'date-fns'
-import DataTable from '@/components/DataTable.vue'
+import TableComponent from '@/components/TableComponent.vue'
 
 const itemList = ref([])
 const title = '更新数据库'
 const isProcessing = ref(false)
 let globalItemListRef = null
-const dataTableContainer = ref(null)
+const TableComponentContainer = ref(null)
 
 const columns = [
   {
@@ -31,7 +31,7 @@ const handleProgress = async (event, item) => {
     })
 
     await nextTick()
-    const container = dataTableContainer.value
+    const container = TableComponentContainer.value
     if (container) {
       container.scrollTop = container.scrollHeight
     }
@@ -79,13 +79,13 @@ const main = () => {
 </script>
 
 <template>
-  <div ref="dataTableContainer" class="data-table-container">
-    <DataTable
+  <div ref="TableComponentContainer" class="data-table-container">
+    <TableComponent
       :title="title"
       :item-list="itemList"
       :columns="columns"
       @main-handler="main"
-    ></DataTable>
+    ></TableComponent>
   </div>
 </template>
 

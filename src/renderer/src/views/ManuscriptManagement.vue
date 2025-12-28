@@ -4,7 +4,7 @@ import { ref, onMounted, onBeforeUnmount } from 'vue'
 import { format } from 'date-fns'
 import { useBilibiliStore } from '@/stores/bilibiliStore'
 import { excelDateToJSDate, formatTimestampToDatetime } from '@/utils'
-import ContentCard from '@/components/ContentCard.vue'
+import ContentCardComponent from '@/components/ContentCardComponent.vue'
 
 // 投稿标签
 const postTag = ref('')
@@ -188,12 +188,12 @@ const searchHandler = () => {
       <div>当前投稿：投稿量={{ totalCount }}, 播放量={{ totalPlay }}</div>
     </div>
     <div class="content-box">
-      <ContentCard
+      <ContentCardComponent
         v-for="(item, index) in itemList"
         :key="item.title"
         :item="item"
         :count="index + 1"
-      ></ContentCard>
+      ></ContentCardComponent>
     </div>
   </div>
 </template>

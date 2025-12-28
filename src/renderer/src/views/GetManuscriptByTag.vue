@@ -2,7 +2,7 @@
 <script setup>
 import { format } from 'date-fns'
 import { ref } from 'vue'
-import SearchByTag from '@/components/SearchByTag.vue'
+import SearchComponent from '@/components/SearchComponent.vue'
 
 const itemList = ref([])
 const columns = [
@@ -39,11 +39,11 @@ const searchHandler = async (tag) => {
 </script>
 
 <template>
-  <SearchByTag
+  <SearchComponent
     :item-list="itemList"
     :columns="columns"
     @search-handler="searchHandler"
-  ></SearchByTag>
+  ></SearchComponent>
 </template>
 
 <style scoped lang="scss"></style>
