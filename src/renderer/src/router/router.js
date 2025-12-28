@@ -31,4 +31,23 @@ const router = createRouter({
   routes
 })
 
+router.beforeEach(async (to, from, next) => {
+  // 如果目标是登录页, 直接放行
+  if (to.path === '/login') {
+    return next()
+  }
+
+  // 检查是否登录
+  let isLogin = false
+  isLogin = await window.electronAPI.checkLoginStatus()
+
+  if (!isLogin) {
+    // 未登录且不是去登录页, 跳转到登录页
+    next('/login')
+  } else {
+    // 已登录, 正常访问
+    next()
+  }
+})
+
 export default router

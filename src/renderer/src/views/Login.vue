@@ -60,6 +60,7 @@ const logout = async () => {
     isLogin.value = false
     QRCodeKey.value = ''
     avatar.value = ''
+    window.electronAPI.setLoginStatus(false)
     login()
   }
 }

@@ -3,10 +3,14 @@ import { contextBridge, ipcRenderer } from 'electron'
 contextBridge.exposeInMainWorld('electronAPI', {
   // 持久化存储Excel数据
   saveExcelData: (callback) => {
-    ipcRenderer.on('save-excel-data', (e, data) => {
+    ipcRenderer.on('save-excel-data', (event, data) => {
       callback(data)
     })
   },
+  // 检查登录状态
+  checkLoginStatus: () => ipcRenderer.invoke('check-login-status'),
+  // 登录成功
+  loginSuccess: (callback) => ipcRenderer.on('login-success', callback),
   // 消息弹窗
   showMessage: (params) => ipcRenderer.invoke('show-message', params),
   // 展示右键菜单
@@ -21,6 +25,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getNavigationData: () => ipcRenderer.invoke('get-navigation-data'),
   // 退出登录
   logout: () => ipcRenderer.invoke('logout'),
+  // 修改登录状态
+  setLoginStatus: (params) => ipcRenderer.send('login-status-change', params),
+  // 监听登录状态变更
+  loginStatusChange: (params) => ipcRenderer.on('login-status-change', params),
   // 稿件管理
   manuscriptManagement: (params) => ipcRenderer.invoke('manuscript-management', params),
   // 热门活动

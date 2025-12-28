@@ -1,8 +1,10 @@
 <!-- 首页 -->
 <script setup>
-import { onMounted } from 'vue'
+import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+const router = useRouter()
 
-const itemList = [
+const list = [
   {
     text: '登录',
     url: '/login'
@@ -69,8 +71,45 @@ const itemList = [
   }
 ]
 
-// 监听右键菜单事件
+const isLogin = ref(false)
+
+// 检查登录状态
+const checkIsLogin = async () => {
+  isLogin.value = await window.electronAPI.checkLoginStatus()
+}
+
+const itemList = computed(() => {
+  if (isLogin.value) {
+    return list
+  } else {
+    return [
+      {
+        text: '登录',
+        url: '/login'
+      }
+    ]
+  }
+})
+
 onMounted(() => {
+  // 检查登录状态
+  checkIsLogin()
+
+  // 监听登录成功事件
+  window.electronAPI.loginSuccess(() => {
+    isLogin.value = true
+    // 如果当前在登录页，跳转到稿件管理
+    if (router.currentRoute.value.path === '/login') {
+      router.push('/manuscript-management')
+    }
+  })
+
+  // 监听登录状态变化事件
+  window.electronAPI.loginStatusChange((event, status) => {
+    isLogin.value = status
+  })
+
+  // 监听右键菜单事件
   window.addEventListener('contextmenu', (e) => {
     e.preventDefault()
     window.electronAPI.showContextMenu()

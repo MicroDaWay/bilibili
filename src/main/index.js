@@ -134,7 +134,7 @@ const initTable = async () => {
       ) COMMENT '提现表'
     `)
   } catch (error) {
-    dialog.showMessageBox(mainWindow, {
+    await dialog.showMessageBox(mainWindow, {
       title: '初始化数据库表',
       type: 'error',
       message: `初始化数据库表失败: ${error.message}`
@@ -309,7 +309,7 @@ const importExcelHandler = async () => {
       const sheetNames = workbook.SheetNames
       const excelData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetNames[0]])
       if (excelData) {
-        dialog.showMessageBox(mainWindow, {
+        await dialog.showMessageBox(mainWindow, {
           title: '导入Excel表',
           type: 'info',
           message: '导入Excel表成功'
@@ -318,7 +318,7 @@ const importExcelHandler = async () => {
         BrowserWindow.getFocusedWindow().webContents.send('save-excel-data', excelData)
       }
     } catch (error) {
-      dialog.showMessageBox(mainWindow, {
+      await dialog.showMessageBox(mainWindow, {
         title: '导入Excel表',
         type: 'error',
         message: `导入Excel表失败, ${error.message}`
@@ -348,7 +348,7 @@ const startServer = () => {
       })
       response.data.pipe(res)
     } catch (error) {
-      dialog.showMessageBox(mainWindow, {
+      await dialog.showMessageBox(mainWindow, {
         title: '开启图片代理服务器',
         type: 'error',
         message: `开启图片代理服务器失败, ${error.message}`
@@ -373,7 +373,8 @@ const createWindow = () => {
     icon: join(__dirname, '../../resources/icon.ico'),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
-      sandbox: false
+      sandbox: false,
+      contextIsolation: true
     }
   })
 
@@ -398,12 +399,12 @@ const createWindow = () => {
 const gotTheLock = app.requestSingleInstanceLock()
 
 if (!gotTheLock) {
-  // 如果没拿到锁，说明已有实例在运行，直接退出当前进程
+  // 如果没拿到锁, 说明已有实例在运行, 直接退出当前进程
   app.quit()
 } else {
-  // 如果拿到了锁，监听second-instance事件
+  // 如果拿到了锁, 监听second-instance事件
   app.on('second-instance', () => {
-    // 当用户再次尝试启动应用时，聚焦到已有窗口
+    // 当用户再次尝试启动应用时, 聚焦到已有窗口
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore()
       mainWindow.focus()
@@ -414,7 +415,7 @@ if (!gotTheLock) {
 app.whenReady().then(async () => {
   // 检查数据库连接
   const result = await checkDatabaseConnection()
-  // 如果连不上数据库，直接退出应用
+  // 如果连不上数据库, 直接退出应用
   if (!result) return
 
   // 初始化数据库表
@@ -424,10 +425,11 @@ app.whenReady().then(async () => {
   startServer()
 
   // 消息弹窗
-  ipcMain.handle('show-message', (e, params) => {
-    dialog.showMessageBox(mainWindow, {
+  ipcMain.handle('show-message', async (event, params) => {
+    const result = await dialog.showMessageBox(mainWindow, {
       ...params
     })
+    return result
   })
 
   // 展示右键菜单
@@ -449,7 +451,7 @@ app.whenReady().then(async () => {
       })
       return response.data || null
     } catch (error) {
-      dialog.showMessageBox(mainWindow, {
+      await dialog.showMessageBox(mainWindow, {
         title: '查询登录二维码',
         type: 'error',
         message: `查询登录二维码失败, ${error.message}`
@@ -459,7 +461,7 @@ app.whenReady().then(async () => {
   })
 
   // 检查二维码状态
-  ipcMain.handle('check-qrcode-status', async (e, qrcode_key) => {
+  ipcMain.handle('check-qrcode-status', async (event, qrcode_key) => {
     try {
       const url = 'https://passport.bilibili.com/x/passport-login/web/qrcode/poll'
       const response = await axios.get(url, {
@@ -470,7 +472,7 @@ app.whenReady().then(async () => {
       })
       return response.data
     } catch (error) {
-      dialog.showMessageBox(mainWindow, {
+      await dialog.showMessageBox(mainWindow, {
         title: '检查二维码状态',
         type: 'error',
         message: `检查二维码状态失败, ${error.message}`
@@ -479,8 +481,35 @@ app.whenReady().then(async () => {
   })
 
   // 保存cookie
-  ipcMain.handle('save-cookie', async (e, cookie) => {
+  ipcMain.handle('save-cookie', async (event, cookie) => {
     await fs.promises.writeFile(cookieFilePath, cookie, 'utf8')
+    BrowserWindow.getAllWindows().forEach((win) => {
+      win.webContents.send('login-success')
+    })
+    return true
+  })
+
+  // 检查登录状态
+  ipcMain.handle('check-login-status', async () => {
+    try {
+      const cookie = fs.readFileSync(cookieFilePath, 'utf8')
+      if (!cookie) return false
+
+      const url = 'https://api.bilibili.com/x/web-interface/nav'
+      const headers = {
+        Referer: 'https://www.bilibili.com',
+        Cookie: cookie,
+        'User-Agent': import.meta.env.VITE_USER_AGENT
+      }
+      const response = await axios.get(url, {
+        headers
+      })
+
+      return response.data?.code === 0 && response.data?.data?.isLogin
+    } catch (error) {
+      console.error('检查登录状态失败:', error)
+      return false
+    }
   })
 
   // 查询导航栏数据
@@ -497,7 +526,7 @@ app.whenReady().then(async () => {
       })
       return response.data?.data || null
     } catch (error) {
-      dialog.showMessageBox(mainWindow, {
+      await dialog.showMessageBox(mainWindow, {
         title: '查询导航栏数据',
         type: 'error',
         message: `查询导航栏数据失败, ${error.message}`
@@ -523,7 +552,7 @@ app.whenReady().then(async () => {
       await fs.promises.writeFile(cookieFilePath, '', 'utf8')
       return response.data || null
     } catch (error) {
-      dialog.showMessageBox(mainWindow, {
+      await dialog.showMessageBox(mainWindow, {
         title: '退出登录',
         type: 'error',
         message: `退出登录失败, ${error.message}`
@@ -532,13 +561,20 @@ app.whenReady().then(async () => {
     }
   })
 
+  // 登录状态改变
+  ipcMain.on('login-status-change', (event, status) => {
+    BrowserWindow.getAllWindows().forEach((win) => {
+      win.webContents.send('login-status-change', status)
+    })
+  })
+
   // 查询稿件管理数据
-  ipcMain.handle('manuscript-management', async (e, pn) => {
+  ipcMain.handle('manuscript-management', async (event, pn) => {
     try {
       const result = getManuscriptList(pn)
       return result
     } catch (error) {
-      dialog.showMessageBox(mainWindow, {
+      await dialog.showMessageBox(mainWindow, {
         title: '查询稿件管理数据',
         type: 'error',
         message: `查询稿件管理数据失败, ${error.message}`
@@ -561,7 +597,7 @@ app.whenReady().then(async () => {
       })
       return response.data?.data || []
     } catch (error) {
-      dialog.showMessageBox(mainWindow, {
+      await dialog.showMessageBox(mainWindow, {
         title: '查询热门活动数据',
         type: 'error',
         message: `查询热门活动数据失败, ${error.message}`
@@ -574,13 +610,14 @@ app.whenReady().then(async () => {
   ipcMain.on('earnings-center', async (event) => {
     const conn = await pool.getConnection()
     await conn.query('DELETE FROM rewards')
+
     try {
       let currentPage = 1
       let totalPage = 1
       let totalMoney = 0
       const result = await getBalance()
       if (!result) {
-        dialog.showMessageBox(mainWindow, {
+        await dialog.showMessageBox(mainWindow, {
           title: '查询余额',
           type: 'error',
           message: '查询余额失败'
@@ -592,7 +629,7 @@ app.whenReady().then(async () => {
         await new Promise((resolve) => setTimeout(resolve, 5000))
         const result2 = await getEarningsList(currentPage)
         if (!result2) {
-          dialog.showMessageBox(mainWindow, {
+          await dialog.showMessageBox(mainWindow, {
             title: '查询收益数据',
             type: 'error',
             message: '查询收益数据失败'
@@ -652,7 +689,7 @@ app.whenReady().then(async () => {
 
         if (currentPage >= totalPage) {
           event.sender.send('earnings-center-finish')
-          dialog.showMessageBox(mainWindow, {
+          await dialog.showMessageBox(mainWindow, {
             title: '查询收益中心数据',
             type: 'info',
             message: '查询结束'
@@ -662,7 +699,7 @@ app.whenReady().then(async () => {
         currentPage++
       }
     } catch (error) {
-      dialog.showMessageBox(mainWindow, {
+      await dialog.showMessageBox(mainWindow, {
         title: '查询收益中心数据',
         type: 'error',
         message: `查询收益中心数据失败, ${error.message}`
@@ -676,6 +713,7 @@ app.whenReady().then(async () => {
   ipcMain.on('update-database', async (event) => {
     const conn = await pool.getConnection()
     await conn.query('DELETE FROM manuscript')
+
     try {
       let page = 1
 
@@ -683,7 +721,7 @@ app.whenReady().then(async () => {
         await new Promise((resolve) => setTimeout(resolve, 5000))
         const result = await getManuscriptList(page)
         if (!result) {
-          dialog.showMessageBox(mainWindow, {
+          await dialog.showMessageBox(mainWindow, {
             title: '查询稿件数据',
             type: 'error',
             message: '查询稿件数据失败'
@@ -724,7 +762,7 @@ app.whenReady().then(async () => {
 
         if (page >= totalPage) {
           event.sender.send('update-database-finish')
-          dialog.showMessageBox(mainWindow, {
+          await dialog.showMessageBox(mainWindow, {
             title: '更新数据库',
             type: 'info',
             message: '查询结束'
@@ -734,7 +772,7 @@ app.whenReady().then(async () => {
         page++
       }
     } catch (error) {
-      dialog.showMessageBox(mainWindow, {
+      await dialog.showMessageBox(mainWindow, {
         title: '更新数据库',
         type: 'error',
         message: `更新数据库失败, ${error.message}`
@@ -747,6 +785,7 @@ app.whenReady().then(async () => {
   // 查询活动资格取消稿件
   ipcMain.on('cancel-event-qualification', async (event) => {
     const conn = await pool.getConnection()
+
     try {
       let end_seqno
       let messageTime
@@ -758,7 +797,7 @@ app.whenReady().then(async () => {
         await new Promise((resolve) => setTimeout(resolve, 5000))
         const result = await getMessageList(end_seqno)
         if (!result) {
-          dialog.showMessageBox(mainWindow, {
+          await dialog.showMessageBox(mainWindow, {
             title: '查询消息数据',
             type: 'error',
             message: '查询消息数据失败'
@@ -790,7 +829,7 @@ app.whenReady().then(async () => {
           const result2 = await getTagByTitle(title)
           // const result2 = await getTagAndViewByTitle(conn, title)
           if (!result2) {
-            dialog.showMessageBox(mainWindow, {
+            await dialog.showMessageBox(mainWindow, {
               title: '根据标题查询投稿标签',
               type: 'error',
               message: '根据标题查询投稿标签失败'
@@ -818,7 +857,7 @@ app.whenReady().then(async () => {
 
         if (isExit || !has_more) {
           event.sender.send('cancel-event-qualification-finish')
-          dialog.showMessageBox(mainWindow, {
+          await dialog.showMessageBox(mainWindow, {
             title: '查询活动资格取消稿件',
             type: 'info',
             message: '查询结束'
@@ -829,7 +868,7 @@ app.whenReady().then(async () => {
         end_seqno = min_seqno
       }
     } catch (error) {
-      dialog.showMessageBox(mainWindow, {
+      await dialog.showMessageBox(mainWindow, {
         title: '查询活动资格取消稿件',
         type: 'error',
         message: `查询活动资格取消稿件失败, ${error.message}`
@@ -851,7 +890,7 @@ app.whenReady().then(async () => {
       const [rows] = await conn.query(sql)
       return rowsToCamel(rows)
     } catch (error) {
-      dialog.showMessageBox(mainWindow, {
+      await dialog.showMessageBox(mainWindow, {
         title: '查询播放量<100的稿件',
         type: 'error',
         message: `查询播放量<100的稿件失败, ${error.message}`
@@ -875,7 +914,7 @@ app.whenReady().then(async () => {
       const [rows] = await conn.query(sql)
       return rowsToCamel(rows)
     } catch (error) {
-      dialog.showMessageBox(mainWindow, {
+      await dialog.showMessageBox(mainWindow, {
         title: '查询每年获得的激励金额',
         type: 'error',
         message: `查询每年获得的激励金额失败, ${error.message}`
@@ -899,7 +938,7 @@ app.whenReady().then(async () => {
       const [rows] = await conn.query(sql)
       return rowsToCamel(rows)
     } catch (error) {
-      dialog.showMessageBox(mainWindow, {
+      await dialog.showMessageBox(mainWindow, {
         title: '查询每月获得的激励金额',
         type: 'error',
         message: `查询每月获得的激励金额失败, ${error.message}`
@@ -911,7 +950,7 @@ app.whenReady().then(async () => {
   })
 
   // 根据标签查询激励金额
-  ipcMain.handle('get-money-by-tag', async (e, productName) => {
+  ipcMain.handle('get-money-by-tag', async (event, productName) => {
     const conn = await pool.getConnection()
     try {
       const sql = `
@@ -923,7 +962,7 @@ app.whenReady().then(async () => {
       const [rows] = await conn.query(sql, [`%${productName}%`])
       return rowsToCamel(rows)
     } catch (error) {
-      dialog.showMessageBox(mainWindow, {
+      await dialog.showMessageBox(mainWindow, {
         title: '根据标签查询激励金额',
         type: 'error',
         message: `根据标签查询激励金额失败, ${error.message}`
@@ -935,7 +974,7 @@ app.whenReady().then(async () => {
   })
 
   // 根据投稿标签查询稿件
-  ipcMain.handle('get-manuscript-by-tag', async (e, tag) => {
+  ipcMain.handle('get-manuscript-by-tag', async (event, tag) => {
     const conn = await pool.getConnection()
     try {
       const sql = `
@@ -946,7 +985,7 @@ app.whenReady().then(async () => {
       const [rows] = await conn.query(sql, [`%${tag}%`])
       return rowsToCamel(rows)
     } catch (error) {
-      dialog.showMessageBox(mainWindow, {
+      await dialog.showMessageBox(mainWindow, {
         title: '根据投稿标签查询稿件',
         type: 'error',
         message: `根据投稿标签查询稿件失败, ${error.message}`
@@ -958,7 +997,7 @@ app.whenReady().then(async () => {
   })
 
   // 根据标签查询取消稿件
-  ipcMain.handle('get-disqualification-by-tag', async (e, tag) => {
+  ipcMain.handle('get-disqualification-by-tag', async (event, tag) => {
     const conn = await pool.getConnection()
     try {
       const sql = `
@@ -969,7 +1008,7 @@ app.whenReady().then(async () => {
       const [rows] = await conn.query(sql, [`%${tag}%`])
       return rowsToCamel(rows)
     } catch (error) {
-      dialog.showMessageBox(mainWindow, {
+      await dialog.showMessageBox(mainWindow, {
         title: '根据标签查询取消稿件',
         type: 'error',
         message: `根据标签查询取消稿件失败, ${error.message}`
@@ -992,7 +1031,7 @@ app.whenReady().then(async () => {
       const [rows] = await conn.query(sql)
       return rowsToCamel(rows)
     } catch (error) {
-      dialog.showMessageBox(mainWindow, {
+      await dialog.showMessageBox(mainWindow, {
         title: '查询每月的工资',
         type: 'error',
         message: `查询每月的工资失败, ${error.message}`
@@ -1016,7 +1055,7 @@ app.whenReady().then(async () => {
       const [rows] = await conn.query(sql)
       return rowsToCamel(rows)
     } catch (error) {
-      dialog.showMessageBox(mainWindow, {
+      await dialog.showMessageBox(mainWindow, {
         title: '查询每年的工资',
         type: 'error',
         message: `查询每年的工资失败, ${error.message}`
@@ -1046,7 +1085,7 @@ app.whenReady().then(async () => {
       const [rows] = await conn.query(sql)
       return rowsToCamel(rows)
     } catch (error) {
-      dialog.showMessageBox(mainWindow, {
+      await dialog.showMessageBox(mainWindow, {
         title: '查询每月提现金额',
         type: 'error',
         message: `查询每月提现金额失败, ${error.message}`
@@ -1070,7 +1109,7 @@ app.whenReady().then(async () => {
       const [rows] = await conn.query(sql)
       return rowsToCamel(rows)
     } catch (error) {
-      dialog.showMessageBox(mainWindow, {
+      await dialog.showMessageBox(mainWindow, {
         title: '查询每年提现金额',
         type: 'error',
         message: `查询每年提现金额失败, ${error.message}`
@@ -1092,7 +1131,7 @@ app.whenReady().then(async () => {
       const [rows] = await pool.query(sql)
       return rowsToCamel(rows)
     } catch (error) {
-      dialog.showMessageBox(mainWindow, {
+      await dialog.showMessageBox(mainWindow, {
         title: '查询manuscript表中的数据',
         type: 'error',
         message: `查询manuscript表中的数据失败, ${error.message}`
@@ -1112,7 +1151,7 @@ app.whenReady().then(async () => {
       const [rows] = await pool.query(sql)
       return rowsToCamel(rows)
     } catch (error) {
-      dialog.showMessageBox(mainWindow, {
+      await dialog.showMessageBox(mainWindow, {
         title: '查询rewards表中的数据',
         type: 'error',
         message: `查询rewards表中的数据失败, ${error.message}`
@@ -1132,7 +1171,7 @@ app.whenReady().then(async () => {
       const [rows] = await pool.query(sql)
       return rowsToCamel(rows)
     } catch (error) {
-      dialog.showMessageBox(mainWindow, {
+      await dialog.showMessageBox(mainWindow, {
         title: '查询disqualification表中的数据',
         type: 'error',
         message: `查询disqualification表中的数据失败, ${error.message}`
@@ -1181,6 +1220,8 @@ app.whenReady().then(async () => {
     if (server && server.listening) {
       await new Promise((resolve) => server.close(resolve))
     }
+
+    await pool.end()
 
     app.quit()
   })

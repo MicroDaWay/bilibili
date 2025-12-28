@@ -26,6 +26,7 @@ const filterActivityListByTime = (activityList, startTime) => {
       const activityTime = dayjs.unix(item.stime)
       return activityTime.isAfter(startTime) || activityTime.isSame(startTime)
     })
+    .sort((a, b) => a.stime - b.stime)
     .map((item) => ({
       name: item.name,
       startTime: dayjs.unix(item.stime).format('YYYY-MM-DD HH:mm:ss')
