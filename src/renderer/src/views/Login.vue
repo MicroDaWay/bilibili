@@ -98,7 +98,7 @@ const proxyImage = (url) => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: 100vh;
+  height: calc(#{'100vh - 1px'});
   justify-content: center;
 
   canvas,

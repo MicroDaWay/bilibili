@@ -34,9 +34,9 @@ $ npm run build:linux
 ### .env config
 
 ```bash
-VITE_HOST=xxx
-VITE_USER=xxx
-VITE_PASSWORD=xxx
-VITE_DATABASE=xxx
-VITE_USER_AGENT=xxx
+DB_HOST=xxx
+DB_USER=xxx
+DB_PASSWORD=xxx
+DB_DATABASE=xxx
+DB_USER_AGENT=xxx
 ```

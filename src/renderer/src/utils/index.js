@@ -34,10 +34,19 @@ const rowsToCamel = (rows) => {
   })
 }
 
+// 查询几天前的零点时间
+const getAnyDaysAgo = (day) => {
+  const date = new Date()
+  date.setDate(date.getDate() - day)
+  date.setHours(0, 0, 0, 0)
+  return date
+}
+
 export {
   excelDateToJSDate,
   jsDateToExcelDate,
   formatDatetimeToTimestamp,
   formatTimestampToDatetime,
-  rowsToCamel
+  rowsToCamel,
+  getAnyDaysAgo
 }

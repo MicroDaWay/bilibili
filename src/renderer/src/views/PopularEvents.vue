@@ -3,6 +3,7 @@
 import dayjs from 'dayjs'
 import { ref } from 'vue'
 import TableComponent from '@/components/TableComponent.vue'
+import { getAnyDaysAgo } from '@/utils/index'
 
 const itemList = ref([])
 const title = '热门活动'
@@ -10,14 +11,6 @@ const columns = [
   { title: '活动开始时间', key: 'startTime', width: '26%' },
   { title: '活动名称', key: 'name' }
 ]
-
-// 获取7天前的零点时间
-const getSevenDaysAgo = () => {
-  const date = new Date()
-  date.setDate(date.getDate() - 7)
-  date.setHours(0, 0, 0, 0)
-  return date
-}
 
 // 过滤出前一周的活动
 const filterActivityListByTime = (activityList, startTime) => {
@@ -37,7 +30,7 @@ const filterActivityListByTime = (activityList, startTime) => {
 const main = async () => {
   itemList.value = []
   const activityList = await window.electronAPI.popularEvents()
-  const sevenDaysAgo = getSevenDaysAgo()
+  const sevenDaysAgo = getAnyDaysAgo(7)
   const filterActivityList = filterActivityListByTime(activityList, sevenDaysAgo)
 
   filterActivityList.forEach((item) => {
