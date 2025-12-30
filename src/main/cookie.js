@@ -1,6 +1,7 @@
-import { app } from 'electron'
-import path from 'node:path'
 import fs from 'node:fs'
+import path from 'node:path'
+
+import { app } from 'electron'
 
 // 确保cookie.txt文件所在的目录存在
 const userDataPath = app.getPath('userData')

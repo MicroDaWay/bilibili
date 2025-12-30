@@ -1,7 +1,7 @@
 <!-- 登录 -->
 <script setup>
-import { nextTick, onMounted, ref } from 'vue'
 import qrcode from 'qrcode'
+import { nextTick, onMounted, ref } from 'vue'
 
 const QRCode = ref(null)
 const QRCodeKey = ref('')

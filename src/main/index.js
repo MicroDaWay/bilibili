@@ -1,10 +1,12 @@
-import { app, shell, BrowserWindow, Menu } from 'electron'
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import { join } from 'node:path'
-import { importExcelHandler } from './otherFunction.js'
-import { pool, checkDatabaseConnection, initTable } from './db.js'
-import { startServer } from './server.js'
+
+import { electronApp, is, optimizer } from '@electron-toolkit/utils'
+import { app, BrowserWindow, Menu, shell } from 'electron'
+
+import { checkDatabaseConnection, initTable, pool } from './db.js'
 import { registerIpcHandler } from './ipcHandler.js'
+import { importExcelHandler } from './otherFunction.js'
+import { startServer } from './server.js'
 
 let server
 let mainWindow

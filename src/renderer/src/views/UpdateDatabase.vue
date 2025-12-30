@@ -1,7 +1,8 @@
 <!-- 更新数据库 -->
 <script setup>
-import { onMounted, onUnmounted, ref, nextTick } from 'vue'
 import { format } from 'date-fns'
+import { nextTick, onMounted, onUnmounted, ref } from 'vue'
+
 import TableComponent from '@/components/TableComponent.vue'
 
 const itemList = ref([])

@@ -44,9 +44,9 @@ const getAnyDaysAgo = (day) => {
 
 export {
   excelDateToJSDate,
-  jsDateToExcelDate,
   formatDatetimeToTimestamp,
   formatTimestampToDatetime,
-  rowsToCamel,
-  getAnyDaysAgo
+  getAnyDaysAgo,
+  jsDateToExcelDate,
+  rowsToCamel
 }

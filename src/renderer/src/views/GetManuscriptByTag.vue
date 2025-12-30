@@ -2,6 +2,7 @@
 <script setup>
 import { format } from 'date-fns'
 import { ref } from 'vue'
+
 import SearchComponent from '@/components/SearchComponent.vue'
 
 const itemList = ref([])

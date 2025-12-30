@@ -1,7 +1,8 @@
 <!-- 播放量<100的稿件 -->
 <script setup>
-import { ref, onMounted } from 'vue'
 import { format } from 'date-fns'
+import { onMounted, ref } from 'vue'
+
 import TableComponent from '@/components/TableComponent.vue'
 
 const itemList = ref([])

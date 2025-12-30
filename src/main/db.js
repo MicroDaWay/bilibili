@@ -1,6 +1,6 @@
-import mysql from 'mysql2/promise'
-import { app, dialog } from 'electron'
 import { config } from 'dotenv'
+import { app, dialog } from 'electron'
+import mysql from 'mysql2/promise'
 
 // 加载环境变量
 config()

@@ -1,6 +1,7 @@
 <!-- 每年的激励金额 -->
 <script setup>
-import { ref, onMounted } from 'vue'
+import { onMounted, ref } from 'vue'
+
 import TableComponent from '@/components/TableComponent.vue'
 
 const itemList = ref([])

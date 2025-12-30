@@ -1,7 +1,8 @@
-import { getManuscriptList } from './api'
-import { formatTimestampToDatetime } from '../renderer/src/utils/index'
 import { BrowserWindow, dialog } from 'electron'
 import xlsx from 'xlsx'
+
+import { formatTimestampToDatetime } from '../renderer/src/utils/index'
+import { getManuscriptList } from './api'
 
 // 根据标题查询投稿标签
 export const getTagByTitle = async (targetTitle) => {

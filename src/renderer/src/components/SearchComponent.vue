@@ -1,6 +1,6 @@
 <!-- 搜索框组件 -->
 <script setup>
-import { ref, onMounted, onBeforeUnmount } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 const props = defineProps({
   placeholder: {

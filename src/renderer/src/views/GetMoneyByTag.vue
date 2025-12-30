@@ -1,8 +1,9 @@
 <!-- 根据标签查询激励金额 -->
 <script setup>
-import { ref } from 'vue'
-import SearchComponent from '@/components/SearchComponent.vue'
 import { format } from 'date-fns'
+import { ref } from 'vue'
+
+import SearchComponent from '@/components/SearchComponent.vue'
 
 const itemList = ref([])
 const columns = [

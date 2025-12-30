@@ -1,9 +1,10 @@
 <!-- 收益中心 -->
 <script setup>
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
 import { format } from 'date-fns'
-import { useBilibiliStore } from '@/stores/bilibiliStore'
+import { nextTick, onMounted, onUnmounted, ref } from 'vue'
+
 import TableComponent from '@/components/TableComponent.vue'
+import { useBilibiliStore } from '@/stores/bilibiliStore'
 
 const itemList = ref([])
 const totalMoney = ref('')
