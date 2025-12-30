@@ -5,8 +5,8 @@ import { app, BrowserWindow, Menu, shell } from 'electron'
 
 import { checkDatabaseConnection, initTable, pool } from './db.js'
 import { registerIpcHandler } from './ipcHandler.js'
-import { importExcelHandler } from './otherFunction.js'
 import { startServer } from './server.js'
+import { importExcelHandler } from './utilFunction.js'
 
 let server
 let mainWindow
@@ -63,6 +63,8 @@ if (!gotTheLock) {
 }
 
 app.whenReady().then(async () => {
+  createWindow()
+
   // 检查数据库连接
   const result = await checkDatabaseConnection(mainWindow)
   // 如果连不上数据库, 直接退出应用
@@ -93,7 +95,7 @@ app.whenReady().then(async () => {
 
   const menu = Menu.buildFromTemplate(myMenu)
   Menu.setApplicationMenu(menu)
-  createWindow()
+
   electronApp.setAppUserModelId('com.electron')
 
   app.on('browser-window-created', (_, window) => {

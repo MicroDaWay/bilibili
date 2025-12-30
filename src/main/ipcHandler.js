@@ -4,7 +4,7 @@ import { BrowserWindow, dialog, ipcMain, Menu } from 'electron'
 import { formatTimestampToDatetime, getAnyDaysAgo, rowsToCamel } from '../renderer/src/utils'
 import { getBalance, getEarningsList, getManuscriptList, getMessageList } from './api.js'
 import { readCookie, writeCookie } from './cookie.js'
-import { getTagByTitle } from './otherFunction.js'
+import { getTagByTitle } from './utilFunction.js'
 
 // 自定义右键菜单项
 const createMenuItem = (label, role, shortcut) => {
