@@ -1,9 +1,13 @@
 import { config } from 'dotenv'
 import { app, dialog } from 'electron'
 import mysql from 'mysql2/promise'
+import path from 'path'
 
-// 加载环境变量
-config()
+const envPath = app.isPackaged
+  ? path.join(process.resourcesPath, '.env')
+  : path.join(process.cwd(), '.env')
+
+config({ path: envPath })
 
 // 创建数据库连接池
 const dbConfig = {
