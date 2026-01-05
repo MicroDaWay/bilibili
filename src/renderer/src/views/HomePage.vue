@@ -35,15 +35,15 @@ const list = [
   },
   {
     text: '查询每月的激励金额',
-    url: '/get-money-by-month'
+    url: '/get-rewards-by-month'
   },
   {
     text: '查询每年的激励金额',
-    url: '/get-money-by-year'
+    url: '/get-rewards-by-year'
   },
   {
     text: '根据标签查询激励金额',
-    url: '/get-money-by-tag'
+    url: '/get-rewards-by-tag'
   },
   {
     text: '根据标签查询投稿稿件',

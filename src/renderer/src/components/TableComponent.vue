@@ -25,14 +25,18 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['main-handler'])
+const emit = defineEmits(['main-handler', 'order-handler'])
 
 const activeRow = ref(null)
 const textEl = ref(null)
 let resizeObserver = null
 
-const clickHandler = () => {
+const mainHandler = () => {
   emit('main-handler')
+}
+
+const orderHandler = () => {
+  emit('order-handler')
 }
 
 const checkScrollbar = () => {
@@ -65,7 +69,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="data-table">
-    <div ref="textEl" class="text" @click="clickHandler">{{ props.title }}</div>
+    <div ref="textEl" class="text" @click="mainHandler">{{ props.title }}</div>
     <div v-if="props.totalMoney && props.balance" class="container">
       <div class="total-money">累计金额：{{ totalMoney }}</div>
       <div class="balance">账户余额：{{ balance }}</div>
@@ -77,7 +81,7 @@ onBeforeUnmount(() => {
       }"
     >
       <thead v-if="props.itemList.length">
-        <tr class="table-tr">
+        <tr class="table-tr" @click="orderHandler">
           <th
             v-for="column in props.columns"
             :key="column.key"
@@ -155,6 +159,10 @@ onBeforeUnmount(() => {
 
     .table-tr {
       font-size: 1.5vw;
+
+      &:hover {
+        cursor: pointer;
+      }
     }
 
     .tr-text {

@@ -87,6 +87,11 @@ const main = () => {
   itemList.value = []
   window.electronAPI.earningsCenter()
 }
+
+const orderHandler = () => {
+  // 根据金额降序排序
+  itemList.value.sort((a, b) => b.money - a.money)
+}
 </script>
 
 <template>
@@ -98,6 +103,7 @@ const main = () => {
       :total-money="totalMoney"
       :balance="balance"
       @main-handler="main"
+      @order-handler="orderHandler"
     ></TableComponent>
   </div>
 </template>

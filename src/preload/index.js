@@ -2,8 +2,8 @@ import { contextBridge, ipcRenderer } from 'electron'
 
 contextBridge.exposeInMainWorld('electronAPI', {
   // 持久化存储Excel数据
-  saveExcelData: (callback) => {
-    ipcRenderer.on('save-excel-data', (event, data) => {
+  saveBilibiliData: (callback) => {
+    ipcRenderer.on('save-bilibili-data', (event, data) => {
       callback(data)
     })
   },
@@ -84,5 +84,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 查询每月提现金额
   getWithdrawByMonth: () => ipcRenderer.invoke('get-withdraw-by-month'),
   // 查询每年提现金额
-  getWithdrawByYear: () => ipcRenderer.invoke('get-withdraw-by-year')
+  getWithdrawByYear: () => ipcRenderer.invoke('get-withdraw-by-year'),
+  saveOutcomeData: (callback) => {
+    ipcRenderer.on('save-outcome-data', (event, data) => {
+      callback(data)
+    })
+  },
+  saveOutcome: (params) => ipcRenderer.invoke('save-outcome', params)
 })

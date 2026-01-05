@@ -1,7 +1,7 @@
 import { join } from 'node:path'
 
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
-import { app, BrowserWindow, Menu, shell } from 'electron'
+import { app, BrowserWindow, globalShortcut, Menu, shell } from 'electron'
 
 import { checkDatabaseConnection, initTable, pool } from './db.js'
 import { registerIpcHandler } from './ipcHandler.js'
@@ -26,6 +26,11 @@ const createWindow = () => {
       sandbox: false,
       contextIsolation: true
     }
+  })
+
+  // 开发者调试工具
+  globalShortcut.register('F11', () => {
+    mainWindow.webContents.toggleDevTools()
   })
 
   mainWindow.on('ready-to-show', () => {
@@ -86,7 +91,13 @@ app.whenReady().then(async () => {
         {
           label: '导入bilibili.xlsx',
           click() {
-            importExcelHandler(mainWindow)
+            importExcelHandler(mainWindow, 'save-bilibili-data')
+          }
+        },
+        {
+          label: '导入outcome.xlsx',
+          click() {
+            importExcelHandler(mainWindow, 'save-outcome-data')
           }
         }
       ]

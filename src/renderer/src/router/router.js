@@ -12,9 +12,9 @@ const routes = [
     component: () => import('@/views/CancelEventQualification.vue')
   },
   { path: '/view-less-one-hundred', component: () => import('@/views/ViewLessOneHundred.vue') },
-  { path: '/get-money-by-year', component: () => import('@/views/GetMoneyByYear.vue') },
-  { path: '/get-money-by-month', component: () => import('@/views/GetMoneyByMonth.vue') },
-  { path: '/get-money-by-tag', component: () => import('@/views/GetMoneyByTag.vue') },
+  { path: '/get-rewards-by-year', component: () => import('@/views/GetRewardsByYear.vue') },
+  { path: '/get-rewards-by-month', component: () => import('@/views/GetRewardsByMonth.vue') },
+  { path: '/get-rewards-by-tag', component: () => import('@/views/GetRewardsByTag.vue') },
   { path: '/get-manuscript-by-tag', component: () => import('@/views/GetManuscriptByTag.vue') },
   {
     path: '/get-disqualified-by-tag',

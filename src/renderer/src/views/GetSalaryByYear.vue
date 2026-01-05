@@ -31,6 +31,11 @@ const main = async () => {
     message: '查询结束'
   })
 }
+
+const orderHandler = () => {
+  // 根据全年工资降序排序
+  itemList.value.sort((a, b) => b.totalSalary - a.totalSalary)
+}
 </script>
 
 <template>
@@ -39,6 +44,7 @@ const main = async () => {
     :item-list="itemList"
     :columns="columns"
     @main-handler="main"
+    @order-handler="orderHandler"
   ></TableComponent>
 </template>
 

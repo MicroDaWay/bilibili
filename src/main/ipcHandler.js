@@ -4,6 +4,7 @@ import { BrowserWindow, dialog, ipcMain, Menu } from 'electron'
 import { formatTimestampToDatetime, getAnyDaysAgo, rowsToCamel } from '../renderer/src/utils'
 import { getBalance, getEarningsList, getManuscriptList, getMessageList } from './api.js'
 import { readCookie, writeCookie } from './cookie.js'
+import { pool } from './db.js'
 import { getTagByTitle } from './utilFunction.js'
 
 // 自定义右键菜单项
@@ -783,3 +784,20 @@ export const registerIpcHandler = (pool, mainWindow) => {
     }
   })
 }
+
+// 将outcome中的数据写入数据库
+ipcMain.handle('save-outcome', async (event, excelData) => {
+  const records = excelData.map((item) => [
+    item['年份'],
+    item['月份'],
+    item['日期'],
+    item['支付平台'],
+    item['支出金额'],
+    item['支出备注']
+  ])
+  const sql = `
+    INSERT IGNORE INTO outcome(year, month, day, pay_platform, amount, note)
+    VALUES ?
+  `
+  await pool.query(sql, [records])
+})

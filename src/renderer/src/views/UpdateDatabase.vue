@@ -77,6 +77,11 @@ const main = () => {
   itemList.value = []
   window.electronAPI.updateDatabase()
 }
+
+const orderHandler = () => {
+  // 根据播放量降序排序
+  itemList.value.sort((a, b) => b.view - a.view)
+}
 </script>
 
 <template>
@@ -86,6 +91,7 @@ const main = () => {
       :item-list="itemList"
       :columns="columns"
       @main-handler="main"
+      @order-handler="orderHandler"
     ></TableComponent>
   </div>
 </template>

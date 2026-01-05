@@ -15,7 +15,11 @@ app.use(pinia)
 app.use(router)
 app.mount('#app')
 
-window.electronAPI.saveExcelData((excelData) => {
+window.electronAPI.saveBilibiliData((excelData) => {
   const bilibiliStore = useBilibiliStore()
   bilibiliStore.setExcelData(excelData)
+})
+
+window.electronAPI.saveOutcomeData(async (excelData) => {
+  await window.electronAPI.saveOutcome(excelData)
 })

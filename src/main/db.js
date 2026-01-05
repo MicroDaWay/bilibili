@@ -96,6 +96,19 @@ export const initTable = async (mainWindow) => {
         UNIQUE KEY UK_withdraw_year_month_type(year, month, type)
       ) COMMENT '提现表'
     `)
+
+    // 初始化outcome表
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS outcome (
+        year INT COMMENT '年份',
+        month INT COMMENT '月份',
+        day INT COMMENT '日期',
+        pay_platform INT COMMENT '支付平台 0:微信 1:支付宝 2:银行卡',
+        amount DECIMAL(10,2) COMMENT '支出金额',
+        note VARCHAR(255) COMMENT '支出备注',
+        UNIQUE KEY UK_outcome_year_month_day_pay_platform_amount_note(year, month, day, pay_platform, amount, note)
+      ) COMMENT '支出表'
+    `)
   } catch (error) {
     await dialog.showMessageBox(mainWindow, {
       title: '初始化数据库表',
