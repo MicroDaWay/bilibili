@@ -17,7 +17,7 @@ const props = defineProps({
   }
 })
 
-const emit = defineEmits(['search-handler'])
+const emit = defineEmits(['search-handler', 'order-handler'])
 
 const tag = ref('')
 const activeRow = ref(null)
@@ -51,6 +51,10 @@ onBeforeUnmount(() => {
 // 点击搜索
 const searchHandler = async () => {
   emit('search-handler', tag.value)
+}
+
+const orderHandler = () => {
+  emit('order-handler')
 }
 </script>
 
@@ -87,7 +91,7 @@ const searchHandler = async () => {
 
     <table class="table-container">
       <thead v-if="itemList.length">
-        <tr class="table-tr">
+        <tr class="table-tr" @click="orderHandler">
           <th
             v-for="column in props.columns"
             :key="column.key"
@@ -128,9 +132,11 @@ const searchHandler = async () => {
     width: 83.3%;
     padding: 20px 0;
     background-color: #fff;
+
     .input-container {
       position: relative;
       width: 100%;
+
       .search-input {
         width: 100%;
         height: 40px;
@@ -145,6 +151,7 @@ const searchHandler = async () => {
           border: 1px solid orange;
         }
       }
+
       .search-icon {
         position: absolute;
         top: 50%;
@@ -152,6 +159,7 @@ const searchHandler = async () => {
         right: 12px;
       }
     }
+
     .search-button {
       display: flex;
       justify-content: center;
@@ -164,23 +172,33 @@ const searchHandler = async () => {
       margin-left: 50px;
       cursor: pointer;
       user-select: none;
+
       &:hover {
         background-color: #ffb121;
       }
     }
   }
+
   .table-container {
     margin: 100px 0 50px 0;
     width: 98%;
+
     .table-tr {
       font-size: 22px;
+
+      &:hover {
+        cursor: pointer;
+      }
     }
+
     .tr-text {
       font-size: 22px;
       margin: 6px 0;
+
       &.tr-active {
         background-color: orange;
       }
+
       &:hover {
         background-color: orange;
       }

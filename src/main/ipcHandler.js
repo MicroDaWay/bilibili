@@ -386,7 +386,7 @@ export const registerIpcHandler = (pool, mainWindow) => {
   })
 
   // 查询活动资格取消稿件
-  ipcMain.on('cancel-event-qualification', async (event) => {
+  ipcMain.on('event-disqualification', async (event) => {
     const conn = await pool.getConnection()
 
     try {
@@ -450,7 +450,7 @@ export const registerIpcHandler = (pool, mainWindow) => {
           const postTime = formatTimestampToDatetime(timestamp)
           await conn.query(sql, [title, tag, view, postTime])
 
-          event.sender.send('cancel-event-qualification-progress', {
+          event.sender.send('event-disqualification-progress', {
             title,
             tag,
             view,
@@ -459,7 +459,7 @@ export const registerIpcHandler = (pool, mainWindow) => {
         }
 
         if (isExit || !has_more) {
-          event.sender.send('cancel-event-qualification-finish')
+          event.sender.send('event-disqualification-finish')
           await dialog.showMessageBox(mainWindow, {
             title: '查询活动资格取消稿件',
             type: 'info',

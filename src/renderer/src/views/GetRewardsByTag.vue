@@ -37,6 +37,11 @@ const searchHandler = async (tag) => {
     })
   }
 }
+
+const orderHandler = () => {
+  // 根据金额降序排序
+  itemList.value.sort((a, b) => b.money - a.money)
+}
 </script>
 
 <template>
@@ -45,6 +50,7 @@ const searchHandler = async (tag) => {
     :item-list="itemList"
     :columns="columns"
     @search-handler="searchHandler"
+    @order-handler="orderHandler"
   ></SearchComponent>
 </template>
 

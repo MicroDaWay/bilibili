@@ -37,6 +37,11 @@ const searchHandler = async (tag) => {
     })
   }
 }
+
+const orderHandler = () => {
+  // 根据播放量降序排序
+  itemList.value.sort((a, b) => b.view - a.view)
+}
 </script>
 
 <template>
@@ -44,6 +49,7 @@ const searchHandler = async (tag) => {
     :item-list="itemList"
     :columns="columns"
     @search-handler="searchHandler"
+    @order-handler="orderHandler"
   ></SearchComponent>
 </template>
 

@@ -27,7 +27,7 @@ const list = [
   },
   {
     text: '活动资格取消稿件',
-    url: '/cancel-event-qualification'
+    url: '/event-disqualification'
   },
   {
     text: '播放量<100的稿件',
@@ -51,7 +51,7 @@ const list = [
   },
   {
     text: '根据标签查询取消稿件',
-    url: '/get-disqualified-by-tag'
+    url: '/get-disqualification-by-tag'
   },
   {
     text: '查询每月的工资',

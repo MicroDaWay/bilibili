@@ -45,20 +45,20 @@ onMounted(() => {
   isProcessing.value = false
 
   // 先移除可能存在的监听器
-  window.electronAPI.removeCancelEventQualificationProgressListener(handleProgress)
-  window.electronAPI.removeCancelEventQualificationFinishListener(handleFinish)
+  window.electronAPI.removeEventDisqualificationProgressListener(handleProgress)
+  window.electronAPI.removeEventDisqualificationFinishListener(handleFinish)
 
   // 再注册
-  window.electronAPI.cancelEventQualificationProgress(handleProgress)
-  window.electronAPI.cancelEventQualificationFinish(handleFinish)
+  window.electronAPI.eventDisqualificationProgress(handleProgress)
+  window.electronAPI.eventDisqualificationFinish(handleFinish)
 
   getDatabaseData()
 })
 
 onUnmounted(() => {
   globalItemListRef = null
-  window.electronAPI.removeCancelEventQualificationProgressListener(handleProgress)
-  window.electronAPI.removeCancelEventQualificationFinishListener(handleFinish)
+  window.electronAPI.removeEventDisqualificationProgressListener(handleProgress)
+  window.electronAPI.removeEventDisqualificationFinishListener(handleFinish)
 })
 
 // 主函数
@@ -66,7 +66,12 @@ const main = () => {
   if (isProcessing.value) return
   isProcessing.value = true
   itemList.value = []
-  window.electronAPI.cancelEventQualification()
+  window.electronAPI.eventDisqualification()
+}
+
+const orderHandler = () => {
+  // 根据播放量降序排序
+  itemList.value.sort((a, b) => b.view - a.view)
 }
 </script>
 
@@ -76,6 +81,7 @@ const main = () => {
     :item-list="itemList"
     :columns="columns"
     @main-handler="main"
+    @order-handler="orderHandler"
   ></TableComponent>
 </template>
 

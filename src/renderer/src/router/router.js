@@ -8,8 +8,8 @@ const routes = [
   { path: '/earnings-center', component: () => import('@/views/EarningsCenter.vue') },
   { path: '/update-database', component: () => import('@/views/UpdateDatabase.vue') },
   {
-    path: '/cancel-event-qualification',
-    component: () => import('@/views/CancelEventQualification.vue')
+    path: '/event-disqualification',
+    component: () => import('@/views/EventDisqualification.vue')
   },
   { path: '/view-less-one-hundred', component: () => import('@/views/ViewLessOneHundred.vue') },
   { path: '/get-rewards-by-year', component: () => import('@/views/GetRewardsByYear.vue') },
@@ -17,8 +17,8 @@ const routes = [
   { path: '/get-rewards-by-tag', component: () => import('@/views/GetRewardsByTag.vue') },
   { path: '/get-manuscript-by-tag', component: () => import('@/views/GetManuscriptByTag.vue') },
   {
-    path: '/get-disqualified-by-tag',
-    component: () => import('@/views/GetDisqualifiedByTag.vue')
+    path: '/get-disqualification-by-tag',
+    component: () => import('@/views/GetDisqualificationByTag.vue')
   },
   { path: '/get-salary-by-month', component: () => import('@/views/GetSalaryByMonth.vue') },
   { path: '/get-salary-by-year', component: () => import('@/views/GetSalaryByYear.vue') },

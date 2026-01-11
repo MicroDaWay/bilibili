@@ -50,15 +50,15 @@ contextBridge.exposeInMainWorld('electronAPI', {
   removeUpdateDatabaseFinishListener: (callback) =>
     ipcRenderer.removeListener('update-database-finish', callback),
   // 活动资格取消稿件
-  cancelEventQualification: () => ipcRenderer.send('cancel-event-qualification'),
-  cancelEventQualificationProgress: (callback) =>
-    ipcRenderer.on('cancel-event-qualification-progress', callback),
-  cancelEventQualificationFinish: (callback) =>
-    ipcRenderer.on('cancel-event-qualification-finish', callback),
-  removeCancelEventQualificationProgressListener: (callback) =>
-    ipcRenderer.removeListener('cancel-event-qualification-progress', callback),
-  removeCancelEventQualificationFinishListener: (callback) =>
-    ipcRenderer.removeListener('cancel-event-qualification-finish', callback),
+  eventDisqualification: () => ipcRenderer.send('event-disqualification'),
+  eventDisqualificationProgress: (callback) =>
+    ipcRenderer.on('event-disqualification-progress', callback),
+  eventDisqualificationFinish: (callback) =>
+    ipcRenderer.on('event-disqualification-finish', callback),
+  removeEventDisqualificationProgressListener: (callback) =>
+    ipcRenderer.removeListener('event-disqualification-progress', callback),
+  removeEventDisqualificationFinishListener: (callback) =>
+    ipcRenderer.removeListener('event-disqualification-finish', callback),
   // 查询播放量<100的稿件
   viewLessOneHundred: () => ipcRenderer.invoke('view-less-one-hundred'),
   // 查询每年获得的激励金额
