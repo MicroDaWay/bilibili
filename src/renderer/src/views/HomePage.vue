@@ -68,6 +68,18 @@ const list = [
   {
     text: '查询每年的提现金额',
     url: '/get-withdraw-by-year'
+  },
+  {
+    text: '查询支出明细',
+    url: '/get-outcome-details'
+  },
+  {
+    text: '查询每月的支出',
+    url: '/get-outcome-by-month'
+  },
+  {
+    text: '查询每年的支出',
+    url: '/get-outcome-by-year'
   }
 ]
 

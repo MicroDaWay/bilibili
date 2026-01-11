@@ -4,7 +4,6 @@ import { BrowserWindow, dialog, ipcMain, Menu } from 'electron'
 import { formatTimestampToDatetime, getAnyDaysAgo, rowsToCamel } from '../renderer/src/utils'
 import { getBalance, getEarningsList, getManuscriptList, getMessageList } from './api.js'
 import { readCookie, writeCookie } from './cookie.js'
-import { pool } from './db.js'
 import { getTagByTitle } from './utilFunction.js'
 
 // 自定义右键菜单项
@@ -783,21 +782,93 @@ export const registerIpcHandler = (pool, mainWindow) => {
       return null
     }
   })
-}
 
-// 将outcome中的数据写入数据库
-ipcMain.handle('save-outcome', async (event, excelData) => {
-  const records = excelData.map((item) => [
-    item['年份'],
-    item['月份'],
-    item['日期'],
-    item['支付平台'],
-    item['支出金额'],
-    item['支出备注']
-  ])
-  const sql = `
+  // 将outcome中的数据写入数据库
+  ipcMain.handle('save-outcome', async (event, excelData) => {
+    const records = excelData.map((item) => [
+      item['年份'],
+      item['月份'],
+      item['日期'],
+      item['支付平台'],
+      item['支付金额'],
+      item['备注']
+    ])
+    const sql = `
     INSERT IGNORE INTO outcome(year, month, day, pay_platform, amount, note)
     VALUES ?
   `
-  await pool.query(sql, [records])
-})
+    await pool.query(sql, [records])
+  })
+
+  // 查询支出明细
+  ipcMain.handle('get-outcome-details', async () => {
+    try {
+      const sql = `
+        SELECT
+          year,
+          month,
+          day,
+          CASE pay_platform
+            WHEN 0 THEN '微信'
+            WHEN 1 THEN '支付宝'
+            WHEN 2 THEN '银行卡'
+          END AS payPlatform,
+          amount,
+          note
+        FROM outcome
+        ORDER BY year DESC, month DESC, day DESC
+      `
+      const [rows] = await pool.query(sql)
+      return rowsToCamel(rows)
+    } catch (error) {
+      await dialog.showMessageBox(mainWindow, {
+        title: '查询支出明细',
+        type: 'error',
+        message: `查询支出明细失败, ${error.message}`
+      })
+      return null
+    }
+  })
+
+  // 查询每月的支出
+  ipcMain.handle('get-outcome-by-month', async () => {
+    try {
+      const sql = `
+        SELECT year, month, SUM(amount) AS totalAmount
+        FROM outcome
+        GROUP BY year, month
+        ORDER BY year DESC, month DESC
+      `
+      const [rows] = await pool.query(sql)
+      return rowsToCamel(rows)
+    } catch (error) {
+      await dialog.showMessageBox(mainWindow, {
+        title: '查询每月的支出',
+        type: 'error',
+        message: `查询每月的支出失败, ${error.message}`
+      })
+      return null
+    }
+  })
+
+  // 查询每年的支出
+  ipcMain.handle('get-outcome-by-year', async () => {
+    try {
+      const sql = `
+        SELECT year, SUM(amount) AS totalAmount
+        FROM outcome
+        GROUP BY year
+        ORDER BY year DESC
+      `
+      const [rows] = await pool.query(sql)
+      return rowsToCamel(rows)
+    } catch (error) {
+      await dialog.showMessageBox(mainWindow, {
+        title: '查询每年的支出',
+        type: 'error',
+        message: `查询每年的支出失败, ${error.message}`
+      })
+      return null
+    }
+  })
+}

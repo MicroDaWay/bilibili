@@ -103,9 +103,9 @@ export const initTable = async (mainWindow) => {
         year INT COMMENT '年份',
         month INT COMMENT '月份',
         day INT COMMENT '日期',
-        pay_platform INT COMMENT '支付平台 0:微信 1:支付宝 2:银行卡',
-        amount DECIMAL(10,2) COMMENT '支出金额',
-        note VARCHAR(255) COMMENT '支出备注',
+        pay_platform INT COMMENT '支付平台',
+        amount DECIMAL(10,2) COMMENT '支付金额',
+        note VARCHAR(255) COMMENT '备注',
         UNIQUE KEY UK_outcome_year_month_day_pay_platform_amount_note(year, month, day, pay_platform, amount, note)
       ) COMMENT '支出表'
     `)

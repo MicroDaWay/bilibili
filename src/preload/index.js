@@ -90,5 +90,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
       callback(data)
     })
   },
-  saveOutcome: (params) => ipcRenderer.invoke('save-outcome', params)
+  saveOutcome: (params) => ipcRenderer.invoke('save-outcome', params),
+  // 查询支出明细
+  getOutcomeDetails: () => ipcRenderer.invoke('get-outcome-details'),
+  // 查询每月的支出
+  getOutcomeByMonth: () => ipcRenderer.invoke('get-outcome-by-month'),
+  // 查询每年的支出
+  getOutcomeByYear: () => ipcRenderer.invoke('get-outcome-by-year')
 })

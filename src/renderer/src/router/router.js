@@ -23,7 +23,10 @@ const routes = [
   { path: '/get-salary-by-month', component: () => import('@/views/GetSalaryByMonth.vue') },
   { path: '/get-salary-by-year', component: () => import('@/views/GetSalaryByYear.vue') },
   { path: '/get-withdraw-by-month', component: () => import('@/views/GetWithdrawByMonth.vue') },
-  { path: '/get-withdraw-by-year', component: () => import('@/views/GetWithdrawByYear.vue') }
+  { path: '/get-withdraw-by-year', component: () => import('@/views/GetWithdrawByYear.vue') },
+  { path: '/get-outcome-details', component: () => import('@/views/GetOutcomeDetails.vue') },
+  { path: '/get-outcome-by-month', component: () => import('@/views/GetOutcomeByMonth.vue') },
+  { path: '/get-outcome-by-year', component: () => import('@/views/GetOutcomeByYear.vue') }
 ]
 
 const router = createRouter({
