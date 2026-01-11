@@ -90,7 +90,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
       callback(data)
     })
   },
+  saveSalaryData: (callback) => {
+    ipcRenderer.on('save-salary-data', (event, data) => {
+      callback(data)
+    })
+  },
   saveOutcome: (params) => ipcRenderer.invoke('save-outcome', params),
+  saveSalary: (params) => ipcRenderer.invoke('save-salary', params),
   // 查询支出明细
   getOutcomeDetails: () => ipcRenderer.invoke('get-outcome-details'),
   // 查询每月的支出

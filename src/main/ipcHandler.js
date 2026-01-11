@@ -794,9 +794,25 @@ export const registerIpcHandler = (pool, mainWindow) => {
       item['备注']
     ])
     const sql = `
-    INSERT IGNORE INTO outcome(year, month, day, pay_platform, amount, note)
-    VALUES ?
-  `
+      INSERT IGNORE INTO outcome(year, month, day, pay_platform, amount, note)
+      VALUES ?
+    `
+    await pool.query(sql, [records])
+  })
+
+  // 将salary.excel中的数据写入数据库
+  ipcMain.handle('save-salary', async (event, excelData) => {
+    const records = excelData.map((item) => [
+      item['年份'],
+      item['月份'],
+      item['工资'],
+      item['工时'],
+      item['时薪']
+    ])
+    const sql = `
+      INSERT IGNORE INTO salary(year, month, salary, working_hours, hourly_wage)
+      VALUES ?
+    `
     await pool.query(sql, [records])
   })
 

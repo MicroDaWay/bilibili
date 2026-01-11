@@ -82,7 +82,7 @@ export const initTable = async (mainWindow) => {
         salary DECIMAL(10,2) COMMENT '工资',
         working_hours DECIMAL(4,1) COMMENT '工时',
         hourly_wage DECIMAL(4,2) COMMENT '时薪',
-        PRIMARY KEY PK_salary_year_month(year, month)
+        UNIQUE KEY UK_salary_year_month(year, month)
       ) COMMENT '每月工资'
     `)
 

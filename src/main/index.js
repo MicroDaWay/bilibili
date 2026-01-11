@@ -89,6 +89,12 @@ app.whenReady().then(async () => {
       label: '文件',
       submenu: [
         {
+          label: '导入salary.xlsx',
+          click() {
+            importExcelHandler(mainWindow, 'save-salary-data')
+          }
+        },
+        {
           label: '导入bilibili.xlsx',
           click() {
             importExcelHandler(mainWindow, 'save-bilibili-data')

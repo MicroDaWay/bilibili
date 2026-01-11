@@ -23,3 +23,7 @@ window.electronAPI.saveBilibiliData((excelData) => {
 window.electronAPI.saveOutcomeData(async (excelData) => {
   await window.electronAPI.saveOutcome(excelData)
 })
+
+window.electronAPI.saveSalaryData(async (excelData) => {
+  await window.electronAPI.saveSalary(excelData)
+})
