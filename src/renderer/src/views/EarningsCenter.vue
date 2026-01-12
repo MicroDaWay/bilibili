@@ -95,7 +95,7 @@ const orderHandler = () => {
 </script>
 
 <template>
-  <div ref="TableComponentContainer" class="data-table-container">
+  <div ref="TableComponentContainer">
     <TableComponent
       :title="title"
       :item-list="itemList"
@@ -108,31 +108,4 @@ const orderHandler = () => {
   </div>
 </template>
 
-<style scoped lang="scss">
-.data-table-container {
-  height: 100%;
-  overflow-y: auto;
-
-  &::-webkit-scrollbar {
-    width: 12px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: #e0e0e0;
-    border-radius: 6px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: #9e9e9e;
-    border-radius: 6px;
-  }
-
-  &::-webkit-scrollbar-thumb:hover {
-    background: #757575;
-  }
-
-  &::-webkit-scrollbar-button {
-    display: none;
-  }
-}
-</style>
+<style scoped lang="scss"></style>

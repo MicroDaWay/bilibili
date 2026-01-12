@@ -150,30 +150,30 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .left-nav {
-  width: 16%;
+  width: 15%;
   height: 100vh;
   border-right: 1px solid #ccc;
+  border-top: 1px solid #ccc;
+  overflow-y: auto;
 
-  &:hover {
-    overflow-y: auto;
-  }
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 
   &::-webkit-scrollbar {
-    width: 4px;
-  }
-
-  &::-webkit-scrollbar-track {
-    background: #fff;
-    border-radius: 2px;
+    background: transparent;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: #ccd0d7;
-    border-radius: 2px;
+    background: transparent;
   }
 
-  &::-webkit-scrollbar-button {
-    display: none;
+  &:hover {
+    &::-webkit-scrollbar-thumb {
+      background: #ccd0d7;
+    }
+    &::-webkit-scrollbar-track {
+      background: #fff;
+    }
   }
 
   .item {
@@ -184,10 +184,6 @@ onMounted(() => {
     cursor: pointer;
     text-indent: 1em;
     user-select: none;
-
-    &:first-child {
-      border-top: 1px solid #ccc;
-    }
 
     &:hover {
       background-color: orange;
@@ -206,7 +202,7 @@ onMounted(() => {
 }
 
 .right-content {
-  width: 84%;
+  width: 85%;
   height: 100vh;
   overflow-y: auto;
   border-top: 1px solid #ccc;
