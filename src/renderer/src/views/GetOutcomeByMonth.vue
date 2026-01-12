@@ -9,7 +9,7 @@ const title = '每月的支出'
 const columns = [
   { title: '年份', key: 'year', width: '33%' },
   { title: '月份', key: 'month', width: '33%' },
-  { title: '总支出', key: 'totalAmount', width: '34%' }
+  { title: '总支出', key: 'totalOutcome', width: '34%' }
 ]
 
 // 获取数据库中的数据
@@ -35,7 +35,7 @@ const main = async () => {
 
 const orderHandler = () => {
   // 根据总支出降序排序
-  itemList.value.sort((a, b) => b.totalAmount - a.totalAmount)
+  itemList.value.sort((a, b) => b.totalOutcome - a.totalOutcome)
 }
 </script>
 

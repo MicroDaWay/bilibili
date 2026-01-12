@@ -97,6 +97,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   },
   saveOutcome: (params) => ipcRenderer.invoke('save-outcome', params),
   saveSalary: (params) => ipcRenderer.invoke('save-salary', params),
+  // 查询每月的收入
+  getIncomeByMonth: () => ipcRenderer.invoke('get-income-by-month'),
+  // 查询每年的收入
+  getIncomeByYear: () => ipcRenderer.invoke('get-income-by-year'),
   // 查询支出明细
   getOutcomeDetails: () => ipcRenderer.invoke('get-outcome-details'),
   // 查询每月的支出

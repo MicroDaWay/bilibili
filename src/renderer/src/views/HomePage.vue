@@ -70,6 +70,14 @@ const list = [
     url: '/get-withdraw-by-year'
   },
   {
+    text: '查询每月的收入',
+    url: '/get-income-by-month'
+  },
+  {
+    text: '查询每年的收入',
+    url: '/get-income-by-year'
+  },
+  {
     text: '查询支出明细',
     url: '/get-outcome-details'
   },
@@ -142,9 +150,31 @@ onMounted(() => {
 
 <style scoped lang="scss">
 .left-nav {
-  width: 15%;
+  width: 16%;
   height: 100vh;
   border-right: 1px solid #ccc;
+
+  &:hover {
+    overflow-y: auto;
+  }
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: #fff;
+    border-radius: 2px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: #ccd0d7;
+    border-radius: 2px;
+  }
+
+  &::-webkit-scrollbar-button {
+    display: none;
+  }
 
   .item {
     height: 5vh;
@@ -176,7 +206,7 @@ onMounted(() => {
 }
 
 .right-content {
-  width: 85%;
+  width: 84%;
   height: 100vh;
   overflow-y: auto;
   border-top: 1px solid #ccc;

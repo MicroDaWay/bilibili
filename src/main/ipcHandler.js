@@ -816,6 +816,61 @@ export const registerIpcHandler = (pool, mainWindow) => {
     await pool.query(sql, [records])
   })
 
+  // 查询每月的收入
+  ipcMain.handle('get-income-by-month', async () => {
+    try {
+      const sql = `
+        SELECT
+          year,
+          month,
+          SUM(COALESCE(salary, 0) + COALESCE(brokerage, 0)) AS totalIncome
+        FROM (
+            SELECT year, month, salary, NULL AS brokerage FROM salary
+            UNION ALL
+            SELECT year, month, NULL AS salary, brokerage FROM withdraw
+        ) combined
+        GROUP BY year, month
+        ORDER BY year DESC, month DESC;
+      `
+      const [rows] = await pool.query(sql)
+      return rowsToCamel(rows)
+    } catch (error) {
+      await dialog.showMessageBox(mainWindow, {
+        title: '查询每月的收入',
+        type: 'error',
+        message: `查询每月的收入失败, ${error.message}`
+      })
+      return null
+    }
+  })
+
+  // 查询每年的收入
+  ipcMain.handle('get-income-by-year', async () => {
+    try {
+      const sql = `
+        SELECT
+          year,
+          SUM(COALESCE(salary, 0) + COALESCE(brokerage, 0)) AS totalIncome
+        FROM (
+            SELECT year, salary, NULL AS brokerage FROM salary
+            UNION ALL
+            SELECT year, NULL AS salary, brokerage FROM withdraw
+        ) t
+        GROUP BY year
+        ORDER BY year DESC;
+      `
+      const [rows] = await pool.query(sql)
+      return rowsToCamel(rows)
+    } catch (error) {
+      await dialog.showMessageBox(mainWindow, {
+        title: '查询每年的收入',
+        type: 'error',
+        message: `查询每年的收入失败, ${error.message}`
+      })
+      return null
+    }
+  })
+
   // 查询支出明细
   ipcMain.handle('get-outcome-details', async () => {
     try {
@@ -850,7 +905,7 @@ export const registerIpcHandler = (pool, mainWindow) => {
   ipcMain.handle('get-outcome-by-month', async () => {
     try {
       const sql = `
-        SELECT year, month, SUM(amount) AS totalAmount
+        SELECT year, month, SUM(amount) AS totalOutcome
         FROM outcome
         GROUP BY year, month
         ORDER BY year DESC, month DESC
@@ -871,7 +926,7 @@ export const registerIpcHandler = (pool, mainWindow) => {
   ipcMain.handle('get-outcome-by-year', async () => {
     try {
       const sql = `
-        SELECT year, SUM(amount) AS totalAmount
+        SELECT year, SUM(amount) AS totalOutcome
         FROM outcome
         GROUP BY year
         ORDER BY year DESC
