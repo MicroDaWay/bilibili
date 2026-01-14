@@ -1,5 +1,6 @@
 <!-- 支出明细 -->
 <script setup>
+import { format } from 'date-fns'
 import { onMounted, ref } from 'vue'
 
 import TableComponent from '@/components/TableComponent.vue'
@@ -7,12 +8,15 @@ import TableComponent from '@/components/TableComponent.vue'
 const itemList = ref([])
 const title = '支出明细'
 const columns = [
-  { title: '年份', key: 'year', width: '15%' },
-  { title: '月份', key: 'month', width: '15%' },
-  { title: '日期', key: 'day', width: '15%' },
-  { title: '支付平台', key: 'payPlatform', width: '15%' },
-  { title: '支付金额', key: 'amount', width: '20%' },
-  { title: '备注', key: 'note', width: '20%' }
+  {
+    title: '日期',
+    key: 'payDate',
+    width: '25%',
+    formatter: (value) => format(value, 'yyyy-MM-dd')
+  },
+  { title: '支付平台', key: 'payPlatform', width: '25%' },
+  { title: '支付金额', key: 'amount', width: '25%' },
+  { title: '备注', key: 'note', width: '25%' }
 ]
 
 // 获取数据库中的数据

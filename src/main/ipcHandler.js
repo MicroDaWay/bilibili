@@ -1,7 +1,13 @@
 import axios from 'axios'
+import { format } from 'date-fns'
 import { BrowserWindow, dialog, ipcMain, Menu } from 'electron'
 
-import { formatTimestampToDatetime, getAnyDaysAgo, rowsToCamel } from '../renderer/src/utils'
+import {
+  excelDateToJSDate,
+  formatTimestampToDatetime,
+  getAnyDaysAgo,
+  rowsToCamel
+} from '../renderer/src/utils'
 import { getBalance, getEarningsList, getManuscriptList, getMessageList } from './api.js'
 import { readCookie, writeCookie } from './cookie.js'
 import { getTagByTitle } from './utilFunction.js'
@@ -785,16 +791,16 @@ export const registerIpcHandler = (pool, mainWindow) => {
 
   // 将outcome中的数据写入数据库
   ipcMain.handle('save-outcome', async (event, excelData) => {
-    const records = excelData.map((item) => [
-      item['年份'],
-      item['月份'],
-      item['日期'],
-      item['支付平台'],
-      item['支付金额'],
-      item['备注']
-    ])
+    const records = excelData.map((item) => {
+      return [
+        format(excelDateToJSDate(item['日期']), 'yyyy-MM-dd'),
+        item['支付平台'],
+        item['支付金额'],
+        item['备注']
+      ]
+    })
     const sql = `
-      INSERT IGNORE INTO outcome(year, month, day, pay_platform, amount, note)
+      INSERT IGNORE INTO outcome(pay_date, pay_platform, amount, note)
       VALUES ?
     `
     await pool.query(sql, [records])
@@ -876,9 +882,7 @@ export const registerIpcHandler = (pool, mainWindow) => {
     try {
       const sql = `
         SELECT
-          year,
-          month,
-          day,
+          CAST(pay_date AS DATE) AS payDate,
           CASE pay_platform
             WHEN 0 THEN '微信'
             WHEN 1 THEN '支付宝'
@@ -887,7 +891,7 @@ export const registerIpcHandler = (pool, mainWindow) => {
           amount,
           note
         FROM outcome
-        ORDER BY year DESC, month DESC, day DESC
+        ORDER BY pay_date DESC
       `
       const [rows] = await pool.query(sql)
       return rowsToCamel(rows)
@@ -905,10 +909,13 @@ export const registerIpcHandler = (pool, mainWindow) => {
   ipcMain.handle('get-outcome-by-month', async () => {
     try {
       const sql = `
-        SELECT year, month, SUM(amount) AS totalOutcome
+        SELECT
+          YEAR(pay_date) AS year,
+          MONTH(pay_date) AS month,
+          SUM(amount) AS totalOutcome
         FROM outcome
-        GROUP BY year, month
-        ORDER BY year DESC, month DESC
+        GROUP BY YEAR(pay_date), MONTH(pay_date)
+        ORDER BY year DESC, month DESC;
       `
       const [rows] = await pool.query(sql)
       return rowsToCamel(rows)
@@ -926,9 +933,9 @@ export const registerIpcHandler = (pool, mainWindow) => {
   ipcMain.handle('get-outcome-by-year', async () => {
     try {
       const sql = `
-        SELECT year, SUM(amount) AS totalOutcome
+        SELECT YEAR(pay_date) AS year, SUM(amount) AS totalOutcome
         FROM outcome
-        GROUP BY year
+        GROUP BY YEAR(pay_date)
         ORDER BY year DESC
       `
       const [rows] = await pool.query(sql)

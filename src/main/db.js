@@ -100,13 +100,11 @@ export const initTable = async (mainWindow) => {
     // 初始化outcome表
     await conn.query(`
       CREATE TABLE IF NOT EXISTS outcome (
-        year INT COMMENT '年份',
-        month INT COMMENT '月份',
-        day INT COMMENT '日期',
+        pay_date date COMMENT '日期',
         pay_platform INT COMMENT '支付平台',
         amount DECIMAL(10,2) COMMENT '支付金额',
         note VARCHAR(255) COMMENT '备注',
-        UNIQUE KEY UK_outcome_year_month_day_pay_platform_amount_note(year, month, day, pay_platform, amount, note)
+        UNIQUE KEY UK_outcome_pay_date_pay_platform_amount_note(pay_date, pay_platform, amount, note)
       ) COMMENT '支出表'
     `)
   } catch (error) {

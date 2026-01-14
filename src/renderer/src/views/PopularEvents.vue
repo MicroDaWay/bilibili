@@ -1,7 +1,7 @@
 <!-- 热门活动 -->
 <script setup>
 import dayjs from 'dayjs'
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
 
 import TableComponent from '@/components/TableComponent.vue'
 import { getAnyDaysAgo } from '@/utils/index'
@@ -41,13 +41,11 @@ const main = async () => {
     })
     console.log(`活动开始时间 = ${item.startTime}, 活动名称 = ${item.name}`)
   })
-
-  window.electronAPI.showMessage({
-    title: '查询热门活动数据',
-    type: 'info',
-    message: '查询结束'
-  })
 }
+
+onMounted(() => {
+  main()
+})
 </script>
 
 <template>
