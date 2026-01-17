@@ -1,7 +1,7 @@
 <!-- 稿件管理 -->
 <script setup>
 import { format } from 'date-fns'
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { nextTick, ref } from 'vue'
 
 import ContentCardComponent from '@/components/ContentCardComponent.vue'
 import { useBilibiliStore } from '@/stores/bilibiliStore'
@@ -22,39 +22,15 @@ const totalCount = ref(0)
 const itemList = ref([])
 const inputEl = ref(null)
 const eventRulesEl = ref(null)
-let resizeObserver = null
 const isInputFocus = ref(false)
 
 const bilibiliStore = useBilibiliStore()
 
-const checkScrollbar = () => {
+const scrollToBottom = () => {
   const container = document.querySelector('.right-content')
-  if (!container || !inputEl.value) return
-  const hasScrollbar = container.scrollHeight > container.clientHeight
-  inputEl.value.style.width = hasScrollbar ? 'calc(83.3% - 12px)' : '83.3%'
-  if (eventRulesEl.value) {
-    eventRulesEl.value.style.width = hasScrollbar ? 'calc(83.3% - 12px)' : '83.3%'
-  }
+  if (!container) return
+  container.scrollTop = container.scrollHeight
 }
-
-onMounted(() => {
-  checkScrollbar()
-
-  // 用 ResizeObserver 监控容器变化
-  const container = document.querySelector('.right-content')
-  if (container) {
-    resizeObserver = new ResizeObserver(checkScrollbar)
-    resizeObserver.observe(container)
-  }
-
-  // 监听窗口变化
-  window.addEventListener('resize', checkScrollbar)
-})
-
-onBeforeUnmount(() => {
-  if (resizeObserver) resizeObserver.disconnect()
-  window.removeEventListener('resize', checkScrollbar)
-})
 
 // 主函数
 const main = async () => {
@@ -99,6 +75,9 @@ const main = async () => {
           )
         }
       }
+
+      await nextTick()
+      scrollToBottom()
 
       const latestPostTime = formatTimestampToDatetime(arc_audits.at(-1)?.Archive?.ptime)
 
@@ -156,37 +135,39 @@ const searchHandler = () => {
 
 <template>
   <div class="manuscript-management">
-    <div ref="inputEl" class="search-input-box">
-      <div class="input-container">
-        <input
-          v-model.trim="postTag"
-          class="search-input"
-          type="text"
-          :class="{ 'input-focus': isInputFocus }"
-          placeholder="请输入投稿标签"
-          @focus="isInputFocus = true"
-          @blur="isInputFocus = false"
-          @keyup.enter="searchHandler"
-        />
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 24 24"
-          fill="#000"
-          class="search-icon"
-          width="24"
-          height="24"
-          @click="searchHandler"
-        >
-          <path
-            d="M18.031 16.6168L22.3137 20.8995L20.8995 22.3137L16.6168 18.031C15.0769 19.263 13.124 20 11 20C6.032 20 2 15.968 2 11C2 6.032 6.032 2 11 2C15.968 2 20 6.032 20 11C20 13.124 19.263 15.0769 18.031 16.6168ZM16.0247 15.8748C17.2475 14.6146 18 12.8956 18 11C18 7.1325 14.8675 4 11 4C7.1325 4 4 7.1325 4 11C4 14.8675 7.1325 18 11 18C12.8956 18 14.6146 17.2475 15.8748 16.0247L16.0247 15.8748Z"
-          ></path>
-        </svg>
+    <div class="header">
+      <div ref="inputEl" class="search-input-box">
+        <div class="input-container">
+          <input
+            v-model.trim="postTag"
+            class="search-input"
+            type="text"
+            :class="{ 'input-focus': isInputFocus }"
+            placeholder="请输入投稿标签"
+            @focus="isInputFocus = true"
+            @blur="isInputFocus = false"
+            @keyup.enter="searchHandler"
+          />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="#000"
+            class="search-icon"
+            width="24"
+            height="24"
+            @click="searchHandler"
+          >
+            <path
+              d="M18.031 16.6168L22.3137 20.8995L20.8995 22.3137L16.6168 18.031C15.0769 19.263 13.124 20 11 20C6.032 20 2 15.968 2 11C2 6.032 6.032 2 11 2C15.968 2 20 6.032 20 11C20 13.124 19.263 15.0769 18.031 16.6168ZM16.0247 15.8748C17.2475 14.6146 18 12.8956 18 11C18 7.1325 14.8675 4 11 4C7.1325 4 4 7.1325 4 11C4 14.8675 7.1325 18 11 18C12.8956 18 14.6146 17.2475 15.8748 16.0247L16.0247 15.8748Z"
+            ></path>
+          </svg>
+        </div>
+        <div class="search-button" @click="searchHandler">搜索</div>
       </div>
-      <div class="search-button" @click="searchHandler">搜索</div>
-    </div>
-    <div ref="eventRulesEl" class="event-rules">
-      <div>活动规则：{{ filterData['活动规则'] }}</div>
-      <div>当前投稿：投稿量={{ totalCount }}, 播放量={{ totalPlay }}</div>
+      <div ref="eventRulesEl" class="event-rules">
+        <div>活动规则：{{ filterData['活动规则'] }}</div>
+        <div>当前投稿：投稿量={{ totalCount }}, 播放量={{ totalPlay }}</div>
+      </div>
     </div>
     <div class="content-box">
       <ContentCardComponent
@@ -205,12 +186,20 @@ const searchHandler = () => {
   flex-direction: column;
   align-items: center;
 
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: #fff;
+    width: 100%;
+  }
+
   .search-input-box {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: fixed;
-    width: 83.3%;
+    position: static;
+    width: 100%;
     padding: 20px 0;
     background-color: #fff;
 
@@ -265,9 +254,9 @@ const searchHandler = () => {
     display: flex;
     flex-direction: column;
     justify-content: center;
-    position: fixed;
+    position: static;
+    width: 100%;
     top: 80px;
-    width: 83.3%;
     min-height: 80px;
     font-size: 20px;
     background-color: #fff;
@@ -278,7 +267,6 @@ const searchHandler = () => {
     flex-direction: column;
     align-items: center;
     width: 100%;
-    padding-top: 160px;
   }
 }
 </style>

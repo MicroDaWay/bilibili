@@ -38,9 +38,9 @@ const proxyImage = (url) => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 98%;
+  width: 100%;
   border-bottom: 1px solid #ccc;
-  padding: 20px 0;
+  padding: 2vh 0;
 
   .img-container {
     img {

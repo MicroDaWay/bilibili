@@ -208,6 +208,7 @@ onMounted(() => {
   border-top: 1px solid #ccc;
   scrollbar-gutter: stable;
   padding: 0 1vw 1vw 1vw;
+  scroll-behavior: smooth;
 
   &::-webkit-scrollbar {
     width: 12px;
