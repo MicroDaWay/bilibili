@@ -1,4 +1,4 @@
-<!-- 数据表格组件 -->
+<!-- 表格组件 -->
 <script setup>
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 
@@ -29,7 +29,6 @@ const emit = defineEmits(['main-handler', 'order-handler'])
 
 const headerRef = ref(null)
 const stickyTop = ref(0)
-
 const activeRow = ref(null)
 
 const mainHandler = () => {
@@ -59,15 +58,15 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="data-table">
+  <div class="table-component">
     <div ref="headerRef" class="header">
-      <div class="text" @click="mainHandler">{{ props.title }}</div>
+      <div class="title" @click="mainHandler">{{ props.title }}</div>
       <div v-if="props.totalMoney && props.balance" class="container">
         <div class="total-money">累计金额：{{ props.totalMoney }}</div>
         <div class="balance">账户余额：{{ props.balance }}</div>
       </div>
-      <table class="table-container">
-        <thead v-if="props.itemList.length">
+      <table v-if="props.itemList.length" class="table-thead">
+        <thead>
           <tr class="table-tr" @click="orderHandler">
             <th
               v-for="column in props.columns"
@@ -80,7 +79,7 @@ onBeforeUnmount(() => {
         </thead>
       </table>
     </div>
-    <table class="table-container">
+    <table class="table-tbody">
       <tbody>
         <tr
           v-for="item in props.itemList"
@@ -103,52 +102,51 @@ onBeforeUnmount(() => {
 </template>
 
 <style scoped lang="scss">
-.data-table {
-  width: 100%;
-
+.table-component {
   .header {
     position: sticky;
     top: 0;
     z-index: 20;
     background: #fff;
-  }
 
-  .text {
-    height: 14vh;
-    line-height: 14vh;
-    text-align: center;
-    font-size: 2.4vw;
-    cursor: pointer;
-
-    &:hover {
-      background-color: orange;
-    }
-  }
-
-  .container {
-    text-align: center;
-    padding: 1vh 0;
-    background: #fff;
-
-    .total-money,
-    .balance {
-      font-size: 1.5vw;
+    .title {
+      height: 14vh;
+      line-height: 14vh;
+      text-align: center;
+      font-size: 2.4vw;
+      cursor: pointer;
 
       &:hover {
         background-color: orange;
       }
     }
+
+    .container {
+      text-align: center;
+      padding: 1vh 0;
+
+      .total-money,
+      .balance {
+        font-size: 1.5vw;
+
+        &:hover {
+          background-color: orange;
+        }
+      }
+    }
+
+    .table-thead {
+      width: 100%;
+
+      .table-tr {
+        font-size: 1.5vw;
+        cursor: pointer;
+      }
+    }
   }
 
-  .table-container {
+  .table-tbody {
     width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-
-    .table-tr {
-      font-size: 1.5vw;
-      cursor: pointer;
-    }
 
     .tr-text {
       font-size: 1.5vw;

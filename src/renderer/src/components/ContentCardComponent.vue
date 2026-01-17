@@ -45,7 +45,7 @@ const proxyImage = (url) => {
   .img-container {
     img {
       display: block;
-      width: 230px;
+      width: 14vw;
     }
   }
 
@@ -54,10 +54,9 @@ const proxyImage = (url) => {
     display: flex;
     flex-direction: column;
     justify-content: space-around;
-    width: 500px;
-    height: 130px;
-    margin-left: 20px;
-    font-size: 18px;
+    height: 16vh;
+    margin-left: 1vw;
+    font-size: 1.2vw;
 
     .title {
       white-space: nowrap;

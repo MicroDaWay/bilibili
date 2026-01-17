@@ -8,14 +8,14 @@ import SearchComponent from '@/components/SearchComponent.vue'
 const itemList = ref([])
 const columns = [
   { title: '标题', key: 'title' },
-  { title: '播放量', key: 'view', width: '6%' },
+  { title: '播放量', key: 'view', width: '8%' },
   {
     title: '投稿时间',
     key: 'postTime',
-    width: '20%',
+    width: '22%',
     formatter: (value) => format(value, 'yyyy-MM-dd HH:mm:ss')
   },
-  { title: '投稿标签', key: 'tag' }
+  { title: '投稿标签', key: 'tag', width: '22%' }
 ]
 
 // 点击搜索的处理函数
@@ -46,10 +46,10 @@ const orderHandler = () => {
 
 <template>
   <SearchComponent
-    :item-list="itemList"
     :columns="columns"
-    @search-handler="searchHandler"
+    :item-list="itemList"
     @order-handler="orderHandler"
+    @search-handler="searchHandler"
   ></SearchComponent>
 </template>
 

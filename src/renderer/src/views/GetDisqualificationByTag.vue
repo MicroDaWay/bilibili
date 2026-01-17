@@ -8,12 +8,12 @@ import SearchComponent from '@/components/SearchComponent.vue'
 const itemList = ref([])
 const columns = [
   { title: '标题', key: 'title' },
-  { title: '投稿标签', key: 'tag', width: '20%' },
+  { title: '投稿标签', key: 'tag', width: '22%' },
   { title: '播放量', key: 'view', width: '8%' },
   {
     title: '投稿时间',
     key: 'postTime',
-    width: '20%',
+    width: '22%',
     formatter: (value) => format(value, 'yyyy-MM-dd HH:mm:ss')
   }
 ]
@@ -46,11 +46,10 @@ const orderHandler = () => {
 
 <template>
   <SearchComponent
-    :title="title"
-    :item-list="itemList"
     :columns="columns"
-    @search-handler="searchHandler"
+    :item-list="itemList"
     @order-handler="orderHandler"
+    @search-handler="searchHandler"
   ></SearchComponent>
 </template>
 

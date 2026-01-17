@@ -20,8 +20,6 @@ const filterData = ref({
 const totalPlay = ref(0)
 const totalCount = ref(0)
 const itemList = ref([])
-const inputEl = ref(null)
-const eventRulesEl = ref(null)
 const isInputFocus = ref(false)
 
 const bilibiliStore = useBilibiliStore()
@@ -136,7 +134,7 @@ const searchHandler = () => {
 <template>
   <div class="manuscript-management">
     <div class="header">
-      <div ref="inputEl" class="search-input-box">
+      <div class="search-input-box">
         <div class="input-container">
           <input
             v-model.trim="postTag"
@@ -164,7 +162,7 @@ const searchHandler = () => {
         </div>
         <div class="search-button" @click="searchHandler">搜索</div>
       </div>
-      <div ref="eventRulesEl" class="event-rules">
+      <div class="event-rules">
         <div>活动规则：{{ filterData['活动规则'] }}</div>
         <div>当前投稿：投稿量={{ totalCount }}, 播放量={{ totalPlay }}</div>
       </div>
@@ -182,84 +180,75 @@ const searchHandler = () => {
 
 <style scoped lang="scss">
 .manuscript-management {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
   .header {
     position: sticky;
     top: 0;
     z-index: 10;
     background: #fff;
-    width: 100%;
-  }
 
-  .search-input-box {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    position: static;
-    width: 100%;
-    padding: 20px 0;
-    background-color: #fff;
+    .search-input-box {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 2vh 0;
+      background-color: #fff;
 
-    .input-container {
-      position: relative;
-      width: 100%;
-
-      .search-input {
+      .input-container {
+        position: relative;
         width: 100%;
-        height: 40px;
-        border-radius: 22px;
-        border: none;
-        outline: none;
-        border: 1px solid #ccc;
-        font-size: 20px;
-        padding: 0 42px 0 16px;
-        user-select: none;
 
-        &.input-focus {
-          border: 1px solid orange;
+        .search-input {
+          width: 100%;
+          height: 5.4vh;
+          border-radius: 2vw;
+          border: none;
+          outline: none;
+          border: 1px solid #ccc;
+          font-size: 1.3vw;
+          padding: 0 3vw 0 1.2vw;
+          user-select: none;
+
+          &.input-focus {
+            border: 1px solid orange;
+          }
+        }
+
+        .search-icon {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+          right: 1vw;
         }
       }
 
-      .search-icon {
-        position: absolute;
-        top: 50%;
-        transform: translateY(-50%);
-        right: 12px;
+      .search-button {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 8vw;
+        height: 5.4vh;
+        background-color: orange;
+        border-radius: 2vw;
+        font-size: 1.5vw;
+        margin-left: 2vw;
+        user-select: none;
+        cursor: pointer;
+
+        &:hover {
+          background-color: #ffb121;
+        }
       }
     }
 
-    .search-button {
+    .event-rules {
       display: flex;
+      flex-direction: column;
       justify-content: center;
-      align-items: center;
-      width: 10%;
-      height: 40px;
-      background-color: orange;
-      border-radius: 22px;
-      font-size: 20px;
-      margin-left: 50px;
-      cursor: pointer;
-      user-select: none;
-
-      &:hover {
-        background-color: #ffb121;
-      }
+      width: 100%;
+      height: 10vh;
+      font-size: 1.3vw;
+      background-color: #fff;
     }
-  }
-
-  .event-rules {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    position: static;
-    width: 100%;
-    top: 80px;
-    min-height: 80px;
-    font-size: 20px;
-    background-color: #fff;
   }
 
   .content-box {

@@ -12,10 +12,10 @@ const columns = [
   {
     title: '奖励时间',
     key: 'createTime',
-    width: '20%',
+    width: '22%',
     formatter: (value) => format(value, 'yyyy-MM-dd HH:mm:ss')
   },
-  { title: '累计金额', key: 'totalMoney', width: '8%' }
+  { title: '累计金额', key: 'totalMoney', width: '10%' }
 ]
 
 // 点击搜索的处理函数
@@ -46,11 +46,10 @@ const orderHandler = () => {
 
 <template>
   <SearchComponent
-    :title="title"
-    :item-list="itemList"
     :columns="columns"
-    @search-handler="searchHandler"
+    :item-list="itemList"
     @order-handler="orderHandler"
+    @search-handler="searchHandler"
   ></SearchComponent>
 </template>
 

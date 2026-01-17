@@ -1,24 +1,31 @@
 <!-- 登录 -->
 <script setup>
 import qrcode from 'qrcode'
-import { nextTick, onMounted, ref } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 
 const QRCode = ref(null)
 const QRCodeKey = ref('')
 const isLogin = ref(false)
 const avatar = ref('')
+const qrUrl = ref('')
+
+const drawQRCode = async () => {
+  if (!QRCode.value || !qrUrl.value) return
+  const size = Math.min(Math.max(window.innerWidth * 0.2, 180), 320)
+  await qrcode.toCanvas(QRCode.value, qrUrl.value, {
+    width: size,
+    height: size
+  })
+}
 
 // 登录
 const login = async () => {
   const result = await window.electronAPI.getQRCode()
-  const url = result.data.url
+  qrUrl.value = result.data.url
   QRCodeKey.value = result.data.qrcode_key
+
   await nextTick()
-  const QRCodeCanvas = QRCode.value
-  await qrcode.toCanvas(QRCodeCanvas, url, {
-    width: 300,
-    height: 300
-  })
+  await drawQRCode()
   checkStatus()
 }
 
@@ -72,11 +79,20 @@ const getNavigation = async () => {
   isLogin.value = result.isLogin
 }
 
+const handleResize = () => {
+  drawQRCode()
+}
+
 onMounted(async () => {
   await getNavigation()
   if (!isLogin.value) {
-    login()
+    await login()
+    window.addEventListener('resize', handleResize)
   }
+})
+
+onUnmounted(() => {
+  window.removeEventListener('resize', handleResize)
 })
 
 const proxyImage = (url) => {
@@ -98,28 +114,26 @@ const proxyImage = (url) => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  height: calc(#{'100vh - 1px'});
+  height: calc(99vh - 1px);
   justify-content: center;
 
   canvas,
   img {
-    width: 300px;
-    height: 300px;
     border: 1px solid #ccc;
     user-select: none;
   }
 
   .login-btn,
   .logout {
-    width: 180px;
-    height: 50px;
-    line-height: 50px;
+    width: 10vw;
+    height: 6vh;
+    line-height: 6vh;
     text-align: center;
-    border-radius: 30px;
+    border-radius: 2vw;
     background-color: orange;
-    font-size: 26px;
+    font-size: 1.6vw;
     user-select: none;
-    margin-top: 20px;
+    margin-top: 4vh;
 
     &:hover {
       cursor: pointer;

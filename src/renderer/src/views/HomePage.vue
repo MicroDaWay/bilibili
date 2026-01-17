@@ -207,7 +207,7 @@ onMounted(() => {
   overflow-y: auto;
   border-top: 1px solid #ccc;
   scrollbar-gutter: stable;
-  padding: 0 1vw 1vw 1vw;
+  padding: 0 1vw 1vh 1vw;
   scroll-behavior: smooth;
 
   &::-webkit-scrollbar {
