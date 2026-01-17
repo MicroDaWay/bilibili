@@ -9,7 +9,7 @@ import { getAnyDaysAgo } from '@/utils/index'
 const itemList = ref([])
 const title = '热门活动'
 const columns = [
-  { title: '活动开始时间', key: 'startTime', width: '26%' },
+  { title: '活动开始时间', key: 'startTime', width: '22%' },
   { title: '活动名称', key: 'name' }
 ]
 

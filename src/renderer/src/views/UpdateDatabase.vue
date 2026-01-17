@@ -15,10 +15,10 @@ const columns = [
   {
     title: '投稿时间',
     key: 'postTime',
-    width: '20%',
+    width: '22%',
     formatter: (value) => format(value, 'yyyy-MM-dd HH:mm:ss')
   },
-  { title: '播放量', key: 'view', width: '6%', formatter: (value) => value.toString().padEnd(5) },
+  { title: '播放量', key: 'view', width: '8%', formatter: (value) => value.toString().padEnd(5) },
   { title: '标题', key: 'title' }
 ]
 

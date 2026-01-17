@@ -7,8 +7,8 @@ import TableComponent from '@/components/TableComponent.vue'
 import { useBilibiliStore } from '@/stores/bilibiliStore'
 
 const itemList = ref([])
-const totalMoney = ref('')
-const balance = ref('')
+const totalMoney = ref(0)
+const balance = ref(0)
 const title = '收益中心'
 const isProcessing = ref(false)
 let globalItemListRef = null
@@ -18,10 +18,10 @@ const columns = [
   {
     title: '发放时间',
     key: 'createTime',
-    width: '20%',
+    width: '22%',
     formatter: (value) => format(value, 'yyyy-MM-dd HH:mm:ss')
   },
-  { title: '发放金额', key: 'money', width: '8%' },
+  { title: '发放金额', key: 'money', width: '10%' },
   { title: '活动名称', key: 'productName' }
 ]
 
@@ -34,10 +34,10 @@ const handleProgress = async (event, item) => {
       money: item.money,
       productName: item.productName
     })
-    totalMoney.value = item.totalMoney
-    balance.value = item.balance
-    bilibiliStore.setTotalMoney(item.totalMoney)
-    bilibiliStore.setBalance(item.balance)
+    totalMoney.value = +item.totalMoney
+    balance.value = +item.balance
+    bilibiliStore.setTotalMoney(+item.totalMoney)
+    bilibiliStore.setBalance(+item.balance)
 
     await nextTick()
     const container = TableComponentContainer.value

@@ -14,12 +14,12 @@ const columns = [
   {
     title: '活动资格取消时间',
     key: 'postTime',
-    width: '20%',
+    width: '22%',
     formatter: (value) => format(value, 'yyyy-MM-dd HH:mm:ss')
   },
-  { title: '播放量', key: 'view', width: '6%' },
+  { title: '播放量', key: 'view', width: '8%' },
   { title: '标题', key: 'title' },
-  { title: '投稿标签', key: 'tag', width: '26%' }
+  { title: '投稿标签', key: 'tag', width: '22%' }
 ]
 
 const handleProgress = (event, item) => {
