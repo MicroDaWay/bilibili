@@ -9,7 +9,6 @@ const itemList = ref([])
 const title = '更新数据库'
 const isProcessing = ref(false)
 let globalItemListRef = null
-const TableComponentContainer = ref(null)
 
 const columns = [
   {
@@ -32,7 +31,7 @@ const handleProgress = async (event, item) => {
     })
 
     await nextTick()
-    const container = TableComponentContainer.value
+    const container = document.querySelector('.right-content')
     if (container) {
       container.scrollTop = container.scrollHeight
     }
@@ -85,15 +84,13 @@ const orderHandler = () => {
 </script>
 
 <template>
-  <div ref="TableComponentContainer">
-    <TableComponent
-      :title="title"
-      :item-list="itemList"
-      :columns="columns"
-      @main-handler="main"
-      @order-handler="orderHandler"
-    ></TableComponent>
-  </div>
+  <TableComponent
+    :title="title"
+    :item-list="itemList"
+    :columns="columns"
+    @main-handler="main"
+    @order-handler="orderHandler"
+  ></TableComponent>
 </template>
 
 <style scoped lang="scss"></style>

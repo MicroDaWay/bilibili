@@ -12,7 +12,6 @@ const balance = ref(0)
 const title = '收益中心'
 const isProcessing = ref(false)
 let globalItemListRef = null
-const TableComponentContainer = ref(null)
 
 const columns = [
   {
@@ -40,7 +39,7 @@ const handleProgress = async (event, item) => {
     bilibiliStore.setBalance(+item.balance)
 
     await nextTick()
-    const container = TableComponentContainer.value
+    const container = document.querySelector('.right-content')
     if (container) {
       container.scrollTop = container.scrollHeight
     }
@@ -95,17 +94,15 @@ const orderHandler = () => {
 </script>
 
 <template>
-  <div ref="TableComponentContainer">
-    <TableComponent
-      :title="title"
-      :item-list="itemList"
-      :columns="columns"
-      :total-money="totalMoney"
-      :balance="balance"
-      @main-handler="main"
-      @order-handler="orderHandler"
-    ></TableComponent>
-  </div>
+  <TableComponent
+    :title="title"
+    :item-list="itemList"
+    :columns="columns"
+    :total-money="totalMoney"
+    :balance="balance"
+    @main-handler="main"
+    @order-handler="orderHandler"
+  ></TableComponent>
 </template>
 
 <style scoped lang="scss"></style>
