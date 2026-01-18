@@ -117,10 +117,14 @@ const proxyImage = (url) => {
   height: calc(99vh - 1px);
   justify-content: center;
 
-  canvas,
-  img {
+  canvas {
     border: 1px solid #ccc;
     user-select: none;
+  }
+
+  img {
+    user-select: none;
+    width: 20vw;
   }
 
   .login-btn,

@@ -24,14 +24,17 @@ const createWindow = () => {
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
-      contextIsolation: true
+      contextIsolation: true,
+      devTools: is.dev
     }
   })
 
-  // 开发者调试工具
-  globalShortcut.register('F11', () => {
-    mainWindow.webContents.toggleDevTools()
-  })
+  // 开发者调试工具, 只在开发环境才能调用
+  if (is.dev) {
+    globalShortcut.register('F11', () => {
+      mainWindow.webContents.toggleDevTools()
+    })
+  }
 
   mainWindow.on('ready-to-show', () => {
     mainWindow.maximize()

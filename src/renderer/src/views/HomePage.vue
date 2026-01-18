@@ -118,7 +118,7 @@ onMounted(() => {
   // 监听登录成功事件
   window.electronAPI.loginSuccess(() => {
     isLogin.value = true
-    // 如果当前在登录页，跳转到稿件管理
+    // 如果当前在登录页, 跳转到稿件管理
     if (router.currentRoute.value.path === '/login') {
       router.push('/manuscript-management')
     }
