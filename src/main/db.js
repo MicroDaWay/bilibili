@@ -44,35 +44,29 @@ export const initTable = async (mainWindow) => {
     // 初始化manuscript表
     await conn.query(`
       CREATE TABLE IF NOT EXISTS manuscript (
-        id INT AUTO_INCREMENT COMMENT 'id',
         title VARCHAR(255) COMMENT '标题',
         view INT COMMENT '播放量',
         post_time DATETIME COMMENT '投稿时间',
         tag VARCHAR(255) COMMENT '投稿标签',
-        CONSTRAINT PK_manuscript_id PRIMARY KEY(id)
       ) COMMENT '稿件管理'
     `)
 
     // 初始化rewards表
     await conn.query(`
       CREATE TABLE IF NOT EXISTS rewards (
-        id INT AUTO_INCREMENT COMMENT 'id',
         product_name VARCHAR(100) COMMENT '活动名称',
         money DECIMAL(10,2) COMMENT '发放金额',
         create_time DATETIME COMMENT '发放时间',
-        CONSTRAINT PK_rewards_id PRIMARY KEY(id)
       ) COMMENT '收益中心'
     `)
 
     // 初始化disqualification表
     await conn.query(`
       CREATE TABLE IF NOT EXISTS disqualification (
-        id INT AUTO_INCREMENT COMMENT 'id',
         title VARCHAR(255) COMMENT '标题',
         tag VARCHAR(255) COMMENT '投稿标签',
         view INT COMMENT '播放量',
         post_time DATETIME COMMENT '投稿时间',
-        CONSTRAINT PK_disqualification_id PRIMARY KEY(id),
         UNIQUE KEY UK_disqualification_title_post_time(title, post_time)
       ) COMMENT '活动资格取消稿件'
     `)
