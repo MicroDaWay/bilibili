@@ -106,5 +106,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 查询每月的支出
   getOutcomeByMonth: () => ipcRenderer.invoke('get-outcome-by-month'),
   // 查询每年的支出
-  getOutcomeByYear: () => ipcRenderer.invoke('get-outcome-by-year')
+  getOutcomeByYear: () => ipcRenderer.invoke('get-outcome-by-year'),
+  // 停止录制
+  stopRecorder: () => ipcRenderer.invoke('stop-recorder'),
+  // 通过直播间地址开始录制
+  startByRoomUrl: (params) => ipcRenderer.invoke('start-by-room-url', params)
 })

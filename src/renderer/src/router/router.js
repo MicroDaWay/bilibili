@@ -28,7 +28,8 @@ const routes = [
   { path: '/get-income-by-year', component: () => import('@/views/GetIncomeByYear.vue') },
   { path: '/get-outcome-details', component: () => import('@/views/GetOutcomeDetails.vue') },
   { path: '/get-outcome-by-month', component: () => import('@/views/GetOutcomeByMonth.vue') },
-  { path: '/get-outcome-by-year', component: () => import('@/views/GetOutcomeByYear.vue') }
+  { path: '/get-outcome-by-year', component: () => import('@/views/GetOutcomeByYear.vue') },
+  { path: '/live-recorder', component: () => import('@/views/LiveRecorder.vue') }
 ]
 
 const router = createRouter({

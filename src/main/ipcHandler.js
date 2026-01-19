@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { format } from 'date-fns'
-import { BrowserWindow, dialog, ipcMain, Menu } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Menu } from 'electron'
+import path from 'path'
 
 import {
   excelDateToJSDate,
@@ -8,9 +9,16 @@ import {
   getAnyDaysAgo,
   rowsToCamel
 } from '../renderer/src/utils'
-import { getBalance, getEarningsList, getManuscriptList, getMessageList } from './api.js'
+import {
+  getBalance,
+  getEarningsList,
+  getM3U8,
+  getManuscriptList,
+  getMessageList,
+  isLiving
+} from './api.js'
 import { readCookie, writeCookie } from './cookie.js'
-import { getTagByTitle } from './utilFunction.js'
+import { getTagByTitle, parseRoomId } from './utilFunction.js'
 
 // 自定义右键菜单项
 const createMenuItem = (label, role, shortcut) => {
@@ -32,7 +40,7 @@ const contextMenuTemplate = [
   createMenuItem('全选', 'selectAll', 'Ctrl + A')
 ]
 
-export const registerIpcHandler = (pool, mainWindow) => {
+export const registerIpcHandler = (pool, mainWindow, recorder) => {
   // 消息弹窗
   ipcMain.handle('show-message', async (event, params) => {
     const result = await dialog.showMessageBox(mainWindow, {
@@ -948,5 +956,37 @@ export const registerIpcHandler = (pool, mainWindow) => {
       })
       return null
     }
+  })
+
+  // 通过直播间地址开始录制
+  ipcMain.handle('start-by-room-url', async (event, roomUrl) => {
+    const roomId = parseRoomId(roomUrl)
+    if (!roomId) {
+      await dialog.showMessageBox(mainWindow, {
+        title: '直播录制',
+        type: 'error',
+        message: '无效的直播间地址'
+      })
+    }
+
+    // 判断是否在播
+    const living = await isLiving(roomId)
+    if (!living) {
+      await dialog.showMessageBox(mainWindow, {
+        title: '直播录制',
+        type: 'error',
+        message: '当前直播间未开播'
+      })
+    }
+
+    // 获取m3u8(原画优先)
+    const m3u8 = await getM3U8(roomId, 10000)
+    const dir = path.join(app.getPath('videos'), 'BilibiliRecorder')
+    return recorder.start(m3u8, dir)
+  })
+
+  // 停止录制
+  ipcMain.handle('stop-recorder', () => {
+    recorder.stop()
   })
 }

@@ -88,6 +88,10 @@ const list = [
   {
     text: '查询每年的支出',
     url: '/get-outcome-by-year'
+  },
+  {
+    text: '直播录制',
+    url: '/live-recorder'
   }
 ]
 

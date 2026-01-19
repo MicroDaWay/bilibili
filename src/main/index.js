@@ -5,12 +5,14 @@ import { app, BrowserWindow, globalShortcut, Menu, shell } from 'electron'
 
 import { checkDatabaseConnection, initTable, pool } from './db.js'
 import { registerIpcHandler } from './ipcHandler.js'
+import { LiveRecorder } from './recorder.js'
 import { startServer } from './server.js'
 import { importExcelHandler } from './utilFunction.js'
 
 let server
 let mainWindow
 let isQuitting = false
+const recorder = new LiveRecorder()
 
 // 创建窗口
 const createWindow = () => {
@@ -84,7 +86,7 @@ app.whenReady().then(async () => {
   // 开启图片代理服务器
   startServer(server, mainWindow)
 
-  registerIpcHandler(pool, mainWindow)
+  registerIpcHandler(pool, mainWindow, recorder)
 
   // 菜单栏
   const myMenu = [

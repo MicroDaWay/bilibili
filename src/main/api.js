@@ -83,3 +83,67 @@ export const getMessageList = async (end_seqno) => {
   })
   return response.data?.data || null
 }
+
+// 查询直播间是否开播
+export const isLiving = async (roomId) => {
+  const url = 'https://api.live.bilibili.com/room/v1/Room/get_info'
+  const headers = {
+    Referer: 'https://live.bilibili.com',
+    'User-Agent': process.env.DB_USER_AGENT
+  }
+  const params = {
+    room_id: roomId
+  }
+  const response = await axios.get(url, {
+    headers,
+    params
+  })
+
+  return response.data.data.live_status === 1
+}
+
+// 获取直播间m3u8地址
+export const getM3U8 = async (roomId, qn = 10000) => {
+  const url = 'https://api.live.bilibili.com/xlive/web-room/v2/index/getRoomPlayInfo'
+  const headers = {
+    Referer: 'https://live.bilibili.com',
+    'User-Agent': process.env.DB_USER_AGENT
+  }
+  const params = {
+    room_id: roomId,
+    protocol: '0,1',
+    format: '0,1,2',
+    codec: '0,1',
+    qn,
+    platform: 'web'
+  }
+  const response = await axios.get(url, {
+    headers,
+    params
+  })
+
+  const playurl = response.data?.data?.playurl_info?.playurl
+  if (!playurl || !playurl?.stream?.length) {
+    throw new Error('未获取到直播流, playurl为空)')
+  }
+
+  for (const stream of playurl.stream) {
+    for (const format of stream.format || []) {
+      // 只要是m3u8就行, 不强制ts
+      if (!format.format_name?.includes('ts') && !format.format_name?.includes('fmp4')) {
+        continue
+      }
+
+      for (const codec of format.codec || []) {
+        const baseUrl = codec.base_url
+        const info = codec.url_info?.[0]
+
+        if (baseUrl && info?.host && info?.extra) {
+          return info.host + baseUrl + info.extra
+        }
+      }
+    }
+  }
+
+  throw new Error('未找到可用的m3u8流')
+}
