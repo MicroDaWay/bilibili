@@ -47,7 +47,7 @@ export const initTable = async (mainWindow) => {
         title VARCHAR(255) COMMENT '标题',
         view INT COMMENT '播放量',
         post_time DATETIME COMMENT '投稿时间',
-        tag VARCHAR(255) COMMENT '投稿标签',
+        tag VARCHAR(255) COMMENT '投稿标签'
       ) COMMENT '稿件管理'
     `)
 
@@ -56,7 +56,7 @@ export const initTable = async (mainWindow) => {
       CREATE TABLE IF NOT EXISTS rewards (
         product_name VARCHAR(100) COMMENT '活动名称',
         money DECIMAL(10,2) COMMENT '发放金额',
-        create_time DATETIME COMMENT '发放时间',
+        create_time DATETIME COMMENT '发放时间'
       ) COMMENT '收益中心'
     `)
 
