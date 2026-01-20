@@ -15,6 +15,7 @@ import {
   getM3U8,
   getManuscriptList,
   getMessageList,
+  getUsernameByUid,
   isLiving
 } from './api.js'
 import { readCookie, writeCookie } from './cookie.js'
@@ -970,7 +971,8 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
     }
 
     // 判断是否在播
-    const living = await isLiving(roomId)
+    const { uid, live_status, title, user_cover, live_time, tags } = await isLiving(roomId)
+    const living = live_status === 1
     if (!living) {
       await dialog.showMessageBox(mainWindow, {
         title: '直播录制',
@@ -979,10 +981,20 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
       })
     }
 
+    const result = await getUsernameByUid(uid)
+    const username = result?.info?.uname
+
     // 获取m3u8(原画优先)
     const m3u8 = await getM3U8(roomId, 10000)
     const dir = path.join(app.getPath('videos'), 'BilibiliRecorder')
-    return recorder.start(m3u8, dir)
+    return {
+      file: recorder.start(m3u8, dir),
+      username,
+      title,
+      userCover: user_cover,
+      liveTime: live_time,
+      tags
+    }
   })
 
   // 停止录制

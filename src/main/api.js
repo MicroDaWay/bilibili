@@ -67,7 +67,7 @@ export const getEarningsList = async (currentPage) => {
 export const getMessageList = async (end_seqno) => {
   const url = 'https://api.vc.bilibili.com/svr_sync/v1/svr_sync/fetch_session_msgs'
   const headers = {
-    Referer: 'https://text.bilibili.com/',
+    Referer: 'https://text.bilibili.com',
     Cookie: readCookie(),
     'User-Agent': process.env.DB_USER_AGENT
   }
@@ -99,7 +99,7 @@ export const isLiving = async (roomId) => {
     params
   })
 
-  return response.data.data.live_status === 1
+  return response.data?.data
 }
 
 // 获取直播间m3u8地址
@@ -146,4 +146,22 @@ export const getM3U8 = async (roomId, qn = 10000) => {
   }
 
   throw new Error('未找到可用的m3u8流')
+}
+
+// 查询用户名
+export const getUsernameByUid = async (uid) => {
+  const url = `https://api.live.bilibili.com/live_user/v1/Master/info`
+  const headers = {
+    Referer: 'https://live.bilibili.com',
+    'User-Agent': process.env.DB_USER_AGENT
+  }
+  const params = {
+    uid
+  }
+  const response = await axios.get(url, {
+    headers,
+    params
+  })
+
+  return response.data?.data
 }

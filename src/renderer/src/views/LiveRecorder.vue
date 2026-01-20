@@ -2,17 +2,31 @@
 import { ref } from 'vue'
 
 const roomUrl = ref('')
-const isRecorder = ref(false)
+const isRecording = ref(false)
 const isInputFocus = ref(false)
+
+const item = ref({
+  username: '',
+  title: '',
+  userCover: '',
+  liveTime: '',
+  tags: ''
+})
 
 // 开始录制
 const startRecord = async () => {
   try {
-    isRecorder.value = true
-    const file = await window.electronAPI.startByRoomUrl(roomUrl.value)
+    isRecording.value = true
+    const { file, username, title, userCover, liveTime, tags } =
+      await window.electronAPI.startByRoomUrl(roomUrl.value)
+    item.value.username = username
+    item.value.title = title
+    item.value.userCover = userCover
+    item.value.liveTime = liveTime
+    item.value.tags = tags
     console.log('正在录制:', file)
   } catch (error) {
-    isRecorder.value = false
+    isRecording.value = false
     window.electronAPI.showMessage({
       title: '直播录制',
       type: 'error',
@@ -23,8 +37,20 @@ const startRecord = async () => {
 
 // 停止录制
 const stopRecord = () => {
-  isRecorder.value = false
+  isRecording.value = false
   window.electronAPI.stopRecorder()
+}
+
+const clickHandler = () => {
+  if (!isRecording.value) {
+    startRecord()
+  } else {
+    stopRecord()
+  }
+}
+
+const proxyImage = (url) => {
+  return `http://localhost:3000/proxy/image?url=${encodeURIComponent(url)}`
 }
 </script>
 
@@ -40,6 +66,7 @@ const stopRecord = () => {
           placeholder="请输入直播间地址"
           @focus="isInputFocus = true"
           @blur="isInputFocus = false"
+          @keyup.enter="clickHandler"
         />
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -55,8 +82,19 @@ const stopRecord = () => {
           ></path>
         </svg>
       </div>
-      <div v-if="!isRecorder" class="search-button" @click="startRecord">开始录制</div>
-      <div v-else class="search-button" @click="stopRecord">停止录制</div>
+      <div v-if="!isRecording" class="search-button" @click="clickHandler">开始录制</div>
+      <div v-else class="search-button" @click="clickHandler">停止录制</div>
+    </div>
+    <div v-if="isRecording" class="content-container">
+      <div class="img-container">
+        <img :src="proxyImage(item.userCover)" :alt="item.title" />
+      </div>
+      <div class="details">
+        <div class="name">UP: {{ item.username }}</div>
+        <div class="title">标题：{{ item.title }}</div>
+        <div class="live-time">直播时间：{{ item.liveTime }}</div>
+        <div class="tags">直播标签：{{ item.tags }}</div>
+      </div>
     </div>
   </div>
 </template>
@@ -113,6 +151,39 @@ const stopRecord = () => {
 
       &:hover {
         background-color: #ffb121;
+      }
+    }
+  }
+
+  .content-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ccc;
+    padding: 2vh 0;
+
+    .img-container {
+      img {
+        display: block;
+        width: 14vw;
+      }
+    }
+
+    .details {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-around;
+      height: 16vh;
+      margin-left: 1vw;
+      font-size: 1.2vw;
+
+      .title,
+      .tags {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
       }
     }
   }
