@@ -1,4 +1,8 @@
-import { BrowserWindow, dialog } from 'electron'
+import { spawn } from 'child_process'
+import { app, BrowserWindow, dialog } from 'electron'
+import ffmpegPath from 'ffmpeg-static'
+import fs from 'fs'
+import path from 'path'
 import xlsx from 'xlsx'
 
 import { formatTimestampToDatetime } from '../renderer/src/utils/index'
@@ -107,4 +111,45 @@ export const parseRoomId = (url) => {
   } catch {
     return null
   }
+}
+
+// 扫描BilibiliRecorder目录下的ts文件并转换为mp4
+export const scanAndConvertTs = (dir) => {
+  if (!fs.existsSync(dir)) return
+  const files = fs.readdirSync(dir).filter((f) => f.endsWith('.ts'))
+
+  for (const file of files) {
+    const ts = path.join(dir, file)
+    const mp4 = ts.replace(/\.ts$/, '.mp4')
+
+    if (fs.existsSync(mp4)) continue
+
+    console.log('[recover] converting:', ts)
+
+    const p = spawn(ffmpegPath, ['-y', '-i', ts, '-c', 'copy', '-movflags', '+faststart', mp4])
+
+    p.on('close', (code) => {
+      if (code === 0) {
+        console.log('[recover] done:', mp4)
+      } else {
+        console.error('[recover] failed:', ts)
+      }
+    })
+  }
+}
+
+export const getFFmpegPath = () => {
+  if (!app.isPackaged) {
+    // 开发环境
+    return ffmpegPath
+  }
+
+  // 打包后: 指向asar.unpacked
+  return path.join(
+    process.resourcesPath,
+    'app.asar.unpacked',
+    'node_modules',
+    'ffmpeg-static',
+    'ffmpeg.exe'
+  )
 }

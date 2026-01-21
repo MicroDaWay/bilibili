@@ -10,6 +10,7 @@ files:
   - '!{.env,.env.*,.npmrc,pnpm-lock.yaml}'
 asarUnpack:
   - resources/**
+  - node_modules/ffmpeg-static/**
 win:
   executableName: bilibili
   icon: icon.ico

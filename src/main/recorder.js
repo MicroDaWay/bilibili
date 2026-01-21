@@ -1,24 +1,27 @@
 import { spawn } from 'child_process'
 import { format } from 'date-fns'
-import ffmpegPath from 'ffmpeg-static'
 import fs from 'fs'
 import path from 'path'
+
+import { getFFmpegPath } from './utilFunction'
 
 export class LiveRecorder {
   constructor() {
     this.process = null
-    this.output = ''
+    this.tsFile = ''
   }
 
-  start(m3u8Url, outputDir) {
-    if (this.process) return this.output
+  start(m3u8Url, outputDir, username) {
+    if (this.process) return this.tsFile
 
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true })
     }
 
-    const filename = `${format(Date.now(), 'yyyy_MM_dd_HH_mm_ss')}.mp4`
-    this.output = path.join(outputDir, filename)
+    const ffmpegPath = getFFmpegPath()
+    const baseName = `${username}_${format(Date.now(), 'yyyy_MM_dd_HH_mm_ss')}`
+    this.tsFile = path.join(outputDir, baseName + '.ts')
+    this.mp4File = path.join(outputDir, baseName + '.mp4')
 
     const args = [
       '-y',
@@ -39,21 +42,16 @@ export class LiveRecorder {
       '-i',
       m3u8Url,
 
-      // 不重新编码, 性能最好
       '-c',
       'copy',
-      '-bsf:a',
-      'aac_adtstoasc',
-
-      // 保证mp4正常
-      '-movflags',
-      '+faststart',
-
-      this.output
+      '-f',
+      'mpegts',
+      this.tsFile
     ]
 
     this.process = spawn(ffmpegPath, args, {
-      stdio: ['pipe', 'pipe', 'pipe']
+      stdio: ['pipe', 'pipe', 'pipe'],
+      windowsHide: true
     })
 
     this.process.stderr.on('data', (data) => {
@@ -65,15 +63,44 @@ export class LiveRecorder {
       this.process = null
     })
 
-    return this.output
+    return this.tsFile
   }
 
-  stop() {
+  convertToMp4() {
+    return new Promise((resolve, reject) => {
+      if (!this.tsFile || !fs.existsSync(this.tsFile)) {
+        return reject(new Error('ts文件不存在'))
+      }
+
+      const args = ['-y', '-i', this.tsFile, '-c', 'copy', '-movflags', '+faststart', this.mp4File]
+      const ffmpegPath = getFFmpegPath()
+      const p = spawn(ffmpegPath, args)
+
+      p.on('close', (code) => {
+        if (code === 0) {
+          resolve(this.mp4File)
+        } else {
+          reject(new Error('ts转mp4失败'))
+        }
+      })
+    })
+  }
+
+  async stop() {
     if (!this.process) return
 
-    // mp4不会损坏
-    this.process.stdin.write('q')
-    this.process.stdin.end()
+    await new Promise((resolve) => {
+      this.process.once('close', resolve)
+      this.process.stdin.write('q')
+      this.process.stdin.end()
+    })
+
+    try {
+      const mp4 = await this.convertToMp4()
+      console.log('转封装完成:', mp4)
+    } catch (error) {
+      console.error(error)
+    }
   }
 
   isRecording() {

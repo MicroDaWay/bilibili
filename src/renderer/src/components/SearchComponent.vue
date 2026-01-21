@@ -53,8 +53,6 @@ const orderHandler = () => {
             viewBox="0 0 24 24"
             fill="#000"
             class="search-icon"
-            width="24"
-            height="24"
             @click="searchHandler"
           >
             <path
@@ -131,7 +129,7 @@ const orderHandler = () => {
           user-select: none;
 
           &.input-focus {
-            border: 1px solid orange;
+            border: 1px solid var(--color-primary);
           }
         }
 
@@ -140,6 +138,8 @@ const orderHandler = () => {
           top: 50%;
           transform: translateY(-50%);
           right: 1vw;
+          width: 1.6vw;
+          height: 1.6vw;
         }
       }
 
@@ -149,7 +149,7 @@ const orderHandler = () => {
         align-items: center;
         width: 8vw;
         height: 5.4vh;
-        background-color: orange;
+        background-color: var(--color-primary);
         border-radius: 2vw;
         font-size: 1.5vw;
         margin-left: 2vw;
@@ -179,11 +179,11 @@ const orderHandler = () => {
       font-size: 1.5vw;
 
       &.tr-active {
-        background-color: orange;
+        background-color: var(--color-primary);
       }
 
       &:hover {
-        background-color: orange;
+        background-color: var(--color-primary);
       }
     }
   }

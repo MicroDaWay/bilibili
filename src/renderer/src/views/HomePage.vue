@@ -190,7 +190,7 @@ onMounted(() => {
     user-select: none;
 
     &:hover {
-      background-color: orange;
+      background-color: var(--color-primary);
     }
 
     a {
@@ -199,7 +199,7 @@ onMounted(() => {
       height: 100%;
 
       &.active {
-        background-color: orange;
+        background-color: var(--color-primary);
       }
     }
   }

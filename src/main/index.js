@@ -1,4 +1,4 @@
-import { join } from 'node:path'
+import path, { join } from 'node:path'
 
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
 import { app, BrowserWindow, globalShortcut, Menu, shell } from 'electron'
@@ -7,7 +7,7 @@ import { checkDatabaseConnection, initTable, pool } from './db.js'
 import { registerIpcHandler } from './ipcHandler.js'
 import { LiveRecorder } from './recorder.js'
 import { startServer } from './server.js'
-import { importExcelHandler } from './utilFunction.js'
+import { importExcelHandler, scanAndConvertTs } from './utilFunction.js'
 
 let server
 let mainWindow
@@ -43,6 +43,22 @@ const createWindow = () => {
     mainWindow.show()
   })
 
+  mainWindow.on('close', async (e) => {
+    if (recorder.isRecording() && !isQuitting) {
+      e.preventDefault()
+      await recorder.stop()
+
+      // 等FFmpeg正常退出后再关闭
+      const timer = setInterval(() => {
+        if (!recorder.isRecording()) {
+          clearInterval(timer)
+          isQuitting = true
+          mainWindow.close()
+        }
+      }, 300)
+    }
+  })
+
   mainWindow.webContents.setWindowOpenHandler((details) => {
     shell.openExternal(details.url)
     return { action: 'deny' }
@@ -73,6 +89,10 @@ if (!gotTheLock) {
 }
 
 app.whenReady().then(async () => {
+  const recordDir = path.join(app.getPath('videos'), 'BilibiliRecorder')
+  // 启动兜底恢复
+  scanAndConvertTs(recordDir)
+
   createWindow()
 
   // 检查数据库连接

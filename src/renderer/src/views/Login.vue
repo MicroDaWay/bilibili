@@ -134,7 +134,7 @@ const proxyImage = (url) => {
     line-height: 6vh;
     text-align: center;
     border-radius: 2vw;
-    background-color: orange;
+    background-color: var(--color-primary);
     font-size: 1.6vw;
     user-select: none;
     margin-top: 4vh;

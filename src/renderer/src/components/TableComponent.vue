@@ -117,7 +117,7 @@ onBeforeUnmount(() => {
       cursor: pointer;
 
       &:hover {
-        background-color: orange;
+        background-color: var(--color-primary);
       }
     }
 
@@ -130,7 +130,7 @@ onBeforeUnmount(() => {
         font-size: 1.5vw;
 
         &:hover {
-          background-color: orange;
+          background-color: var(--color-primary);
         }
       }
     }
@@ -152,11 +152,11 @@ onBeforeUnmount(() => {
       font-size: 1.5vw;
 
       &.tr-active {
-        background-color: orange;
+        background-color: var(--color-primary);
       }
 
       &:hover {
-        background-color: orange;
+        background-color: var(--color-primary);
       }
     }
   }

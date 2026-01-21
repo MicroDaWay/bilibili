@@ -107,6 +107,7 @@ export const getM3U8 = async (roomId, qn = 10000) => {
   const url = 'https://api.live.bilibili.com/xlive/web-room/v2/index/getRoomPlayInfo'
   const headers = {
     Referer: 'https://live.bilibili.com',
+    Cookie: readCookie(),
     'User-Agent': process.env.DB_USER_AGENT
   }
   const params = {

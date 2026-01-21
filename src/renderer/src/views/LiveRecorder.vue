@@ -73,8 +73,6 @@ const proxyImage = (url) => {
           viewBox="0 0 24 24"
           fill="#000"
           class="search-icon"
-          width="24"
-          height="24"
           @click="searchHandler"
         >
           <path
@@ -124,7 +122,7 @@ const proxyImage = (url) => {
         user-select: none;
 
         &.input-focus {
-          border: 1px solid orange;
+          border: 1px solid var(--color-primary);
         }
       }
 
@@ -133,6 +131,8 @@ const proxyImage = (url) => {
         top: 50%;
         transform: translateY(-50%);
         right: 1vw;
+        width: 1.6vw;
+        height: 1.6vw;
       }
     }
 
@@ -142,7 +142,7 @@ const proxyImage = (url) => {
       align-items: center;
       width: 10vw;
       height: 5.4vh;
-      background-color: orange;
+      background-color: var(--color-primary);
       border-radius: 2vw;
       font-size: 1.5vw;
       margin-left: 2vw;
