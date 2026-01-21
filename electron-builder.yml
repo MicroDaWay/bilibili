@@ -1,4 +1,4 @@
-appId: com.electron.app
+appId: com.microdaway.bilibili
 productName: bilibili
 directories:
   buildResources: resources
