@@ -985,10 +985,10 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
     const username = result?.info?.uname
 
     // 获取m3u8(原画优先)
-    const m3u8 = await getM3U8(roomId, 10000)
-    const dir = path.join(app.getPath('videos'), 'BilibiliRecorder')
+    const m3u8Url = await getM3U8(roomId, 10000)
+    const outputDir = path.join(app.getPath('videos'), 'BilibiliRecorder')
     return {
-      file: recorder.start(m3u8, dir, username),
+      file: recorder.start(m3u8Url, outputDir, username, roomId),
       username,
       title,
       userCover: user_cover,
