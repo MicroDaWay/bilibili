@@ -1,5 +1,4 @@
 import { spawn } from 'child_process'
-import { format } from 'date-fns'
 import fs from 'fs'
 import path from 'path'
 
@@ -12,9 +11,7 @@ export class LiveRecorder {
     this.roomId = null
     this.outputDir = ''
     this.username = ''
-    this.tsFiles = []
     this.currentTs = ''
-    this.mp4File = ''
     this.restarting = false
     this.stopping = false
     this.part = 0
@@ -32,22 +29,14 @@ export class LiveRecorder {
       fs.mkdirSync(outputDir, { recursive: true })
     }
 
-    const base = `${username}_${format(Date.now(), 'yyyy_MM_dd_HH_mm_ss')}`
-
-    this.mp4File = path.join(outputDir, base + '.mp4')
     this.startFFmpeg(m3u8Url)
-
     return this.currentTs
   }
 
   // 启动ffmpeg(单段)
   startFFmpeg(m3u8Url) {
-    const ffmpegPath = getFFmpegPath()
-
     this.part++
     this.currentTs = path.join(this.outputDir, `${this.username}_part${this.part}.ts`)
-
-    this.tsFiles.push(this.currentTs)
 
     const args = [
       '-y',
@@ -75,7 +64,7 @@ export class LiveRecorder {
       this.currentTs
     ]
 
-    this.process = spawn(ffmpegPath, args, {
+    this.process = spawn(getFFmpegPath(), args, {
       stdio: ['pipe', 'pipe', 'pipe'],
       windowsHide: true
     })
@@ -95,9 +84,19 @@ export class LiveRecorder {
       }
     })
 
-    this.process.on('close', (code) => {
+    this.process.on('close', async (code) => {
       console.log('[ffmpeg] exited:', code)
+
+      const tsFile = this.currentTs
       this.process = null
+
+      // 如果是切段或停止, 都转mp4
+      try {
+        await this.tsToMp4(tsFile)
+        console.log('[recorder] 单段转mp4完成:', tsFile)
+      } catch (error) {
+        console.error('[recorder] ts转mp4失败', error)
+      }
     })
   }
 
@@ -113,15 +112,15 @@ export class LiveRecorder {
       this.process = null
     }
 
-    await new Promise((r) => setTimeout(r, 1500))
+    await new Promise((resolve) => setTimeout(resolve, 1500))
 
     let newM3u8
     try {
       newM3u8 = await getM3U8(this.roomId, 10000)
     } catch (error) {
-      console.error('[recorder] 获取m3u8失败, 5秒后重试', error)
       this.restarting = false
       setTimeout(() => this.restart(), 5000)
+      console.error('[recorder] 获取新m3u8失败, 5秒后重试', error)
       return
     }
 
@@ -143,34 +142,33 @@ export class LiveRecorder {
 
     this.process = null
     this.restarting = false
-
-    try {
-      const mp4 = await this.mergeTsToMp4()
-      console.log('[recorder] 转封装完成:', mp4)
-    } catch (e) {
-      console.error('[recorder] 转封装失败', e)
-    }
-
     this.stopping = false
   }
 
-  // ts合并为mp4(无损)
-  mergeTsToMp4() {
+  tsToMp4(tsFile) {
     return new Promise((resolve, reject) => {
-      if (!this.tsFiles.length) {
-        return reject(new Error('没有ts文件'))
-      }
+      const mp4File = tsFile.replace(/\.ts$/, '.mp4')
 
-      const ffmpegPath = getFFmpegPath()
-      const input = 'concat:' + this.tsFiles.join('|')
+      const args = ['-y', '-i', tsFile, '-c', 'copy', '-movflags', '+faststart', mp4File]
 
-      const args = ['-y', '-i', input, '-c', 'copy', '-movflags', '+faststart', this.mp4File]
-
-      const p = spawn(ffmpegPath, args)
+      const p = spawn(getFFmpegPath(), args, {
+        windowsHide: true
+      })
 
       p.on('close', (code) => {
-        if (code === 0) resolve(this.mp4File)
-        else reject(new Error('ffmpeg合并失败'))
+        if (code === 0) {
+          // 转封装成功, 删除ts
+          fs.unlink(tsFile, (err) => {
+            if (err) {
+              console.warn('[recorder] mp4已生成, 但ts删除失败:', tsFile, err)
+            } else {
+              console.log('[recorder] ts已删除:', tsFile)
+            }
+            resolve(mp4File)
+          })
+        } else {
+          reject(new Error('ts转mp4失败'))
+        }
       })
     })
   }

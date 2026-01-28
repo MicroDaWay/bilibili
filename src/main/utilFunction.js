@@ -1,6 +1,5 @@
 import { spawn } from 'child_process'
 import { app, BrowserWindow, dialog } from 'electron'
-import ffmpegPath from 'ffmpeg-static'
 import fs from 'fs'
 import path from 'path'
 import xlsx from 'xlsx'
@@ -126,7 +125,7 @@ export const scanAndConvertTs = (dir) => {
 
     console.log('[recover] converting:', ts)
 
-    const p = spawn(ffmpegPath, ['-y', '-i', ts, '-c', 'copy', '-movflags', '+faststart', mp4])
+    const p = spawn(getFFmpegPath(), ['-y', '-i', ts, '-c', 'copy', '-movflags', '+faststart', mp4])
 
     p.on('close', (code) => {
       if (code === 0) {
@@ -141,7 +140,7 @@ export const scanAndConvertTs = (dir) => {
 export const getFFmpegPath = () => {
   if (!app.isPackaged) {
     // 开发环境
-    return ffmpegPath
+    return require('ffmpeg-static')
   }
 
   // 打包后: 指向asar.unpacked
