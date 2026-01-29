@@ -89,11 +89,11 @@ const main = async () => {
       }
       pn++
     }
-  } catch (error) {
+  } catch (err) {
     window.electronAPI.showMessage({
       title: '稿件管理',
       type: 'error',
-      message: `查询失败, ${error.message}`
+      message: `查询失败, ${err.message}`
     })
   } finally {
     isSearching.value = false

@@ -26,11 +26,11 @@ export const checkDatabaseConnection = async (mainWindow) => {
     await conn.ping()
     conn.release()
     return true
-  } catch (error) {
+  } catch (err) {
     await dialog.showMessageBox(mainWindow, {
       title: '检查数据库连接',
       type: 'error',
-      message: `数据库连接失败, ${error.message}`
+      message: `数据库连接失败, ${err.message}`
     })
     app.quit()
     return false
@@ -104,11 +104,11 @@ export const initTable = async (mainWindow) => {
         UNIQUE KEY UK_outcome_pay_date_pay_platform_amount_note(pay_date, pay_platform, amount, note)
       ) COMMENT '支出表'
     `)
-  } catch (error) {
+  } catch (err) {
     await dialog.showMessageBox(mainWindow, {
       title: '初始化数据库表',
       type: 'error',
-      message: `初始化数据库表失败: ${error.message}`
+      message: `初始化数据库表失败: ${err.message}`
     })
   } finally {
     conn.release()

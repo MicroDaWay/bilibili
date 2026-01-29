@@ -1,4 +1,5 @@
 import { spawn } from 'child_process'
+import { format } from 'date-fns'
 import fs from 'fs'
 import path from 'path'
 
@@ -36,7 +37,10 @@ export class LiveRecorder {
   // 启动ffmpeg(单段)
   startFFmpeg(m3u8Url) {
     this.part++
-    this.currentTs = path.join(this.outputDir, `${this.username}_part${this.part}.ts`)
+    this.currentTs = path.join(
+      this.outputDir,
+      `${this.username}_part${this.part}_${format(Date.now(), 'yyyy_MM_dd_HH_mm_ss')}.ts`
+    )
 
     const args = [
       '-y',
@@ -94,8 +98,8 @@ export class LiveRecorder {
       try {
         await this.tsToMp4(tsFile)
         console.log('[recorder] 单段转mp4完成:', tsFile)
-      } catch (error) {
-        console.error('[recorder] ts转mp4失败', error)
+      } catch (err) {
+        console.error('[recorder] ts转mp4失败', err.message)
       }
     })
   }
@@ -117,10 +121,10 @@ export class LiveRecorder {
     let newM3u8
     try {
       newM3u8 = await getM3U8(this.roomId, 10000)
-    } catch (error) {
+    } catch (err) {
       this.restarting = false
       setTimeout(() => this.restart(), 5000)
-      console.error('[recorder] 获取新m3u8失败, 5秒后重试', error)
+      console.error('[recorder] 获取新m3u8失败, 5秒后重试', err.message)
       return
     }
 
@@ -130,14 +134,26 @@ export class LiveRecorder {
 
   // 停止录制
   async stop() {
-    if (!this.process) return
-
+    if (!this.process || this.stopping) return
     this.stopping = true
+    const proc = this.process
 
     await new Promise((resolve) => {
-      this.process.once('close', resolve)
-      this.process.stdin.write('q')
-      this.process.stdin.end()
+      proc.once('close', resolve)
+
+      // stdin可能已经被关掉
+      if (proc.stdin && !proc.stdin.destroyed) {
+        try {
+          proc.stdin.write('q')
+          proc.stdin.end()
+        } catch (err) {
+          resolve()
+          console.log('[recorder] 通过stdin关闭ffmpeg失败, 直接杀掉进程', err.message)
+        }
+      } else {
+        proc.kill('SIGKILL')
+        resolve()
+      }
     })
 
     this.process = null

@@ -110,5 +110,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 停止录制
   stopRecorder: () => ipcRenderer.invoke('stop-recorder'),
   // 通过直播间地址开始录制
-  startByRoomUrl: (params) => ipcRenderer.invoke('start-by-room-url', params)
+  startByRoomUrl: (params) => ipcRenderer.invoke('start-by-room-url', params),
+  appExit: (callback) => ipcRenderer.on('app-exit', callback),
+  // 判断是否正在直播录制
+  isRecording: () => ipcRenderer.invoke('is-recording')
 })

@@ -11,8 +11,33 @@ import { importExcelHandler, scanAndConvertTs } from './utilFunction.js'
 
 let server
 let mainWindow
-let isQuitting = false
+let isQuit = false
 const recorder = new LiveRecorder()
+
+async function gracefulQuit() {
+  if (isQuit) return
+  isQuit = true
+
+  if (mainWindow && mainWindow.webContents) {
+    mainWindow.webContents.send('app-exit')
+  }
+
+  try {
+    if (recorder.isRecording()) {
+      await recorder.stop()
+    }
+
+    if (server && server.listening) {
+      await new Promise((resolve) => server.close(resolve))
+    }
+
+    await pool.end()
+  } catch (err) {
+    console.error('[gracefulQuit]', err.message)
+  }
+
+  app.quit()
+}
 
 // 创建窗口
 const createWindow = () => {
@@ -43,19 +68,10 @@ const createWindow = () => {
     mainWindow.show()
   })
 
-  mainWindow.on('close', async (e) => {
-    if (recorder.isRecording() && !isQuitting) {
+  mainWindow.on('close', (e) => {
+    if (!isQuit) {
       e.preventDefault()
-      await recorder.stop()
-
-      // 等FFmpeg正常退出后再关闭
-      const timer = setInterval(() => {
-        if (!recorder.isRecording()) {
-          clearInterval(timer)
-          isQuitting = true
-          mainWindow.close()
-        }
-      }, 300)
+      gracefulQuit()
     }
   })
 
@@ -137,8 +153,7 @@ app.whenReady().then(async () => {
 
   const menu = Menu.buildFromTemplate(myMenu)
   Menu.setApplicationMenu(menu)
-
-  electronApp.setAppUserModelId('com.electron')
+  electronApp.setAppUserModelId('com.microdaway.bilibili')
 
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
@@ -152,17 +167,10 @@ app.whenReady().then(async () => {
     if (process.platform !== 'darwin') app.quit()
   })
 
-  app.on('before-quit', async (e) => {
-    if (isQuitting) return
-    e.preventDefault()
-    isQuitting = true
-
-    if (server && server.listening) {
-      await new Promise((resolve) => server.close(resolve))
+  app.on('before-quit', (e) => {
+    if (!isQuit) {
+      e.preventDefault()
+      gracefulQuit()
     }
-
-    await pool.end()
-
-    app.quit()
   })
 })

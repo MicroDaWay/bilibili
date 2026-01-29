@@ -90,11 +90,11 @@ export const importExcelHandler = async (mainWindow, ipcHandler) => {
 
         BrowserWindow.getFocusedWindow().webContents.send(ipcHandler, excelData)
       }
-    } catch (error) {
+    } catch (err) {
       await dialog.showMessageBox(mainWindow, {
         title: '导入Excel表',
         type: 'error',
-        message: `导入Excel表失败, ${error.message}`
+        message: `导入Excel表失败, ${err.message}`
       })
     }
   }

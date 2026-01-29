@@ -6,7 +6,6 @@ import { createApp } from 'vue'
 
 import App from './App.vue'
 import router from './router/router'
-import { useBilibiliStore } from './stores/bilibiliStore'
 
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
@@ -14,16 +13,3 @@ const app = createApp(App)
 app.use(pinia)
 app.use(router)
 app.mount('#app')
-
-window.electronAPI.saveBilibiliData((excelData) => {
-  const bilibiliStore = useBilibiliStore()
-  bilibiliStore.setExcelData(excelData)
-})
-
-window.electronAPI.saveOutcomeData(async (excelData) => {
-  await window.electronAPI.saveOutcome(excelData)
-})
-
-window.electronAPI.saveSalaryData(async (excelData) => {
-  await window.electronAPI.saveSalary(excelData)
-})

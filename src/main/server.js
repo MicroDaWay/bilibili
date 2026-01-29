@@ -22,11 +22,11 @@ export const startServer = (server, mainWindow) => {
         responseType: 'stream'
       })
       response.data.pipe(res)
-    } catch (error) {
+    } catch (err) {
       await dialog.showMessageBox(mainWindow, {
         title: '开启图片代理服务器',
         type: 'error',
-        message: `开启图片代理服务器失败, ${error.message}`
+        message: `开启图片代理服务器失败, ${err.message}`
       })
       res.status(500).send('代理错误')
     }

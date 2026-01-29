@@ -1,43 +1,83 @@
 <script setup>
-import { ref } from 'vue'
+import { onMounted, ref } from 'vue'
+
+import { useBilibiliStore } from '@/stores/bilibiliStore'
 
 const roomUrl = ref('')
 const isRecording = ref(false)
 const isInputFocus = ref(false)
+const bilibiliStore = useBilibiliStore()
 
-const item = ref({
+const liveItem = ref({
   username: '',
   title: '',
   userCover: '',
   liveTime: '',
-  tags: ''
+  areaName: ''
+})
+
+onMounted(async () => {
+  roomUrl.value = bilibiliStore.roomUrl
+  isRecording.value = await window.electronAPI.isRecording()
+  liveItem.value = bilibiliStore.liveItem
 })
 
 // 开始录制
 const startRecord = async () => {
   try {
     isRecording.value = true
-    const { file, username, title, userCover, liveTime, tags } =
+    const { username, title, userCover, liveTime, areaName } =
       await window.electronAPI.startByRoomUrl(roomUrl.value)
-    item.value.username = username
-    item.value.title = title
-    item.value.userCover = userCover
-    item.value.liveTime = liveTime
-    item.value.tags = tags
-    console.log('正在录制:', file)
-  } catch (error) {
+    if (!username) {
+      isRecording.value = false
+    }
+
+    liveItem.value = {
+      username,
+      title,
+      userCover,
+      liveTime,
+      areaName
+    }
+
+    bilibiliStore.setRoomUrl(roomUrl.value)
+    bilibiliStore.setLiveItem({
+      username,
+      title,
+      userCover,
+      liveTime,
+      areaName
+    })
+  } catch (err) {
     isRecording.value = false
     window.electronAPI.showMessage({
       title: '直播录制',
       type: 'error',
-      message: `录制失败: ${error.message}`
+      message: `录制失败: ${err.message}`
     })
   }
 }
 
 // 停止录制
 const stopRecord = () => {
+  roomUrl.value = ''
   isRecording.value = false
+  liveItem.value = {
+    username: '',
+    title: '',
+    userCover: '',
+    liveTime: '',
+    areaName: ''
+  }
+
+  bilibiliStore.setRoomUrl('')
+  bilibiliStore.setLiveItem({
+    username: '',
+    title: '',
+    userCover: '',
+    liveTime: '',
+    areaName: ''
+  })
   window.electronAPI.stopRecorder()
 }
 
@@ -83,15 +123,15 @@ const proxyImage = (url) => {
       <div v-if="!isRecording" class="search-button" @click="clickHandler">开始录制</div>
       <div v-else class="search-button" @click="clickHandler">停止录制</div>
     </div>
-    <div v-if="isRecording" class="content-container">
+    <div v-if="isRecording && liveItem.username" class="content-container">
       <div class="img-container">
-        <img :src="proxyImage(item.userCover)" :alt="item.title" />
+        <img :src="proxyImage(liveItem.userCover)" :alt="liveItem.title" />
       </div>
       <div class="details">
-        <div class="name">UP: {{ item.username }}</div>
-        <div class="title">标题：{{ item.title }}</div>
-        <div class="live-time">直播时间：{{ item.liveTime }}</div>
-        <div class="tags">直播标签：{{ item.tags }}</div>
+        <div class="name">UP: {{ liveItem.username }}</div>
+        <div class="title">标题：{{ liveItem.title }}</div>
+        <div class="area_name">直播分区：{{ liveItem.areaName }}</div>
+        <div class="live-time">直播时间：{{ liveItem.liveTime }}</div>
       </div>
     </div>
   </div>
@@ -179,7 +219,7 @@ const proxyImage = (url) => {
       font-size: 1.2vw;
 
       .title,
-      .tags {
+      .area_name {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
