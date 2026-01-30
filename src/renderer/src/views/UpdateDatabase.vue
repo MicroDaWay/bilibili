@@ -21,7 +21,7 @@ const columns = [
   { title: '标题', key: 'title' }
 ]
 
-const handleProgress = async (event, item) => {
+const handleProgress = async (e, item) => {
   if (globalItemListRef) {
     itemList.value.push({
       title: item.title,

@@ -1,7 +1,7 @@
 <!-- 登录 -->
 <script setup>
 import qrcode from 'qrcode'
-import { nextTick, onMounted, onUnmounted, ref } from 'vue'
+import { nextTick, onMounted, ref } from 'vue'
 
 const QRCode = ref(null)
 const QRCodeKey = ref('')
@@ -9,6 +9,7 @@ const isLogin = ref(false)
 const avatar = ref('')
 const qrUrl = ref('')
 
+// 绘制二维码
 const drawQRCode = async () => {
   if (!QRCode.value || !qrUrl.value) return
   const size = Math.min(Math.max(window.innerWidth * 0.2, 180), 320)
@@ -18,24 +19,21 @@ const drawQRCode = async () => {
   })
 }
 
-// 登录
-const login = async () => {
-  const result = await window.electronAPI.getQRCode()
-  qrUrl.value = result.data.url
-  QRCodeKey.value = result.data.qrcode_key
-
-  await nextTick()
-  await drawQRCode()
-  checkStatus()
-}
-
-// 检查二维码状态
+// 检查登录二维码状态
 const checkStatus = async () => {
   isLogin.value = false
 
   while (true) {
     await new Promise((resolve) => setTimeout(resolve, 1000))
     const result = await window.electronAPI.checkQRCodeStatus(QRCodeKey.value)
+    if (!result.isSuccess) {
+      await window.electronAPI.showMessage({
+        title: '检查登录二维码状态失败',
+        type: 'error',
+        message: result.message
+      })
+      return
+    }
     if (result.data.code === 86101) {
       console.log('未扫码')
     } else if (result.data.code === 86038) {
@@ -60,6 +58,24 @@ const checkStatus = async () => {
   }
 }
 
+// 登录
+const login = async () => {
+  const result = await window.electronAPI.getQRCode()
+  if (!result.isSuccess) {
+    await window.electronAPI.showMessage({
+      title: '获取登录二维码',
+      type: 'error',
+      message: result.message
+    })
+    return
+  }
+  qrUrl.value = result.data.url
+  QRCodeKey.value = result.data.qrcode_key
+  await nextTick()
+  await drawQRCode()
+  checkStatus()
+}
+
 // 退出登录
 const logout = async () => {
   const result = await window.electronAPI.logout()
@@ -67,7 +83,7 @@ const logout = async () => {
     isLogin.value = false
     QRCodeKey.value = ''
     avatar.value = ''
-    window.electronAPI.setLoginStatus(false)
+    await window.electronAPI.setLoginStatus(false)
     login()
   }
 }
@@ -79,20 +95,11 @@ const getNavigation = async () => {
   isLogin.value = result.isLogin
 }
 
-const handleResize = () => {
-  drawQRCode()
-}
-
 onMounted(async () => {
   await getNavigation()
   if (!isLogin.value) {
     await login()
-    window.addEventListener('resize', handleResize)
   }
-})
-
-onUnmounted(() => {
-  window.removeEventListener('resize', handleResize)
 })
 
 const proxyImage = (url) => {

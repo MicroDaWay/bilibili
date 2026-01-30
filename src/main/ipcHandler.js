@@ -1,7 +1,8 @@
+import path from 'node:path'
+
 import axios from 'axios'
 import { format } from 'date-fns'
 import { app, BrowserWindow, dialog, ipcMain, Menu } from 'electron'
-import path from 'path'
 
 import {
   excelDateToJSDate,
@@ -41,13 +42,13 @@ const contextMenuTemplate = [
   createMenuItem('全选', 'selectAll', 'Ctrl + A')
 ]
 
+// 注册IPC处理函数
 export const registerIpcHandler = (pool, mainWindow, recorder) => {
   // 消息弹窗
-  ipcMain.handle('show-message', async (event, params) => {
-    const result = await dialog.showMessageBox(mainWindow, {
+  ipcMain.handle('show-message', async (e, params) => {
+    await dialog.showMessageBox(mainWindow, {
       ...params
     })
-    return result
   })
 
   // 展示右键菜单
@@ -58,76 +59,81 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
     })
   })
 
-  // 查询登录二维码
+  // 获取登录二维码
   ipcMain.handle('get-qrcode', async () => {
     try {
       const url = 'https://passport.bilibili.com/x/passport-login/web/qrcode/generate'
+      const headers = {
+        Referer: 'https://www.bilibili.com',
+        'User-Agent': process.env.DB_USER_AGENT
+      }
+      const params = {
+        source: 'main-fe-header'
+      }
       const response = await axios.get(url, {
-        params: {
-          source: 'main-fe-header'
-        }
+        headers,
+        params
       })
-      return response.data || null
+      return {
+        isSuccess: true,
+        data: response.data?.data
+      }
     } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
-        title: '查询登录二维码',
-        type: 'error',
-        message: `查询登录二维码失败, ${err.message}`
-      })
-      return null
+      return {
+        isSuccess: false,
+        message: `获取登录二维码失败, ${err.message}`
+      }
     }
   })
 
-  // 检查二维码状态
-  ipcMain.handle('check-qrcode-status', async (event, qrcode_key) => {
+  // 检查登录二维码状态
+  ipcMain.handle('check-qrcode-status', async (e, qrcode_key) => {
     try {
       const url = 'https://passport.bilibili.com/x/passport-login/web/qrcode/poll'
+      const headers = {
+        Referer: 'https://www.bilibili.com',
+        'User-Agent': process.env.DB_USER_AGENT
+      }
+      const params = {
+        qrcode_key,
+        source: 'main-fe-header'
+      }
       const response = await axios.get(url, {
-        params: {
-          qrcode_key,
-          source: 'main-fe-header'
-        }
+        headers,
+        params
       })
-      return response.data
+      return {
+        isSuccess: true,
+        data: response.data?.data
+      }
     } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
-        title: '检查二维码状态',
-        type: 'error',
-        message: `检查二维码状态失败, ${err.message}`
-      })
+      return {
+        isSuccess: false,
+        message: `检查登录二维码状态失败, ${err.message}`
+      }
     }
   })
 
   // 保存cookie
-  ipcMain.handle('save-cookie', async (event, cookie) => {
+  ipcMain.handle('save-cookie', async (e, cookie) => {
     writeCookie(cookie)
     BrowserWindow.getAllWindows().forEach((win) => {
       win.webContents.send('login-success')
     })
-    return true
   })
 
-  // 检查登录状态
-  ipcMain.handle('check-login-status', async () => {
-    try {
-      const cookie = readCookie()
-      if (!cookie) return false
-
-      const url = 'https://api.bilibili.com/x/web-interface/nav'
-      const headers = {
-        Referer: 'https://www.bilibili.com',
-        Cookie: cookie,
-        'User-Agent': process.env.DB_USER_AGENT
-      }
-      const response = await axios.get(url, {
-        headers
-      })
-
-      return response.data?.code === 0 && response.data?.data?.isLogin
-    } catch (err) {
-      console.error('检查登录状态失败:', err.message)
-      return false
+  // 获取登录状态
+  ipcMain.handle('get-login-status', async () => {
+    const url = 'https://api.bilibili.com/x/web-interface/nav'
+    const headers = {
+      Referer: 'https://www.bilibili.com',
+      Cookie: readCookie(),
+      'User-Agent': process.env.DB_USER_AGENT
     }
+    const response = await axios.get(url, {
+      headers
+    })
+    return response.data?.data?.isLogin
   })
 
   // 查询导航栏数据
@@ -180,14 +186,14 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 登录状态改变
-  ipcMain.on('login-status-change', (event, status) => {
+  ipcMain.on('login-status-change', (e, status) => {
     BrowserWindow.getAllWindows().forEach((win) => {
       win.webContents.send('login-status-change', status)
     })
   })
 
   // 查询稿件管理数据
-  ipcMain.handle('manuscript-management', async (event, pn) => {
+  ipcMain.handle('manuscript-management', async (e, pn) => {
     try {
       const result = getManuscriptList(pn)
       return result
@@ -225,7 +231,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 查询收益中心数据
-  ipcMain.on('earnings-center', async (event) => {
+  ipcMain.on('earnings-center', async (e) => {
     const conn = await pool.getConnection()
     await conn.query('DELETE FROM rewards')
 
@@ -296,7 +302,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
           `
           await conn.query(sql, [productName, money, createTime])
 
-          event.sender.send('earnings-center-progress', {
+          e.sender.send('earnings-center-progress', {
             productName,
             money,
             createTime,
@@ -306,7 +312,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
         }
 
         if (currentPage >= totalPage) {
-          event.sender.send('earnings-center-finish')
+          e.sender.send('earnings-center-finish')
           await dialog.showMessageBox(mainWindow, {
             title: '查询收益中心数据',
             type: 'info',
@@ -328,7 +334,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 更新数据库
-  ipcMain.on('update-database', async (event) => {
+  ipcMain.on('update-database', async (e) => {
     const conn = await pool.getConnection()
     await conn.query('DELETE FROM manuscript')
 
@@ -370,7 +376,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
           `
           await conn.query(sql, [title, view, postTime, tag])
 
-          event.sender.send('update-database-progress', {
+          e.sender.send('update-database-progress', {
             title,
             view,
             postTime,
@@ -401,7 +407,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 查询活动资格取消稿件
-  ipcMain.on('event-disqualification', async (event) => {
+  ipcMain.on('event-disqualification', async (e) => {
     const conn = await pool.getConnection()
 
     try {
@@ -465,7 +471,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
           const postTime = formatTimestampToDatetime(timestamp)
           await conn.query(sql, [title, tag, view, postTime])
 
-          event.sender.send('event-disqualification-progress', {
+          e.sender.send('event-disqualification-progress', {
             title,
             tag,
             view,
@@ -568,7 +574,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 根据标签查询激励金额
-  ipcMain.handle('get-money-by-tag', async (event, productName) => {
+  ipcMain.handle('get-money-by-tag', async (e, productName) => {
     const conn = await pool.getConnection()
     try {
       const sql = `
@@ -592,7 +598,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 根据投稿标签查询稿件
-  ipcMain.handle('get-manuscript-by-tag', async (event, tag) => {
+  ipcMain.handle('get-manuscript-by-tag', async (e, tag) => {
     const conn = await pool.getConnection()
     try {
       const sql = `
@@ -615,7 +621,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 根据标签查询取消稿件
-  ipcMain.handle('get-disqualification-by-tag', async (event, tag) => {
+  ipcMain.handle('get-disqualification-by-tag', async (e, tag) => {
     const conn = await pool.getConnection()
     try {
       const sql = `
@@ -799,7 +805,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 将outcome中的数据写入数据库
-  ipcMain.handle('save-outcome', async (event, excelData) => {
+  ipcMain.handle('save-outcome', async (e, excelData) => {
     const records = excelData.map((item) => {
       return [
         format(excelDateToJSDate(item['日期']), 'yyyy-MM-dd'),
@@ -816,7 +822,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 将salary.excel中的数据写入数据库
-  ipcMain.handle('save-salary', async (event, excelData) => {
+  ipcMain.handle('save-salary', async (e, excelData) => {
     const records = excelData.map((item) => [
       item['年份'],
       item['月份'],
@@ -960,7 +966,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 通过直播间地址开始录制
-  ipcMain.handle('start-by-room-url', async (event, roomUrl) => {
+  ipcMain.handle('start-by-room-url', async (e, roomUrl) => {
     const roomId = parseRoomId(roomUrl)
     if (!roomId) {
       await dialog.showMessageBox(mainWindow, {

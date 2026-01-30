@@ -1,7 +1,8 @@
+import path from 'node:path'
+
 import { config } from 'dotenv'
 import { app, dialog } from 'electron'
 import mysql from 'mysql2/promise'
-import path from 'path'
 
 const envPath = app.isPackaged
   ? path.join(process.resourcesPath, '.env')

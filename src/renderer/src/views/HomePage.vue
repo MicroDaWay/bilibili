@@ -99,7 +99,7 @@ const isLogin = ref(false)
 
 // 检查登录状态
 const checkIsLogin = async () => {
-  isLogin.value = await window.electronAPI.checkLoginStatus()
+  isLogin.value = await window.electronAPI.getLoginStatus()
 }
 
 const itemList = computed(() => {
@@ -129,7 +129,7 @@ onMounted(() => {
   })
 
   // 监听登录状态变化事件
-  window.electronAPI.loginStatusChange((event, status) => {
+  window.electronAPI.loginStatusChange((e, status) => {
     isLogin.value = status
   })
 

@@ -22,7 +22,7 @@ const columns = [
   { title: '投稿标签', key: 'tag', width: '22%' }
 ]
 
-const handleProgress = (event, item) => {
+const handleProgress = (e, item) => {
   if (globalItemListRef) {
     globalItemListRef.value.push(item)
   }

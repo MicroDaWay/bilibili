@@ -1,7 +1,8 @@
+import fs from 'node:fs'
+import path from 'node:path'
+
 import { spawn } from 'child_process'
 import { format } from 'date-fns'
-import fs from 'fs'
-import path from 'path'
 
 import { getM3U8 } from './api'
 import { getFFmpegPath } from './utilFunction'

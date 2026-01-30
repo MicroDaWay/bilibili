@@ -1,7 +1,8 @@
+import fs from 'node:fs'
+import path from 'node:path'
+
 import { spawn } from 'child_process'
 import { app, BrowserWindow, dialog } from 'electron'
-import fs from 'fs'
-import path from 'path'
 import xlsx from 'xlsx'
 
 import { formatTimestampToDatetime } from '../renderer/src/utils/index'

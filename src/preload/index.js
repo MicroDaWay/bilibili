@@ -3,12 +3,12 @@ import { contextBridge, ipcRenderer } from 'electron'
 contextBridge.exposeInMainWorld('electronAPI', {
   // 持久化存储Excel数据
   saveBilibiliData: (callback) => {
-    ipcRenderer.on('save-bilibili-data', (event, data) => {
+    ipcRenderer.on('save-bilibili-data', (e, data) => {
       callback(data)
     })
   },
-  // 检查登录状态
-  checkLoginStatus: () => ipcRenderer.invoke('check-login-status'),
+  // 获取登录状态
+  getLoginStatus: () => ipcRenderer.invoke('get-login-status'),
   // 登录成功
   loginSuccess: (callback) => ipcRenderer.on('login-success', callback),
   // 消息弹窗
@@ -86,12 +86,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 查询每年提现金额
   getWithdrawByYear: () => ipcRenderer.invoke('get-withdraw-by-year'),
   saveOutcomeData: (callback) => {
-    ipcRenderer.on('save-outcome-data', (event, data) => {
+    ipcRenderer.on('save-outcome-data', (e, data) => {
       callback(data)
     })
   },
   saveSalaryData: (callback) => {
-    ipcRenderer.on('save-salary-data', (event, data) => {
+    ipcRenderer.on('save-salary-data', (e, data) => {
       callback(data)
     })
   },

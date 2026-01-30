@@ -26,7 +26,7 @@ const columns = [
 
 const bilibiliStore = useBilibiliStore()
 
-const handleProgress = async (event, item) => {
+const handleProgress = async (e, item) => {
   if (globalItemListRef) {
     itemList.value.push({
       createTime: item.createTime,
