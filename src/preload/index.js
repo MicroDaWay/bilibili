@@ -7,8 +7,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
       callback(data)
     })
   },
-  // 获取登录状态
-  getLoginStatus: () => ipcRenderer.invoke('get-login-status'),
   // 登录成功
   loginSuccess: (callback) => ipcRenderer.on('login-success', callback),
   // 消息弹窗

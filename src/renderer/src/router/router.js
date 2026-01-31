@@ -45,7 +45,8 @@ router.beforeEach(async (to, from, next) => {
 
   // 检查是否登录
   let isLogin = false
-  isLogin = await window.electronAPI.getLoginStatus()
+  const result = await window.electronAPI.getNavigationData()
+  isLogin = result.isLogin
 
   if (!isLogin) {
     // 未登录且不是去登录页, 跳转到登录页

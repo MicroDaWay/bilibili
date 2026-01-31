@@ -12,10 +12,7 @@ const postTag = ref('')
 const isSearching = ref(false)
 
 // 过滤后的数据
-const filterData = ref({
-  eventStartTime: '',
-  eventEndTime: ''
-})
+const filterData = ref({})
 
 const totalPlay = ref(0)
 const totalCount = ref(0)
@@ -33,26 +30,27 @@ const scrollToBottom = () => {
 // 主函数
 const main = async () => {
   try {
+    isSearching.value = true
     totalPlay.value = 0
     totalCount.value = 0
     itemList.value = []
-    const startTime = filterData.value.eventStartTime
+    const startTime = filterData.value['活动开始时间']
     let pn = 1
 
     while (true) {
       await new Promise((resolve) => setTimeout(resolve, 1000))
       const result = await window.electronAPI.manuscriptManagement(pn)
-      const { arc_audits } = result
+      const arc_audits = result?.arc_audits
 
       for (const item of arc_audits) {
-        const tag = item?.Archive?.tag || ''
-        const view = item?.stat?.view || 0
-        const ptime = formatTimestampToDatetime(item?.Archive?.ptime) || 0
-        const title = item?.Archive?.title || ''
-        const cover = item?.Archive?.cover || ''
+        const tag = item?.Archive?.tag
+        const view = item?.stat?.view
+        const ptime = formatTimestampToDatetime(item?.Archive?.ptime)
+        const title = item?.Archive?.title
+        const cover = item?.Archive?.cover
 
         if (tag.includes(postTag.value) && ptime >= startTime) {
-          totalPlay.value += parseInt(view, 10)
+          totalPlay.value += view
           totalCount.value++
 
           itemList.value.push({
@@ -109,10 +107,9 @@ const searchHandler = () => {
     if (item['投稿标签'].includes(postTag.value)) {
       filterData.value = {
         ...item,
-        eventStartTime: format(excelDateToJSDate(item['活动开始时间']), 'yyyy-MM-dd'),
-        eventEndTime: format(excelDateToJSDate(item['活动结束时间']), 'yyyy-MM-dd')
+        ['活动开始时间']: format(excelDateToJSDate(item['活动开始时间']), 'yyyy-MM-dd'),
+        ['活动结束时间']: format(excelDateToJSDate(item['活动结束时间']), 'yyyy-MM-dd')
       }
-
       flag = true
     }
   })
@@ -126,7 +123,6 @@ const searchHandler = () => {
     return
   }
 
-  isSearching.value = true
   main()
 }
 </script>

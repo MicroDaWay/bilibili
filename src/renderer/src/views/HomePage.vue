@@ -99,7 +99,8 @@ const isLogin = ref(false)
 
 // 检查登录状态
 const checkIsLogin = async () => {
-  isLogin.value = await window.electronAPI.getLoginStatus()
+  const result = await window.electronAPI.getNavigationData()
+  isLogin.value = result.isLogin
 }
 
 const itemList = computed(() => {

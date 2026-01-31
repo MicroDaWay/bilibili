@@ -61,57 +61,37 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
 
   // 获取登录二维码
   ipcMain.handle('get-qrcode', async () => {
-    try {
-      const url = 'https://passport.bilibili.com/x/passport-login/web/qrcode/generate'
-      const headers = {
-        Referer: 'https://www.bilibili.com',
-        'User-Agent': process.env.DB_USER_AGENT
-      }
-      const params = {
-        source: 'main-fe-header'
-      }
-      const response = await axios.get(url, {
-        headers,
-        params
-      })
-      return {
-        isSuccess: true,
-        data: response.data?.data
-      }
-    } catch (err) {
-      return {
-        isSuccess: false,
-        message: `获取登录二维码失败, ${err.message}`
-      }
+    const url = 'https://passport.bilibili.com/x/passport-login/web/qrcode/generate'
+    const headers = {
+      Referer: 'https://www.bilibili.com',
+      'User-Agent': process.env.DB_USER_AGENT
     }
+    const params = {
+      source: 'main-fe-header'
+    }
+    const response = await axios.get(url, {
+      headers,
+      params
+    })
+    return response.data?.data
   })
 
   // 检查登录二维码状态
   ipcMain.handle('check-qrcode-status', async (e, qrcode_key) => {
-    try {
-      const url = 'https://passport.bilibili.com/x/passport-login/web/qrcode/poll'
-      const headers = {
-        Referer: 'https://www.bilibili.com',
-        'User-Agent': process.env.DB_USER_AGENT
-      }
-      const params = {
-        qrcode_key,
-        source: 'main-fe-header'
-      }
-      const response = await axios.get(url, {
-        headers,
-        params
-      })
-      return {
-        isSuccess: true,
-        data: response.data?.data
-      }
-    } catch (err) {
-      return {
-        isSuccess: false,
-        message: `检查登录二维码状态失败, ${err.message}`
-      }
+    const url = 'https://passport.bilibili.com/x/passport-login/web/qrcode/poll'
+    const headers = {
+      Referer: 'https://www.bilibili.com',
+      'User-Agent': process.env.DB_USER_AGENT
     }
+    const params = {
+      qrcode_key,
+      source: 'main-fe-header'
+    }
+    const response = await axios.get(url, {
+      headers,
+      params
+    })
+    return response.data?.data
   })
 
   // 保存cookie
@@ -122,8 +102,8 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
     })
   })
 
-  // 获取登录状态
-  ipcMain.handle('get-login-status', async () => {
+  // 获取导航栏信息
+  ipcMain.handle('get-navigation-data', async () => {
     const url = 'https://api.bilibili.com/x/web-interface/nav'
     const headers = {
       Referer: 'https://www.bilibili.com',
@@ -133,56 +113,24 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
     const response = await axios.get(url, {
       headers
     })
-    return response.data?.data?.isLogin
-  })
-
-  // 查询导航栏数据
-  ipcMain.handle('get-navigation-data', async () => {
-    try {
-      const url = 'https://api.bilibili.com/x/web-interface/nav'
-      const headers = {
-        Referer: 'https://www.bilibili.com',
-        Cookie: readCookie(),
-        'User-Agent': process.env.DB_USER_AGENT
-      }
-      const response = await axios.get(url, {
-        headers
-      })
-      return response.data?.data || null
-    } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
-        title: '查询导航栏数据',
-        type: 'error',
-        message: `查询导航栏数据失败, ${err.message}`
-      })
-      return null
-    }
+    return response.data?.data
   })
 
   // 退出登录
   ipcMain.handle('logout', async () => {
-    try {
-      const cookie = readCookie()
-      const biliCSRF = cookie.split(';')[2].split('=')[1]
-      const url = 'https://passport.bilibili.com/login/exit/v2'
-      const headers = {
-        Cookie: readCookie(),
-        'User-Agent': process.env.DB_USER_AGENT,
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-      const response = await axios.post(url, `biliCSRF=${biliCSRF}`, {
-        headers
-      })
-      writeCookie('')
-      return response.data || null
-    } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
-        title: '退出登录',
-        type: 'error',
-        message: `退出登录失败, ${err.message}`
-      })
-      return null
+    const cookie = readCookie()
+    const biliCSRF = cookie.split(';')[2].split('=')[1]
+    const url = 'https://passport.bilibili.com/login/exit/v2'
+    const headers = {
+      Cookie: readCookie(),
+      'User-Agent': process.env.DB_USER_AGENT,
+      'Content-Type': 'application/x-www-form-urlencoded'
     }
+    const response = await axios.post(url, `biliCSRF=${biliCSRF}`, {
+      headers
+    })
+    writeCookie('')
+    return response.data
   })
 
   // 登录状态改变
@@ -194,17 +142,8 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
 
   // 查询稿件管理数据
   ipcMain.handle('manuscript-management', async (e, pn) => {
-    try {
-      const result = getManuscriptList(pn)
-      return result
-    } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
-        title: '查询稿件管理数据',
-        type: 'error',
-        message: `查询稿件管理数据失败, ${err.message}`
-      })
-      return null
-    }
+    const result = getManuscriptList(pn)
+    return result
   })
 
   // 查询热门活动数据
@@ -385,7 +324,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
         }
 
         if (page >= totalPage) {
-          event.sender.send('update-database-finish')
+          e.sender.send('update-database-finish')
           await dialog.showMessageBox(mainWindow, {
             title: '更新数据库',
             type: 'info',
@@ -480,7 +419,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
         }
 
         if (isExit || !has_more) {
-          event.sender.send('event-disqualification-finish')
+          e.sender.send('event-disqualification-finish')
           await dialog.showMessageBox(mainWindow, {
             title: '查询活动资格取消稿件',
             type: 'info',

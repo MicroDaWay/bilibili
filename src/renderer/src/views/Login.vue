@@ -26,24 +26,17 @@ const checkStatus = async () => {
   while (true) {
     await new Promise((resolve) => setTimeout(resolve, 1000))
     const result = await window.electronAPI.checkQRCodeStatus(QRCodeKey.value)
-    if (!result.isSuccess) {
-      await window.electronAPI.showMessage({
-        title: '检查登录二维码状态失败',
-        type: 'error',
-        message: result.message
-      })
-      return
-    }
-    if (result.data.code === 86101) {
+
+    if (result.code === 86101) {
       console.log('未扫码')
-    } else if (result.data.code === 86038) {
+    } else if (result.code === 86038) {
       console.log('二维码已失效')
-    } else if (result.data.code === 86090) {
+    } else if (result.code === 86090) {
       console.log('二维码已扫码未确认')
-    } else if (result.data.code === 0) {
+    } else if (result.code === 0) {
       isLogin.value = true
 
-      const cookieUrl = new URL(result.data.url)
+      const cookieUrl = new URL(result.url)
       const params = new URLSearchParams(cookieUrl.search)
 
       const DedeUserID = params.get('DedeUserID')
@@ -61,16 +54,8 @@ const checkStatus = async () => {
 // 登录
 const login = async () => {
   const result = await window.electronAPI.getQRCode()
-  if (!result.isSuccess) {
-    await window.electronAPI.showMessage({
-      title: '获取登录二维码',
-      type: 'error',
-      message: result.message
-    })
-    return
-  }
-  qrUrl.value = result.data.url
-  QRCodeKey.value = result.data.qrcode_key
+  qrUrl.value = result.url
+  QRCodeKey.value = result.qrcode_key
   await nextTick()
   await drawQRCode()
   checkStatus()

@@ -18,7 +18,7 @@ export const getManuscriptList = async (pn) => {
     headers,
     params
   })
-  return response.data?.data || null
+  return response.data?.data
 }
 
 // 查询余额
