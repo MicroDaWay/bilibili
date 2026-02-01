@@ -28,7 +28,7 @@ export const checkDatabaseConnection = async (mainWindow) => {
     conn.release()
     return true
   } catch (err) {
-    await dialog.showMessageBox(mainWindow, {
+    dialog.showMessageBox(mainWindow, {
       title: '检查数据库连接',
       type: 'error',
       message: `数据库连接失败, ${err.message}`
@@ -106,7 +106,7 @@ export const initTable = async (mainWindow) => {
       ) COMMENT '支出表'
     `)
   } catch (err) {
-    await dialog.showMessageBox(mainWindow, {
+    dialog.showMessageBox(mainWindow, {
       title: '初始化数据库表',
       type: 'error',
       message: `初始化数据库表失败: ${err.message}`

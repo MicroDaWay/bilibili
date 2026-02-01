@@ -38,7 +38,7 @@ export const getBalance = async () => {
   const response = await axios.post(url, payload, {
     headers
   })
-  return response.data?.data || null
+  return response.data?.data
 }
 
 // 查询收益数据
@@ -59,8 +59,7 @@ export const getEarningsList = async (currentPage) => {
   const response = await axios.post(url, payload, {
     headers
   })
-
-  return response.data?.data || null
+  return response.data?.data
 }
 
 // 查询消息数据
@@ -81,7 +80,7 @@ export const getMessageList = async (end_seqno) => {
     headers,
     params
   })
-  return response.data?.data || null
+  return response.data?.data
 }
 
 // 查询直播间是否开播
@@ -98,7 +97,6 @@ export const isLiving = async (roomId) => {
     headers,
     params
   })
-
   return response.data?.data
 }
 
@@ -163,6 +161,5 @@ export const getUsernameByUid = async (uid) => {
     headers,
     params
   })
-
   return response.data?.data
 }

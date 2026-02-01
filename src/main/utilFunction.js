@@ -66,7 +66,7 @@ export const getTagAndViewByTitle = async (conn, title) => {
 
 // 导入Excel文件的处理函数
 export const importExcelHandler = async (mainWindow, ipcHandler) => {
-  const result = await dialog.showOpenDialog({
+  const result = dialog.showOpenDialog({
     properties: ['openFile'],
     filters: [
       {
@@ -83,7 +83,7 @@ export const importExcelHandler = async (mainWindow, ipcHandler) => {
       const sheetNames = workbook.SheetNames
       const excelData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetNames[0]])
       if (excelData) {
-        await dialog.showMessageBox(mainWindow, {
+        dialog.showMessageBox(mainWindow, {
           title: '导入Excel表',
           type: 'info',
           message: '导入Excel表成功'
@@ -92,7 +92,7 @@ export const importExcelHandler = async (mainWindow, ipcHandler) => {
         BrowserWindow.getFocusedWindow().webContents.send(ipcHandler, excelData)
       }
     } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
+      dialog.showMessageBox(mainWindow, {
         title: '导入Excel表',
         type: 'error',
         message: `导入Excel表失败, ${err.message}`

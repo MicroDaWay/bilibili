@@ -23,7 +23,7 @@ export const startServer = (server, mainWindow) => {
       })
       response.data.pipe(res)
     } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
+      dialog.showMessageBox(mainWindow, {
         title: '开启图片代理服务器',
         type: 'error',
         message: `开启图片代理服务器失败, ${err.message}`

@@ -47,9 +47,7 @@ const contextMenuTemplate = [
 export const registerIpcHandler = (pool, mainWindow, recorder) => {
   // 消息弹窗
   ipcMain.handle('show-message', async (e, params) => {
-    await dialog.showMessageBox(mainWindow, {
-      ...params
-    })
+    dialog.showMessageBox(mainWindow, params)
   })
 
   // 展示右键菜单
@@ -171,29 +169,13 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
       let totalPage = 1
       let totalMoney = 0
       const result = await getBalance()
-      if (!result) {
-        await dialog.showMessageBox(mainWindow, {
-          title: '查询余额',
-          type: 'error',
-          message: '查询余额失败'
-        })
-      }
-      const { brokerage } = result
+      const brokerage = result?.brokerage
 
       while (true) {
         await sleep(5)
-        const result2 = await getEarningsList(currentPage)
-        if (!result2) {
-          await dialog.showMessageBox(mainWindow, {
-            title: '查询收益数据',
-            type: 'error',
-            message: '查询收益数据失败'
-          })
-          break
-        }
-
-        const records = result2?.result || []
-        totalPage = result2?.page?.totalPage || 1
+        const data = await getEarningsList(currentPage)
+        const records = data?.result
+        totalPage = data?.page?.totalPage
 
         for (const item of records) {
           const { brokerage: money, title: productName, ctime: createTime, statusDesc } = item
@@ -244,7 +226,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
 
         if (currentPage >= totalPage) {
           e.sender.send('earnings-center-finish')
-          await dialog.showMessageBox(mainWindow, {
+          dialog.showMessageBox(mainWindow, {
             title: '查询收益中心数据',
             type: 'info',
             message: '查询结束'
@@ -254,7 +236,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
         currentPage++
       }
     } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
+      dialog.showMessageBox(mainWindow, {
         title: '查询收益中心数据',
         type: 'error',
         message: `查询收益中心数据失败, ${err.message}`
@@ -275,24 +257,16 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
       while (true) {
         await sleep(5)
         const result = await getManuscriptList(page)
-        if (!result) {
-          await dialog.showMessageBox(mainWindow, {
-            title: '查询稿件数据',
-            type: 'error',
-            message: '查询稿件数据失败'
-          })
-          break
-        }
-
-        const { count, ps } = result?.page || {}
+        const count = result?.page?.count
+        const ps = result?.page?.ps
         const totalPage = Math.ceil(count / ps)
-        const arc_audits = result?.arc_audits || []
+        const arc_audits = result?.arc_audits
 
         for (const item of arc_audits) {
-          const archive = item?.Archive || {}
-          const stat = item?.stat || {}
+          const archive = item?.Archive
+          const stat = item?.stat
           const title = archive?.title
-          const view = stat?.view || 0
+          const view = stat?.view
           const pubTime = archive?.ptime
           const tag = archive?.tag
           const postTime = formatTimestampToDatetime(pubTime)
@@ -317,7 +291,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
 
         if (page >= totalPage) {
           e.sender.send('update-database-finish')
-          await dialog.showMessageBox(mainWindow, {
+          dialog.showMessageBox(mainWindow, {
             title: '更新数据库',
             type: 'info',
             message: '查询结束'
@@ -327,7 +301,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
         page++
       }
     } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
+      dialog.showMessageBox(mainWindow, {
         title: '更新数据库',
         type: 'error',
         message: `更新数据库失败, ${err.message}`
@@ -351,15 +325,6 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
       while (true) {
         await sleep(5)
         const result = await getMessageList(end_seqno)
-        if (!result) {
-          await dialog.showMessageBox(mainWindow, {
-            title: '查询消息数据',
-            type: 'error',
-            message: '查询消息数据失败'
-          })
-          break
-        }
-
         const { has_more, messages, min_seqno } = result
 
         for (const item of messages) {
@@ -381,19 +346,11 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
               : '未知标题'
 
           if (!/[\u4e00-\u9fa5]/.test(title)) continue
-          const result2 = await getTagByTitle(title)
-          // const result2 = await getTagAndViewByTitle(conn, title)
-          if (!result2) {
-            await dialog.showMessageBox(mainWindow, {
-              title: '根据标题查询投稿标签',
-              type: 'error',
-              message: '根据标题查询投稿标签失败'
-            })
-            isExit = true
-            break
-          }
+          const data = await getTagByTitle(title)
+          // 查询所有数据, 较慢
+          // const data = await getTagAndViewByTitle(conn, title)
 
-          const { tag, view } = result2
+          const { tag, view } = data
 
           const sql = `
             INSERT IGNORE INTO disqualification(title, tag, view, post_time)
@@ -412,7 +369,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
 
         if (isExit || !has_more) {
           e.sender.send('event-disqualification-finish')
-          await dialog.showMessageBox(mainWindow, {
+          dialog.showMessageBox(mainWindow, {
             title: '查询活动资格取消稿件',
             type: 'info',
             message: '查询结束'
@@ -423,7 +380,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
         end_seqno = min_seqno
       }
     } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
+      dialog.showMessageBox(mainWindow, {
         title: '查询活动资格取消稿件',
         type: 'error',
         message: `查询活动资格取消稿件失败, ${err.message}`
@@ -445,12 +402,11 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
       const [rows] = await conn.query(sql)
       return rowsToCamel(rows)
     } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
+      dialog.showMessageBox(mainWindow, {
         title: '查询播放量<100的稿件',
         type: 'error',
         message: `查询播放量<100的稿件失败, ${err.message}`
       })
-      return null
     } finally {
       conn.release()
     }
@@ -469,12 +425,11 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
       const [rows] = await conn.query(sql)
       return rowsToCamel(rows)
     } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
+      dialog.showMessageBox(mainWindow, {
         title: '查询每年获得的激励金额',
         type: 'error',
         message: `查询每年获得的激励金额失败, ${err.message}`
       })
-      return null
     } finally {
       conn.release()
     }
@@ -493,12 +448,11 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
       const [rows] = await conn.query(sql)
       return rowsToCamel(rows)
     } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
+      dialog.showMessageBox(mainWindow, {
         title: '查询每月获得的激励金额',
         type: 'error',
         message: `查询每月获得的激励金额失败, ${err.message}`
       })
-      return null
     } finally {
       conn.release()
     }
@@ -517,12 +471,11 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
       const [rows] = await conn.query(sql, [`%${productName}%`])
       return rowsToCamel(rows)
     } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
+      dialog.showMessageBox(mainWindow, {
         title: '根据标签查询激励金额',
         type: 'error',
         message: `根据标签查询激励金额失败, ${err.message}`
       })
-      return null
     } finally {
       conn.release()
     }
@@ -540,12 +493,11 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
       const [rows] = await conn.query(sql, [`%${tag}%`])
       return rowsToCamel(rows)
     } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
+      dialog.showMessageBox(mainWindow, {
         title: '根据投稿标签查询稿件',
         type: 'error',
         message: `根据投稿标签查询稿件失败, ${err.message}`
       })
-      return null
     } finally {
       conn.release()
     }
@@ -563,12 +515,11 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
       const [rows] = await conn.query(sql, [`%${tag}%`])
       return rowsToCamel(rows)
     } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
+      dialog.showMessageBox(mainWindow, {
         title: '根据标签查询取消稿件',
         type: 'error',
         message: `根据标签查询取消稿件失败, ${err.message}`
       })
-      return null
     } finally {
       conn.release()
     }
@@ -586,12 +537,11 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
       const [rows] = await conn.query(sql)
       return rowsToCamel(rows)
     } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
+      dialog.showMessageBox(mainWindow, {
         title: '查询每月的工资',
         type: 'error',
         message: `查询每月的工资失败, ${err.message}`
       })
-      return null
     } finally {
       conn.release()
     }
@@ -610,12 +560,11 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
       const [rows] = await conn.query(sql)
       return rowsToCamel(rows)
     } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
+      dialog.showMessageBox(mainWindow, {
         title: '查询每年的工资',
         type: 'error',
         message: `查询每年的工资失败, ${err.message}`
       })
-      return null
     } finally {
       conn.release()
     }
@@ -640,12 +589,11 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
       const [rows] = await conn.query(sql)
       return rowsToCamel(rows)
     } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
+      dialog.showMessageBox(mainWindow, {
         title: '查询每月提现金额',
         type: 'error',
         message: `查询每月提现金额失败, ${err.message}`
       })
-      return null
     } finally {
       conn.release()
     }
@@ -664,12 +612,11 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
       const [rows] = await conn.query(sql)
       return rowsToCamel(rows)
     } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
+      dialog.showMessageBox(mainWindow, {
         title: '查询每年提现金额',
         type: 'error',
         message: `查询每年提现金额失败, ${err.message}`
       })
-      return null
     } finally {
       conn.release()
     }
@@ -677,62 +624,35 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
 
   // 查询manuscript表中的数据
   ipcMain.handle('get-manuscript-data', async () => {
-    try {
-      const sql = `
+    const sql = `
         SELECT title, view, post_time, tag
         FROM manuscript
         ORDER BY post_time DESC
       `
-      const [rows] = await pool.query(sql)
-      return rowsToCamel(rows)
-    } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
-        title: '查询manuscript表中的数据',
-        type: 'error',
-        message: `查询manuscript表中的数据失败, ${err.message}`
-      })
-      return null
-    }
+    const [rows] = await pool.query(sql)
+    return rowsToCamel(rows)
   })
 
   // 查询rewards表中的数据
   ipcMain.handle('get-rewards-data', async () => {
-    try {
-      const sql = `
+    const sql = `
         SELECT product_name, money, create_time
         FROM rewards
         ORDER BY create_time DESC
       `
-      const [rows] = await pool.query(sql)
-      return rowsToCamel(rows)
-    } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
-        title: '查询rewards表中的数据',
-        type: 'error',
-        message: `查询rewards表中的数据失败, ${err.message}`
-      })
-      return null
-    }
+    const [rows] = await pool.query(sql)
+    return rowsToCamel(rows)
   })
 
   // 查询disqualification表中的数据
   ipcMain.handle('get-disqualification-data', async () => {
-    try {
-      const sql = `
+    const sql = `
         SELECT title, tag, view, post_time
         FROM disqualification
         ORDER BY post_time DESC
       `
-      const [rows] = await pool.query(sql)
-      return rowsToCamel(rows)
-    } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
-        title: '查询disqualification表中的数据',
-        type: 'error',
-        message: `查询disqualification表中的数据失败, ${err.message}`
-      })
-      return null
-    }
+    const [rows] = await pool.query(sql)
+    return rowsToCamel(rows)
   })
 
   // 将outcome中的数据写入数据库
@@ -770,8 +690,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
 
   // 查询每月的收入
   ipcMain.handle('get-income-by-month', async () => {
-    try {
-      const sql = `
+    const sql = `
         SELECT
           year,
           month,
@@ -784,22 +703,13 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
         GROUP BY year, month
         ORDER BY year DESC, month DESC;
       `
-      const [rows] = await pool.query(sql)
-      return rowsToCamel(rows)
-    } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
-        title: '查询每月的收入',
-        type: 'error',
-        message: `查询每月的收入失败, ${err.message}`
-      })
-      return null
-    }
+    const [rows] = await pool.query(sql)
+    return rowsToCamel(rows)
   })
 
   // 查询每年的收入
   ipcMain.handle('get-income-by-year', async () => {
-    try {
-      const sql = `
+    const sql = `
         SELECT
           year,
           SUM(COALESCE(salary, 0) + COALESCE(brokerage, 0)) AS totalIncome
@@ -811,22 +721,13 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
         GROUP BY year
         ORDER BY year DESC;
       `
-      const [rows] = await pool.query(sql)
-      return rowsToCamel(rows)
-    } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
-        title: '查询每年的收入',
-        type: 'error',
-        message: `查询每年的收入失败, ${err.message}`
-      })
-      return null
-    }
+    const [rows] = await pool.query(sql)
+    return rowsToCamel(rows)
   })
 
   // 查询支出明细
   ipcMain.handle('get-outcome-details', async () => {
-    try {
-      const sql = `
+    const sql = `
         SELECT
           CAST(pay_date AS DATE) AS payDate,
           CASE pay_platform
@@ -839,22 +740,13 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
         FROM outcome
         ORDER BY pay_date DESC
       `
-      const [rows] = await pool.query(sql)
-      return rowsToCamel(rows)
-    } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
-        title: '查询支出明细',
-        type: 'error',
-        message: `查询支出明细失败, ${err.message}`
-      })
-      return null
-    }
+    const [rows] = await pool.query(sql)
+    return rowsToCamel(rows)
   })
 
   // 查询每月的支出
   ipcMain.handle('get-outcome-by-month', async () => {
-    try {
-      const sql = `
+    const sql = `
         SELECT
           YEAR(pay_date) AS year,
           MONTH(pay_date) AS month,
@@ -863,44 +755,27 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
         GROUP BY YEAR(pay_date), MONTH(pay_date)
         ORDER BY year DESC, month DESC;
       `
-      const [rows] = await pool.query(sql)
-      return rowsToCamel(rows)
-    } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
-        title: '查询每月的支出',
-        type: 'error',
-        message: `查询每月的支出失败, ${err.message}`
-      })
-      return null
-    }
+    const [rows] = await pool.query(sql)
+    return rowsToCamel(rows)
   })
 
   // 查询每年的支出
   ipcMain.handle('get-outcome-by-year', async () => {
-    try {
-      const sql = `
+    const sql = `
         SELECT YEAR(pay_date) AS year, SUM(amount) AS totalOutcome
         FROM outcome
         GROUP BY YEAR(pay_date)
         ORDER BY year DESC
       `
-      const [rows] = await pool.query(sql)
-      return rowsToCamel(rows)
-    } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
-        title: '查询每年的支出',
-        type: 'error',
-        message: `查询每年的支出失败, ${err.message}`
-      })
-      return null
-    }
+    const [rows] = await pool.query(sql)
+    return rowsToCamel(rows)
   })
 
   // 通过直播间地址开始录制
   ipcMain.handle('start-by-room-url', async (e, roomUrl) => {
     const roomId = parseRoomId(roomUrl)
     if (!roomId) {
-      await dialog.showMessageBox(mainWindow, {
+      dialog.showMessageBox(mainWindow, {
         title: '直播录制',
         type: 'error',
         message: '无效的直播间地址'
@@ -920,7 +795,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
     const { uid, live_status, title, user_cover, live_time, area_name } = await isLiving(roomId)
     const living = live_status === 1
     if (!living) {
-      await dialog.showMessageBox(mainWindow, {
+      dialog.showMessageBox(mainWindow, {
         title: '直播录制',
         type: 'info',
         message: '当前直播间未开播'

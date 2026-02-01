@@ -2,6 +2,9 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+
+import { useBilibiliStore } from '@/stores/bilibiliStore'
+
 const router = useRouter()
 
 const list = [
@@ -96,6 +99,7 @@ const list = [
 ]
 
 const isLogin = ref(false)
+const bilibiliStore = useBilibiliStore()
 
 // 检查登录状态
 const checkIsLogin = async () => {
@@ -138,6 +142,29 @@ onMounted(() => {
   window.addEventListener('contextmenu', (e) => {
     e.preventDefault()
     window.electronAPI.showContextMenu()
+  })
+
+  window.electronAPI.saveBilibiliData((excelData) => {
+    bilibiliStore.setExcelData(excelData)
+  })
+
+  window.electronAPI.saveOutcomeData((excelData) => {
+    window.electronAPI.saveOutcome(excelData)
+  })
+
+  window.electronAPI.saveSalaryData((excelData) => {
+    window.electronAPI.saveSalary(excelData)
+  })
+
+  window.electronAPI.appExit(() => {
+    bilibiliStore.setRoomUrl('')
+    bilibiliStore.setLiveItem({
+      username: '',
+      title: '',
+      userCover: '',
+      liveTime: '',
+      areaName: ''
+    })
   })
 })
 </script>
