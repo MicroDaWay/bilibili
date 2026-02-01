@@ -1,19 +1,19 @@
-const excelDateToJSDate = (excelDate) => {
+export const excelDateToJSDate = (excelDate) => {
   const baseDate = new Date('1899-12-30')
   return new Date(baseDate.setDate(baseDate.getDate() + excelDate))
 }
 
-const jsDateToExcelDate = (jsDate) => {
+export const jsDateToExcelDate = (jsDate) => {
   const baseDate = new Date('1899-12-30')
   return Math.floor((jsDate - baseDate) / (24 * 60 * 60 * 1000)) + 1
 }
 
-const formatDatetimeToTimestamp = (year, month, day, hour = 0, minute = 0, second = 0) => {
+export const formatDatetimeToTimestamp = (year, month, day, hour = 0, minute = 0, second = 0) => {
   const dt = new Date(Date.UTC(year, month - 1, day, hour, minute, second))
   return Math.floor(dt.getTime() / 1000)
 }
 
-const formatTimestampToDatetime = (timestamp) => {
+export const formatTimestampToDatetime = (timestamp) => {
   if (typeof timestamp !== 'number' || timestamp <= 0) return null
   const dt = new Date(timestamp * 1000)
   if (isNaN(dt.getTime())) return null
@@ -23,7 +23,7 @@ const formatTimestampToDatetime = (timestamp) => {
 }
 
 // 下划线命名转驼峰命名
-const rowsToCamel = (rows) => {
+export const rowsToCamel = (rows) => {
   return rows.map((row) => {
     const newRow = {}
     for (const key in row) {
@@ -35,18 +35,13 @@ const rowsToCamel = (rows) => {
 }
 
 // 查询几天前的零点时间
-const getAnyDaysAgo = (day) => {
+export const getAnyDaysAgo = (day) => {
   const date = new Date()
   date.setDate(date.getDate() - day)
   date.setHours(0, 0, 0, 0)
   return date
 }
 
-export {
-  excelDateToJSDate,
-  formatDatetimeToTimestamp,
-  formatTimestampToDatetime,
-  getAnyDaysAgo,
-  jsDateToExcelDate,
-  rowsToCamel
+export const sleep = (second) => {
+  return new Promise((resolve) => setTimeout(resolve, second * 1000))
 }

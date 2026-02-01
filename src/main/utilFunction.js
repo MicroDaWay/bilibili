@@ -5,7 +5,7 @@ import { spawn } from 'child_process'
 import { app, BrowserWindow, dialog } from 'electron'
 import xlsx from 'xlsx'
 
-import { formatTimestampToDatetime } from '../renderer/src/utils/index'
+import { formatTimestampToDatetime, sleep } from '../renderer/src/utils/index'
 import { getManuscriptList } from './api'
 
 // 根据标题查询投稿标签
@@ -14,7 +14,7 @@ export const getTagByTitle = async (targetTitle) => {
   let totalPage = 1
 
   while (true) {
-    await new Promise((resolve) => setTimeout(resolve, 10000))
+    await sleep(10)
     const result = await getManuscriptList(pn)
     if (!result) break
     const { arc_audits, page } = result

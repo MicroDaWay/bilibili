@@ -8,7 +8,8 @@ import {
   excelDateToJSDate,
   formatTimestampToDatetime,
   getAnyDaysAgo,
-  rowsToCamel
+  rowsToCamel,
+  sleep
 } from '../renderer/src/utils'
 import {
   getBalance,
@@ -148,25 +149,16 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
 
   // 查询热门活动数据
   ipcMain.handle('popular-events', async () => {
-    try {
-      const url = 'https://member.bilibili.com/x/web/activity/videoall'
-      const headers = {
-        Referer: 'https://member.bilibili.com/platform/releasecenter',
-        Cookie: readCookie(),
-        'User-Agent': process.env.DB_USER_AGENT
-      }
-      const response = await axios.get(url, {
-        headers
-      })
-      return response.data?.data || []
-    } catch (err) {
-      await dialog.showMessageBox(mainWindow, {
-        title: '查询热门活动数据',
-        type: 'error',
-        message: `查询热门活动数据失败, ${err.message}`
-      })
-      return null
+    const url = 'https://member.bilibili.com/x/web/activity/videoall'
+    const headers = {
+      Referer: 'https://member.bilibili.com/platform/releasecenter',
+      Cookie: readCookie(),
+      'User-Agent': process.env.DB_USER_AGENT
     }
+    const response = await axios.get(url, {
+      headers
+    })
+    return response.data?.data
   })
 
   // 查询收益中心数据
@@ -189,7 +181,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
       const { brokerage } = result
 
       while (true) {
-        await new Promise((resolve) => setTimeout(resolve, 5000))
+        await sleep(5)
         const result2 = await getEarningsList(currentPage)
         if (!result2) {
           await dialog.showMessageBox(mainWindow, {
@@ -281,7 +273,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
       let page = 1
 
       while (true) {
-        await new Promise((resolve) => setTimeout(resolve, 5000))
+        await sleep(5)
         const result = await getManuscriptList(page)
         if (!result) {
           await dialog.showMessageBox(mainWindow, {
@@ -357,7 +349,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
       const text = '由于不符合本次征稿活动的规则'
 
       while (true) {
-        await new Promise((resolve) => setTimeout(resolve, 5000))
+        await sleep(5)
         const result = await getMessageList(end_seqno)
         if (!result) {
           await dialog.showMessageBox(mainWindow, {

@@ -5,7 +5,7 @@ import { nextTick, ref } from 'vue'
 
 import ContentCardComponent from '@/components/ContentCardComponent.vue'
 import { useBilibiliStore } from '@/stores/bilibiliStore'
-import { excelDateToJSDate, formatTimestampToDatetime } from '@/utils'
+import { excelDateToJSDate, formatTimestampToDatetime, sleep } from '@/utils'
 
 // 投稿标签
 const postTag = ref('')
@@ -38,7 +38,7 @@ const main = async () => {
     let pn = 1
 
     while (true) {
-      await new Promise((resolve) => setTimeout(resolve, 1000))
+      await sleep(1)
       const result = await window.electronAPI.manuscriptManagement(pn)
       const arc_audits = result?.arc_audits
 

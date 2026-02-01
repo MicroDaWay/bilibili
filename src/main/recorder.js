@@ -4,6 +4,7 @@ import path from 'node:path'
 import { spawn } from 'child_process'
 import { format } from 'date-fns'
 
+import { sleep } from '../renderer/src/utils'
 import { getM3U8 } from './api'
 import { getFFmpegPath } from './utilFunction'
 
@@ -117,7 +118,7 @@ export class LiveRecorder {
       this.process = null
     }
 
-    await new Promise((resolve) => setTimeout(resolve, 1500))
+    await sleep(1)
 
     let newM3u8
     try {

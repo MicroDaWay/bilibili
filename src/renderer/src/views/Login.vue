@@ -3,6 +3,8 @@
 import qrcode from 'qrcode'
 import { nextTick, onMounted, ref } from 'vue'
 
+import { sleep } from '@/utils'
+
 const QRCode = ref(null)
 const QRCodeKey = ref('')
 const isLogin = ref(false)
@@ -24,7 +26,7 @@ const checkStatus = async () => {
   isLogin.value = false
 
   while (true) {
-    await new Promise((resolve) => setTimeout(resolve, 1000))
+    await sleep(1)
     const result = await window.electronAPI.checkQRCodeStatus(QRCodeKey.value)
 
     if (result.code === 86101) {
