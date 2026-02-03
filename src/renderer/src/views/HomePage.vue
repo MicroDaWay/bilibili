@@ -6,6 +6,7 @@ import { useRouter } from 'vue-router'
 import { useBilibiliStore } from '@/stores/bilibiliStore'
 
 const router = useRouter()
+const bilibiliStore = useBilibiliStore()
 
 const list = [
   {
@@ -99,7 +100,6 @@ const list = [
 ]
 
 const isLogin = ref(false)
-const bilibiliStore = useBilibiliStore()
 
 // 检查登录状态
 const checkIsLogin = async () => {

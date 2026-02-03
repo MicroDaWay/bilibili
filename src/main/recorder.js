@@ -126,7 +126,7 @@ export class LiveRecorder {
     } catch (err) {
       this.restarting = false
       setTimeout(() => this.restart(), 5000)
-      console.error('[recorder] 获取新m3u8失败, 5秒后重试', err.message)
+      console.error(`[recorder] 获取新m3u8失败, 5秒后重试, ${err.message}`)
       return
     }
 

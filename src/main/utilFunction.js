@@ -66,7 +66,7 @@ export const getTagAndViewByTitle = async (conn, title) => {
 
 // 导入Excel文件的处理函数
 export const importExcelHandler = async (mainWindow, ipcHandler) => {
-  const result = dialog.showOpenDialog({
+  const result = await dialog.showOpenDialog({
     properties: ['openFile'],
     filters: [
       {

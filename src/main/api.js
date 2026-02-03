@@ -149,7 +149,7 @@ export const getM3U8 = async (roomId, qn = 10000) => {
 
 // 查询用户名
 export const getUsernameByUid = async (uid) => {
-  const url = `https://api.live.bilibili.com/live_user/v1/Master/info`
+  const url = 'https://api.live.bilibili.com/live_user/v1/Master/info'
   const headers = {
     Referer: 'https://live.bilibili.com',
     'User-Agent': process.env.DB_USER_AGENT
