@@ -101,7 +101,7 @@ export class LiveRecorder {
         await this.tsToMp4(tsFile)
         console.log('[recorder] 单段转mp4完成:', tsFile)
       } catch (err) {
-        console.error('[recorder] ts转mp4失败', err.message)
+        console.log('[recorder] ts转mp4失败', err.message)
       }
     })
   }
@@ -126,7 +126,7 @@ export class LiveRecorder {
     } catch (err) {
       this.restarting = false
       setTimeout(() => this.restart(), 5000)
-      console.error(`[recorder] 获取新m3u8失败, 5秒后重试, ${err.message}`)
+      console.log(`[recorder] 获取新m3u8失败, 5秒后重试, ${err.message}`)
       return
     }
 

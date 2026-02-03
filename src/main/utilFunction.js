@@ -132,7 +132,7 @@ export const scanAndConvertTs = (dir) => {
       if (code === 0) {
         console.log('[recover] done:', mp4)
       } else {
-        console.error('[recover] failed:', ts)
+        console.log('[recover] failed:', ts)
       }
     })
   }
