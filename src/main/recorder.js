@@ -77,7 +77,7 @@ export class LiveRecorder {
 
     this.process.stderr.on('data', (data) => {
       const msg = data.toString()
-      console.log('[ffmpeg]', msg)
+      console.log(`录制中: ${msg}`)
 
       if (
         !this.stopping &&
@@ -85,13 +85,13 @@ export class LiveRecorder {
         (msg.includes('403 Forbidden') || msg.includes('Failed to reload playlist'))
       ) {
         this.restarting = true
-        console.log('[recorder] m3u8过期, 准备续录')
+        console.log('m3u8过期, 准备续录')
         setTimeout(() => this.restart(), 0)
       }
     })
 
     this.process.on('close', async (code) => {
-      console.log('[ffmpeg] exited:', code)
+      console.log(`code: ${code}`)
 
       const tsFile = this.currentTs
       this.process = null
@@ -99,9 +99,9 @@ export class LiveRecorder {
       // 如果是切段或停止, 都转mp4
       try {
         await this.tsToMp4(tsFile)
-        console.log('[recorder] 单段转mp4完成:', tsFile)
+        console.log(`单段转mp4完成: ${tsFile}`)
       } catch (err) {
-        console.log('[recorder] ts转mp4失败', err.message)
+        console.log(`ts转mp4失败, ${err.message}`)
       }
     })
   }
@@ -126,7 +126,7 @@ export class LiveRecorder {
     } catch (err) {
       this.restarting = false
       setTimeout(() => this.restart(), 5000)
-      console.log(`[recorder] 获取新m3u8失败, 5秒后重试, ${err.message}`)
+      console.log(`获取新m3u8失败, 5秒后重试, ${err.message}`)
       return
     }
 
@@ -150,7 +150,7 @@ export class LiveRecorder {
           proc.stdin.end()
         } catch (err) {
           resolve()
-          console.log('[recorder] 通过stdin关闭ffmpeg失败, 直接杀掉进程', err.message)
+          console.log(`通过stdin关闭ffmpeg失败, 直接杀掉进程, ${err.message}`)
         }
       } else {
         proc.kill('SIGKILL')
@@ -178,9 +178,9 @@ export class LiveRecorder {
           // 转封装成功, 删除ts
           fs.unlink(tsFile, (err) => {
             if (err) {
-              console.warn('[recorder] mp4已生成, 但ts删除失败:', tsFile, err)
+              console.log(`mp4已生成, 但ts删除失败, ${err.message}`)
             } else {
-              console.log('[recorder] ts已删除:', tsFile)
+              console.log('ts已删除')
             }
             resolve(mp4File)
           })

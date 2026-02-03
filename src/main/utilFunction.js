@@ -124,15 +124,15 @@ export const scanAndConvertTs = (dir) => {
 
     if (fs.existsSync(mp4)) continue
 
-    console.log('[recover] converting:', ts)
+    console.log(`恢复转换中: ${ts}`)
 
     const p = spawn(getFFmpegPath(), ['-y', '-i', ts, '-c', 'copy', '-movflags', '+faststart', mp4])
 
     p.on('close', (code) => {
       if (code === 0) {
-        console.log('[recover] done:', mp4)
+        console.log(`恢复成功: ${mp4}`)
       } else {
-        console.log('[recover] failed:', ts)
+        console.log(`恢复失败, ${ts}`)
       }
     })
   }

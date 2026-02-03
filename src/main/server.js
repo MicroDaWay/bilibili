@@ -33,6 +33,6 @@ export const startServer = (server, mainWindow) => {
   })
 
   server = expressApp.listen(port, () => {
-    console.log(`服务器运行在 http://localhost:${port}/`)
+    console.log(`服务器运行在: http://localhost:${port}/`)
   })
 }

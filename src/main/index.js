@@ -33,7 +33,7 @@ async function gracefulQuit() {
 
     await pool.end()
   } catch (err) {
-    console.log('[gracefulQuit]', err.message)
+    console.log(`退出时发生错误, ${err.message}`)
   }
 
   app.quit()
