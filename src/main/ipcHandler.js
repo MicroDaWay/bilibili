@@ -782,32 +782,36 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
       })
 
       return {
-        file: '',
         username: '',
         title: '',
         userCover: '',
         liveTime: '',
-        areaName: ''
+        areaName: '',
+        watching: false
       }
     }
 
     // 判断是否在播
     const { uid, live_status, title, user_cover, live_time, area_name } = await isLiving(roomId)
+    const outputDir = path.join(app.getPath('videos'), 'BilibiliRecorder')
+
     const living = live_status === 1
     if (!living) {
       dialog.showMessageBox(mainWindow, {
         title: '直播录制',
         type: 'info',
-        message: '当前直播间未开播'
+        message: '当前直播间未开播, 已进入监控状态'
       })
 
+      recorder.watchRoom(roomId, outputDir, mainWindow)
+
       return {
-        file: '',
         username: '',
         title: '',
         userCover: '',
         liveTime: '',
-        areaName: ''
+        areaName: '',
+        watching: true
       }
     }
 
@@ -816,14 +820,14 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
 
     // 获取m3u8(原画优先)
     const m3u8Url = await getM3U8(roomId, 10000)
-    const outputDir = path.join(app.getPath('videos'), 'BilibiliRecorder')
+    recorder.start(m3u8Url, outputDir, username, roomId, mainWindow)
     return {
-      file: recorder.start(m3u8Url, outputDir, username, roomId),
       username,
       title,
       userCover: user_cover,
       liveTime: live_time,
-      areaName: area_name
+      areaName: area_name,
+      watching: false
     }
   })
 
@@ -835,5 +839,10 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   // 判断是否正在直播录制
   ipcMain.handle('is-recording', () => {
     return recorder.isRecording()
+  })
+
+  // 判断是否正在监控直播
+  ipcMain.handle('is-watching', () => {
+    return recorder.isWatching()
   })
 }

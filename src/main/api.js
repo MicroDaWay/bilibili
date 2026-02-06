@@ -123,7 +123,7 @@ export const getM3U8 = async (roomId, qn = 10000) => {
 
   const playurl = response.data?.data?.playurl_info?.playurl
   if (!playurl || !playurl?.stream?.length) {
-    throw new Error('未获取到直播流, playurl为空)')
+    throw new Error('未获取到直播流, playurl为空')
   }
 
   for (const stream of playurl.stream) {

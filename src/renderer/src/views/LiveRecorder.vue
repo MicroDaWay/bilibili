@@ -5,6 +5,7 @@ import { useBilibiliStore } from '@/stores/bilibiliStore'
 
 const roomUrl = ref('')
 const isRecording = ref(false)
+const isWatching = ref(false)
 const isInputFocus = ref(false)
 const bilibiliStore = useBilibiliStore()
 
@@ -19,18 +20,45 @@ const liveItem = ref({
 onMounted(async () => {
   roomUrl.value = bilibiliStore.roomUrl
   isRecording.value = await window.electronAPI.isRecording()
+  isWatching.value = await window.electronAPI.isWatching()
   liveItem.value = bilibiliStore.liveItem
+
+  window.electronAPI.onRecordStarted((data) => {
+    isRecording.value = true
+    isWatching.value = false
+    liveItem.value = data
+    bilibiliStore.setLiveItem(data)
+  })
+
+  window.electronAPI.onRestart(() => {
+    isRecording.value = false
+    isWatching.value = true
+    liveItem.value = {
+      username: '',
+      title: '',
+      userCover: '',
+      liveTime: '',
+      areaName: ''
+    }
+    bilibiliStore.setLiveItem(liveItem.value)
+  })
 })
 
 // 开始录制
 const startRecord = async () => {
   try {
-    isRecording.value = true
-    const { username, title, userCover, liveTime, areaName } =
-      await window.electronAPI.startByRoomUrl(roomUrl.value)
+    bilibiliStore.setRoomUrl(roomUrl.value)
+    const result = await window.electronAPI.startByRoomUrl(roomUrl.value)
+    const { username, title, userCover, liveTime, areaName } = result
+
     if (!username) {
+      isWatching.value = true
       isRecording.value = false
+      return
     }
+
+    isRecording.value = true
+    isWatching.value = false
 
     liveItem.value = {
       username,
@@ -40,7 +68,6 @@ const startRecord = async () => {
       areaName
     }
 
-    bilibiliStore.setRoomUrl(roomUrl.value)
     bilibiliStore.setLiveItem({
       username,
       title,
@@ -82,9 +109,9 @@ const stopRecord = () => {
 }
 
 const clickHandler = () => {
-  if (!isRecording.value) {
+  if (!isRecording.value && !isWatching.value) {
     startRecord()
-  } else {
+  } else if (isRecording.value && !isWatching.value) {
     stopRecord()
   }
 }
@@ -120,8 +147,13 @@ const proxyImage = (url) => {
           ></path>
         </svg>
       </div>
-      <div v-if="!isRecording" class="search-button" @click="clickHandler">开始录制</div>
-      <div v-else class="search-button" @click="clickHandler">停止录制</div>
+      <div v-if="!isRecording && !isWatching" class="search-button" @click="clickHandler">
+        开始录制
+      </div>
+
+      <div v-else-if="isWatching" class="search-button" @click="clickHandler">监控中</div>
+
+      <div v-else-if="isRecording" class="search-button" @click="clickHandler">停止录制</div>
     </div>
     <div v-if="isRecording && liveItem.username" class="content-container">
       <div class="img-container">

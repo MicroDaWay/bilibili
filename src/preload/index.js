@@ -2,11 +2,7 @@ import { contextBridge, ipcRenderer } from 'electron'
 
 contextBridge.exposeInMainWorld('electronAPI', {
   // 持久化存储Excel数据
-  saveBilibiliData: (callback) => {
-    ipcRenderer.on('save-bilibili-data', (e, data) => {
-      callback(data)
-    })
-  },
+  saveBilibiliData: (callback) => ipcRenderer.on('save-bilibili-data', (e, data) => callback(data)),
   // 登录成功
   loginSuccess: (callback) => ipcRenderer.on('login-success', callback),
   // 消息弹窗
@@ -83,16 +79,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getWithdrawByMonth: () => ipcRenderer.invoke('get-withdraw-by-month'),
   // 查询每年提现金额
   getWithdrawByYear: () => ipcRenderer.invoke('get-withdraw-by-year'),
-  saveOutcomeData: (callback) => {
-    ipcRenderer.on('save-outcome-data', (e, data) => {
-      callback(data)
-    })
-  },
-  saveSalaryData: (callback) => {
-    ipcRenderer.on('save-salary-data', (e, data) => {
-      callback(data)
-    })
-  },
+  saveOutcomeData: (callback) => ipcRenderer.on('save-outcome-data', (e, data) => callback(data)),
+  saveSalaryData: (callback) => ipcRenderer.on('save-salary-data', (e, data) => callback(data)),
   saveOutcome: (params) => ipcRenderer.invoke('save-outcome', params),
   saveSalary: (params) => ipcRenderer.invoke('save-salary', params),
   // 查询每月的收入
@@ -111,5 +99,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
   startByRoomUrl: (params) => ipcRenderer.invoke('start-by-room-url', params),
   appExit: (callback) => ipcRenderer.on('app-exit', callback),
   // 判断是否正在直播录制
-  isRecording: () => ipcRenderer.invoke('is-recording')
+  isRecording: () => ipcRenderer.invoke('is-recording'),
+  // 判断是否正在监控直播
+  isWatching: () => ipcRenderer.invoke('is-watching'),
+  // 开始录制直播间
+  onRecordStarted: (callback) => ipcRenderer.on('record-started', (e, data) => callback(data)),
+  // 直播断开后重新开始录制
+  onRestart: (callback) => ipcRenderer.on('restart', () => callback())
 })

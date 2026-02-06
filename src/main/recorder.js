@@ -5,7 +5,7 @@ import { spawn } from 'child_process'
 import { format } from 'date-fns'
 
 import { sleep } from '../renderer/src/utils'
-import { getM3U8 } from './api'
+import { getM3U8, getUsernameByUid, isLiving } from './api'
 import { getFFmpegPath } from './utilFunction'
 
 export class LiveRecorder {
@@ -18,10 +18,59 @@ export class LiveRecorder {
     this.restarting = false
     this.stopping = false
     this.part = 0
+    this.watching = false
+    this.watchTimer = null
+  }
+
+  // 监控直播间是否开播
+  async watchRoom(roomId, outputDir, mainWindow) {
+    if (this.watching) return
+    this.watching = true
+    this.roomId = roomId
+    this.outputDir = outputDir
+
+    console.log(`开始监控直播间: ${roomId}`)
+
+    const check = async () => {
+      if (!this.watching) return
+
+      try {
+        const { uid, live_status, title, user_cover, live_time, area_name } = await isLiving(roomId)
+
+        if (live_status === 1) {
+          console.log('检测到开播, 开始录制')
+          this.watching = false
+          clearInterval(this.watchTimer)
+
+          const result = await getUsernameByUid(uid)
+          const username = result?.info?.uname
+          const m3u8Url = await getM3U8(roomId, 10000)
+
+          this.start(m3u8Url, outputDir, username, roomId, mainWindow)
+
+          // 通知渲染进程
+          mainWindow.webContents.send('record-started', {
+            username,
+            title,
+            userCover: user_cover,
+            liveTime: live_time,
+            areaName: area_name
+          })
+        }
+      } catch (err) {
+        console.log(`监控直播失败: ${err.message}`)
+      }
+    }
+
+    // 立即检查一次
+    await check()
+
+    // 每30秒检测
+    this.watchTimer = setInterval(check, 30000)
   }
 
   // 开始录制
-  start(m3u8Url, outputDir, username, roomId) {
+  start(m3u8Url, outputDir, username, roomId, mainWindow) {
     if (this.process) return this.currentTs
 
     this.roomId = roomId
@@ -32,12 +81,12 @@ export class LiveRecorder {
       fs.mkdirSync(outputDir, { recursive: true })
     }
 
-    this.startFFmpeg(m3u8Url)
+    this.startFFmpeg(m3u8Url, mainWindow)
     return this.currentTs
   }
 
   // 启动ffmpeg(单段)
-  startFFmpeg(m3u8Url) {
+  startFFmpeg(m3u8Url, mainWindow) {
     this.part++
     this.currentTs = path.join(
       this.outputDir,
@@ -78,15 +127,17 @@ export class LiveRecorder {
     this.process.stderr.on('data', (data) => {
       const msg = data.toString()
       console.log(`录制中: ${msg}`)
-
       if (
         !this.stopping &&
         !this.restarting &&
-        (msg.includes('403 Forbidden') || msg.includes('Failed to reload playlist'))
+        (msg.includes('Server returned 403 Forbidden') ||
+          msg.includes('Error opening input') ||
+          msg.includes('HTTP error 404 Not Found') ||
+          msg.includes('Failed to reload playlist 0'))
       ) {
         this.restarting = true
         console.log('m3u8过期, 准备续录')
-        setTimeout(() => this.restart(), 0)
+        setTimeout(() => this.restart(mainWindow), 0)
       }
     })
 
@@ -107,7 +158,7 @@ export class LiveRecorder {
   }
 
   // 续录
-  async restart() {
+  async restart(mainWindow) {
     if (this.stopping) {
       this.restarting = false
       return
@@ -125,17 +176,23 @@ export class LiveRecorder {
       newM3u8 = await getM3U8(this.roomId, 10000)
     } catch (err) {
       this.restarting = false
-      setTimeout(() => this.restart(), 5000)
+      setTimeout(() => this.restart(mainWindow), 5000)
       console.log(`获取新m3u8失败, 5秒后重试, ${err.message}`)
+      mainWindow.webContents.send('restart')
       return
     }
 
     this.restarting = false
-    this.startFFmpeg(newM3u8)
+    this.startFFmpeg(newM3u8, mainWindow)
   }
 
   // 停止录制
   async stop() {
+    this.watching = false
+    if (this.watchTimer) {
+      clearInterval(this.watchTimer)
+      this.watchTimer = null
+    }
     if (!this.process || this.stopping) return
     this.stopping = true
     const proc = this.process
@@ -193,5 +250,9 @@ export class LiveRecorder {
 
   isRecording() {
     return !!this.process
+  }
+
+  isWatching() {
+    return this.watching
   }
 }
