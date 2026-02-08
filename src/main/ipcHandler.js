@@ -14,6 +14,7 @@ import {
 import {
   getBalance,
   getEarningsList,
+  getHotActivityList,
   getM3U8,
   getManuscriptList,
   getMessageList,
@@ -146,17 +147,63 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 查询热门活动数据
-  ipcMain.handle('popular-events', async () => {
-    const url = 'https://member.bilibili.com/x/web/activity/videoall'
-    const headers = {
-      Referer: 'https://member.bilibili.com/platform/releasecenter',
-      Cookie: readCookie(),
-      'User-Agent': process.env.DB_USER_AGENT
+  ipcMain.on('hot-activity', async (e) => {
+    const conn = await pool.getConnection()
+    await conn.query('DELETE FROM hot_activity')
+
+    try {
+      let currentPage = 1
+
+      while (true) {
+        await sleep(1)
+        const result = await getHotActivityList(currentPage)
+        const list = result?.list
+        const ps = result?.page?.ps
+        const total = result?.page?.total
+        const totalPage = Math.ceil(total / ps)
+
+        for (const item of list) {
+          const { name, stime } = item
+          const startTime = formatTimestampToDatetime(stime)
+          console.log(`活动名称 = ${name}, 活动开始时间 = ${startTime}`)
+
+          const sevenDaysAgo = getAnyDaysAgo(7)
+          if (new Date(startTime) < sevenDaysAgo) {
+            continue
+          }
+
+          const sql = `
+            INSERT INTO hot_activity(name, start_time)
+            VALUES(?, ?)
+          `
+          await conn.query(sql, [name, startTime])
+
+          e.sender.send('hot-activity-progress', {
+            name,
+            startTime
+          })
+        }
+
+        if (currentPage >= totalPage) {
+          e.sender.send('hot-activity-finish')
+          dialog.showMessageBox(mainWindow, {
+            title: '查询热门活动数据',
+            type: 'info',
+            message: '查询结束'
+          })
+          break
+        }
+        currentPage++
+      }
+    } catch (err) {
+      dialog.showMessageBox(mainWindow, {
+        title: '查询热门活动数据',
+        type: 'error',
+        message: `查询热门活动数据失败, ${err.message}`
+      })
+    } finally {
+      conn.release()
     }
-    const response = await axios.get(url, {
-      headers
-    })
-    return response.data?.data
   })
 
   // 查询收益中心数据
@@ -252,11 +299,11 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
     await conn.query('DELETE FROM manuscript')
 
     try {
-      let page = 1
+      let currentPage = 1
 
       while (true) {
         await sleep(5)
-        const result = await getManuscriptList(page)
+        const result = await getManuscriptList(currentPage)
         const count = result?.page?.count
         const ps = result?.page?.ps
         const totalPage = Math.ceil(count / ps)
@@ -289,7 +336,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
           })
         }
 
-        if (page >= totalPage) {
+        if (currentPage >= totalPage) {
           e.sender.send('update-database-finish')
           dialog.showMessageBox(mainWindow, {
             title: '更新数据库',
@@ -298,7 +345,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
           })
           break
         }
-        page++
+        currentPage++
       }
     } catch (err) {
       dialog.showMessageBox(mainWindow, {
@@ -633,6 +680,17 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
     return rowsToCamel(rows)
   })
 
+  // 查询hot_activity表中的数据
+  ipcMain.handle('get-hot-activity-data', async () => {
+    const sql = `
+        SELECT name, start_time
+        FROM hot_activity
+        ORDER BY start_time ASC
+      `
+    const [rows] = await pool.query(sql)
+    return rowsToCamel(rows)
+  })
+
   // 查询rewards表中的数据
   ipcMain.handle('get-rewards-data', async () => {
     const sql = `
@@ -772,7 +830,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 通过直播间地址开始录制
-  ipcMain.handle('start-by-room-url', async (e, roomUrl) => {
+  ipcMain.handle('start-record-by-room-url', async (e, roomUrl) => {
     const roomId = parseRoomId(roomUrl)
     if (!roomId) {
       dialog.showMessageBox(mainWindow, {
@@ -832,7 +890,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 停止录制
-  ipcMain.handle('stop-recorder', () => {
+  ipcMain.handle('stop-record', () => {
     recorder.stop()
   })
 

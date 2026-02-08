@@ -26,7 +26,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 稿件管理
   manuscriptManagement: (params) => ipcRenderer.invoke('manuscript-management', params),
   // 热门活动
-  popularEvents: () => ipcRenderer.invoke('popular-events'),
+  hotActivity: () => ipcRenderer.send('hot-activity'),
+  hotActivityProgress: (callback) => ipcRenderer.on('hot-activity-progress', callback),
+  hotActivityFinish: (callback) => ipcRenderer.on('hot-activity-finish', callback),
+  removeHotActivityProgressListener: (callback) =>
+    ipcRenderer.removeListener('hot-activity-progress', callback),
+  removeHotActivityFinishListener: (callback) =>
+    ipcRenderer.removeListener('hot-activity-finish', callback),
   // 收益中心
   earningsCenter: () => ipcRenderer.send('earnings-center'),
   earningsCenterProgress: (callback) => ipcRenderer.on('earnings-center-progress', callback),
@@ -67,6 +73,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getDisqualificationByTag: (params) => ipcRenderer.invoke('get-disqualification-by-tag', params),
   // 查询manuscript表中的数据
   getManuscriptData: () => ipcRenderer.invoke('get-manuscript-data'),
+  // 查询hot_activity表中的数据
+  getHotActivityData: () => ipcRenderer.invoke('get-hot-activity-data'),
   // 查询rewards表中的数据
   getRewardsData: () => ipcRenderer.invoke('get-rewards-data'),
   // 查询disqualification表中的数据
@@ -94,16 +102,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 查询每年的支出
   getOutcomeByYear: () => ipcRenderer.invoke('get-outcome-by-year'),
   // 停止录制
-  stopRecorder: () => ipcRenderer.invoke('stop-recorder'),
+  stopRecord: () => ipcRenderer.invoke('stop-record'),
   // 通过直播间地址开始录制
-  startByRoomUrl: (params) => ipcRenderer.invoke('start-by-room-url', params),
+  startRecordByRoomUrl: (params) => ipcRenderer.invoke('start-record-by-room-url', params),
   appExit: (callback) => ipcRenderer.on('app-exit', callback),
   // 判断是否正在直播录制
   isRecording: () => ipcRenderer.invoke('is-recording'),
   // 判断是否正在监控直播
   isWatching: () => ipcRenderer.invoke('is-watching'),
   // 开始录制直播间
-  onRecordStarted: (callback) => ipcRenderer.on('record-started', (e, data) => callback(data)),
+  startRecord: (callback) => ipcRenderer.on('start-record', (e, data) => callback(data)),
   // 直播断开后重新开始录制
-  onRestart: (callback) => ipcRenderer.on('restart', () => callback())
+  restartRecord: (callback) => ipcRenderer.on('restart-record', () => callback())
 })

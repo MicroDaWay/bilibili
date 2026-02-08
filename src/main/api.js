@@ -21,6 +21,26 @@ export const getManuscriptList = async (pn) => {
   return response.data?.data
 }
 
+// 查询热门活动数据
+export const getHotActivityList = async (pn) => {
+  const url = 'https://api.bilibili.com/x/activity_components/video_activity/hot_activity'
+  const headers = {
+    Referer: 'https://www.bilibili.com/blackboard/era/reward-activity-list-page.html',
+    Cookie: readCookie(),
+    'User-Agent': process.env.DB_USER_AGENT
+  }
+  const params = {
+    csrf: 'f687804a4f6b7fb2baf9a1e5043c060f',
+    pn,
+    ps: 20
+  }
+  const response = await axios.get(url, {
+    headers,
+    params
+  })
+  return response.data?.data
+}
+
 // 查询余额
 export const getBalance = async () => {
   const url = 'https://pay.bilibili.com/bk/brokerage/getUserBrokerage'

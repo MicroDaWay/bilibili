@@ -4,7 +4,7 @@ const routes = [
   { path: '/', redirect: '/manuscript-management' },
   { path: '/login', component: () => import('@/views/Login.vue') },
   { path: '/manuscript-management', component: () => import('@/views/ManuscriptManagement.vue') },
-  { path: '/popular-events', component: () => import('@/views/PopularEvents.vue') },
+  { path: '/hot-activity', component: () => import('@/views/HotActivity.vue') },
   { path: '/earnings-center', component: () => import('@/views/EarningsCenter.vue') },
   { path: '/update-database', component: () => import('@/views/UpdateDatabase.vue') },
   {

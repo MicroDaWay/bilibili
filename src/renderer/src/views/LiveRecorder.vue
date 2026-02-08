@@ -23,14 +23,14 @@ onMounted(async () => {
   isWatching.value = await window.electronAPI.isWatching()
   liveItem.value = bilibiliStore.liveItem
 
-  window.electronAPI.onRecordStarted((data) => {
+  window.electronAPI.startRecord((data) => {
     isRecording.value = true
     isWatching.value = false
     liveItem.value = data
     bilibiliStore.setLiveItem(data)
   })
 
-  window.electronAPI.onRestart(() => {
+  window.electronAPI.restartRecord(() => {
     isRecording.value = false
     isWatching.value = true
     liveItem.value = {
@@ -48,7 +48,7 @@ onMounted(async () => {
 const startRecord = async () => {
   try {
     bilibiliStore.setRoomUrl(roomUrl.value)
-    const result = await window.electronAPI.startByRoomUrl(roomUrl.value)
+    const result = await window.electronAPI.startRecordByRoomUrl(roomUrl.value)
     const { username, title, userCover, liveTime, areaName } = result
 
     if (!username) {
@@ -105,7 +105,7 @@ const stopRecord = () => {
     liveTime: '',
     areaName: ''
   })
-  window.electronAPI.stopRecorder()
+  window.electronAPI.stopRecord()
 }
 
 const clickHandler = () => {

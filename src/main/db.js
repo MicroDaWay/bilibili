@@ -52,10 +52,18 @@ export const initTable = async (mainWindow) => {
       ) COMMENT '稿件管理'
     `)
 
+    // 初始化hot_activity表
+    await conn.query(`
+      CREATE TABLE IF NOT EXISTS hot_activity (
+        name VARCHAR(255) COMMENT '活动名称',
+        start_time DATETIME COMMENT '活动开始时间'
+      ) COMMENT '热门活动'
+    `)
+
     // 初始化rewards表
     await conn.query(`
       CREATE TABLE IF NOT EXISTS rewards (
-        product_name VARCHAR(100) COMMENT '活动名称',
+        product_name VARCHAR(255) COMMENT '活动名称',
         money DECIMAL(10,2) COMMENT '发放金额',
         create_time DATETIME COMMENT '发放时间'
       ) COMMENT '收益中心'

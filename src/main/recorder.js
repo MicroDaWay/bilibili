@@ -49,7 +49,7 @@ export class LiveRecorder {
           this.start(m3u8Url, outputDir, username, roomId, mainWindow)
 
           // 通知渲染进程
-          mainWindow.webContents.send('record-started', {
+          mainWindow.webContents.send('start-record', {
             username,
             title,
             userCover: user_cover,
@@ -65,7 +65,7 @@ export class LiveRecorder {
     // 立即检查一次
     await check()
 
-    // 每30秒检测
+    // 每隔30秒检测一次
     this.watchTimer = setInterval(check, 30000)
   }
 
@@ -223,9 +223,7 @@ export class LiveRecorder {
   tsToMp4(tsFile) {
     return new Promise((resolve, reject) => {
       const mp4File = tsFile.replace(/\.ts$/, '.mp4')
-
       const args = ['-y', '-i', tsFile, '-c', 'copy', '-movflags', '+faststart', mp4File]
-
       const p = spawn(getFFmpegPath(), args, {
         windowsHide: true
       })
@@ -248,10 +246,12 @@ export class LiveRecorder {
     })
   }
 
+  // 判断是否正在录制
   isRecording() {
     return !!this.process
   }
 
+  // 判断是否正在监控
   isWatching() {
     return this.watching
   }

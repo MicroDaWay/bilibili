@@ -19,7 +19,7 @@ const list = [
   },
   {
     text: '热门活动',
-    url: '/popular-events'
+    url: '/hot-activity'
   },
   {
     text: '收益中心',
