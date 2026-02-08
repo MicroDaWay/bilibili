@@ -165,7 +165,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
         for (const item of list) {
           const { name, stime } = item
           const startTime = formatTimestampToDatetime(stime)
-          console.log(`活动名称 = ${name}, 活动开始时间 = ${startTime}`)
+          console.log(`活动开始时间 = ${startTime}, 活动名称 = ${name}`)
 
           const sevenDaysAgo = getAnyDaysAgo(7)
           if (new Date(startTime) < sevenDaysAgo) {
