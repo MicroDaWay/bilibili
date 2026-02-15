@@ -103,6 +103,15 @@ const searchHandler = () => {
   if (isSearching.value) return
   let flag = false
 
+  if (postTag.value === '') {
+    window.electronAPI.showMessage({
+      title: '稿件管理',
+      type: 'info',
+      message: '未输入投稿标签'
+    })
+    return
+  }
+
   bilibiliStore.excelData.map((item) => {
     if (item['投稿标签'].includes(postTag.value)) {
       filterData.value = {
@@ -118,7 +127,7 @@ const searchHandler = () => {
     window.electronAPI.showMessage({
       title: '稿件管理',
       type: 'info',
-      message: '没有找到相关话题'
+      message: '没有找到相关投稿标签'
     })
     return
   }
