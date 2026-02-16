@@ -121,11 +121,8 @@ export const scanAndConvertTs = (dir) => {
   for (const file of files) {
     const ts = path.join(dir, file)
     const mp4 = ts.replace(/\.ts$/, '.mp4')
-
     if (fs.existsSync(mp4)) continue
-
     console.log(`恢复转换中: ${ts}`)
-
     const p = spawn(getFFmpegPath(), ['-y', '-i', ts, '-c', 'copy', '-movflags', '+faststart', mp4])
 
     p.on('close', (code) => {
@@ -152,4 +149,36 @@ export const getFFmpegPath = () => {
     'ffmpeg-static',
     'ffmpeg.exe'
   )
+}
+
+// 根据文件名中的part数字进行排序
+export const sortByPart = (files) => {
+  return files.sort((a, b) => {
+    const pa = Number(a.match(/part(\d+)/)?.[1] || 0)
+    const pb = Number(b.match(/part(\d+)/)?.[1] || 0)
+    return pa - pb
+  })
+}
+
+// 合并MP4文件
+export const mergeMp4 = async (files) => {
+  const upName = files[0].split('\\').at(-1).split('_')[0]
+  const sorted = sortByPart(files)
+  const dir = path.dirname(sorted[0])
+  const listFile = path.join(dir, 'concat.txt')
+  const content = sorted.map((f) => `file '${f.replace(/'/g, "'\\''")}'`).join('\n')
+  fs.writeFileSync(listFile, content)
+  const outputDir = path.join(app.getPath('videos'), 'BilibiliRecorder')
+  const outputPath = path.join(outputDir, `${upName}_merge.mp4`)
+
+  return new Promise((resolve, reject) => {
+    const args = ['-y', '-f', 'concat', '-safe', '0', '-i', listFile, '-c', 'copy', outputPath]
+    const p = spawn(getFFmpegPath(), args, { windowsHide: true })
+
+    p.on('close', (code) => {
+      fs.unlinkSync(listFile)
+      if (code === 0) resolve(outputPath)
+      else reject(new Error('合并失败'))
+    })
+  })
 }

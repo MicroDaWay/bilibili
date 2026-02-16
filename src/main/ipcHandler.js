@@ -22,7 +22,7 @@ import {
   isLiving
 } from './api.js'
 import { readCookie, writeCookie } from './cookie.js'
-import { getTagByTitle, parseRoomId } from './utilFunction.js'
+import { getTagByTitle, mergeMp4, parseRoomId } from './utilFunction.js'
 
 // 自定义右键菜单项
 const createMenuItem = (label, role, shortcut) => {
@@ -902,5 +902,18 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   // 判断是否正在监控直播
   ipcMain.handle('is-watching', () => {
     return recorder.isWatching()
+  })
+
+  // 合并MP4文件
+  ipcMain.handle('merge-mp4', async () => {
+    const { canceled, filePaths } = await dialog.showOpenDialog({
+      title: '选择要合并的mp4文件',
+      properties: ['openFile', 'multiSelections'],
+      filters: [{ name: 'Video', extensions: ['mp4'] }]
+    })
+
+    if (canceled || filePaths.length === 0) return ''
+    const output = await mergeMp4(filePaths)
+    return output
   })
 }

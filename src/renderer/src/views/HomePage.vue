@@ -96,6 +96,10 @@ const list = [
   {
     text: '直播录制',
     url: '/live-recorder'
+  },
+  {
+    text: '合并MP4',
+    url: '/merge-mp4'
   }
 ]
 
