@@ -1,8 +1,14 @@
 <script setup>
-const upload = async () => {
-  const output = await window.electronAPI.mergeMp4()
+import { ref } from 'vue'
 
-  if (output) {
+const isMerging = ref(false)
+
+const upload = async () => {
+  isMerging.value = true
+  const result = await window.electronAPI.mergeMp4()
+  isMerging.value = false
+
+  if (result) {
     window.electronAPI.showMessage({
       title: '合并MP4',
       type: 'info',
@@ -14,7 +20,8 @@ const upload = async () => {
 
 <template>
   <div class="merge-mp4" @click="upload">
-    <button class="upload-video">上传视频</button>
+    <button v-if="!isMerging" class="upload-video">上传视频</button>
+    <button v-else class="upload-video">合并中</button>
   </div>
 </template>
 

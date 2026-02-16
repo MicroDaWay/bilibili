@@ -912,8 +912,8 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
       filters: [{ name: 'Video', extensions: ['mp4'] }]
     })
 
-    if (canceled || filePaths.length === 0) return ''
-    const output = await mergeMp4(filePaths)
-    return output
+    if (canceled || filePaths.length === 0) return false
+    await mergeMp4(filePaths)
+    return true
   })
 }
