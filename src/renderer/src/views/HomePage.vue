@@ -142,12 +142,6 @@ onMounted(() => {
     isLogin.value = status
   })
 
-  // 监听右键菜单事件
-  window.addEventListener('contextmenu', (e) => {
-    e.preventDefault()
-    window.electronAPI.showContextMenu()
-  })
-
   window.electronAPI.saveBilibiliData((excelData) => {
     bilibiliStore.setExcelData(excelData)
   })

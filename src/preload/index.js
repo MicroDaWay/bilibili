@@ -7,8 +7,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   loginSuccess: (callback) => ipcRenderer.on('login-success', callback),
   // 消息弹窗
   showMessage: (params) => ipcRenderer.invoke('show-message', params),
-  // 展示右键菜单
-  showContextMenu: () => ipcRenderer.send('show-context-menu'),
   // 查询登录二维码
   getQRCode: () => ipcRenderer.invoke('get-qrcode'),
   // 检查二维码状态

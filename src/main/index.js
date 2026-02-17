@@ -1,7 +1,7 @@
 import path, { join } from 'node:path'
 
 import { electronApp, is, optimizer } from '@electron-toolkit/utils'
-import { app, BrowserWindow, globalShortcut, Menu, shell } from 'electron'
+import { app, BrowserWindow, clipboard, globalShortcut, Menu, shell } from 'electron'
 
 import { checkDatabaseConnection, initTable, pool } from './db.js'
 import { registerIpcHandler } from './ipcHandler.js'
@@ -73,6 +73,56 @@ const createWindow = () => {
       e.preventDefault()
       gracefulQuit()
     }
+  })
+
+  // 右键菜单
+  mainWindow.webContents.on('context-menu', (e, params) => {
+    const { linkURL, srcURL, selectionText } = params
+    const template = []
+
+    // 如果是链接
+    if (linkURL) {
+      template.push(
+        {
+          label: '复制链接地址'.padEnd(20),
+          click: () => clipboard.writeText(linkURL)
+        },
+        { type: 'separator' }
+      )
+    }
+
+    // 如果是图片
+    if (srcURL) {
+      const realImageURL = decodeURIComponent(new URL(srcURL).searchParams.get('url'))
+      template.push(
+        {
+          label: '复制图片地址'.padEnd(20),
+          click: () => clipboard.writeText(realImageURL)
+        },
+        {
+          label: '在浏览器中打开图片'.padEnd(20),
+          click: () => shell.openExternal(realImageURL)
+        },
+        { type: 'separator' }
+      )
+    }
+
+    // 如果有选中文本
+    if (selectionText) {
+      template.push(
+        { label: '复制'.padEnd(20), role: 'copy', accelerator: 'Ctrl + C' },
+        { type: 'separator' }
+      )
+    }
+
+    // 通用菜单
+    template.push(
+      { label: '粘贴'.padEnd(20), role: 'paste', accelerator: 'Ctrl + V' },
+      { label: '全选'.padEnd(20), role: 'selectAll', accelerator: 'Ctrl + A' }
+    )
+
+    const menu = Menu.buildFromTemplate(template)
+    menu.popup({ window: mainWindow })
   })
 
   mainWindow.webContents.setWindowOpenHandler((details) => {

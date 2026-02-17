@@ -43,6 +43,7 @@ const main = async () => {
       const arc_audits = result?.arc_audits
 
       for (const item of arc_audits) {
+        const bvid = item?.Archive?.bvid
         const tag = item?.Archive?.tag
         const view = item?.stat?.view
         const ptime = formatTimestampToDatetime(item?.Archive?.ptime)
@@ -54,6 +55,7 @@ const main = async () => {
           totalCount.value++
 
           itemList.value.push({
+            bvid,
             view,
             ptime,
             title,

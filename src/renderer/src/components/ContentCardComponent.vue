@@ -19,7 +19,9 @@ const proxyImage = (url) => {
 <template>
   <div class="content-card">
     <div class="img-container">
-      <img :src="proxyImage(item.cover)" :alt="props.item.title" />
+      <a :href="`https://www.bilibili.com/video/${props.item.bvid}`" target="_blank">
+        <img :src="proxyImage(item.cover)" :alt="props.item.title" />
+      </a>
     </div>
     <div class="details">
       <div class="title">标题：{{ props.item.title }}</div>

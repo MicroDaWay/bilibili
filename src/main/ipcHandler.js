@@ -2,7 +2,7 @@ import path from 'node:path'
 
 import axios from 'axios'
 import { format } from 'date-fns'
-import { app, BrowserWindow, dialog, ipcMain, Menu } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain } from 'electron'
 
 import {
   excelDateToJSDate,
@@ -24,39 +24,11 @@ import {
 import { readCookie, writeCookie } from './cookie.js'
 import { getTagByTitle, mergeMp4, parseRoomId } from './utilFunction.js'
 
-// 自定义右键菜单项
-const createMenuItem = (label, role, shortcut) => {
-  const paddingLength = 20
-  const paddedLabel = label.padEnd(paddingLength)
-  return {
-    label: `${paddedLabel}`,
-    accelerator: shortcut,
-    role: role
-  }
-}
-
-// 自定义右键菜单
-const contextMenuTemplate = [
-  createMenuItem('复制', 'copy', 'Ctrl + C'),
-  createMenuItem('粘贴', 'paste', 'Ctrl + V'),
-  { type: 'separator' },
-  createMenuItem('剪切', 'cut', 'Ctrl + X'),
-  createMenuItem('全选', 'selectAll', 'Ctrl + A')
-]
-
 // 注册IPC处理函数
 export const registerIpcHandler = (pool, mainWindow, recorder) => {
   // 消息弹窗
   ipcMain.handle('show-message', async (e, params) => {
     dialog.showMessageBox(mainWindow, params)
-  })
-
-  // 展示右键菜单
-  ipcMain.on('show-context-menu', () => {
-    const menu = Menu.buildFromTemplate(contextMenuTemplate)
-    menu.popup({
-      window: BrowserWindow.getFocusedWindow()
-    })
   })
 
   // 获取登录二维码
