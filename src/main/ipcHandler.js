@@ -558,6 +558,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
         SELECT title, tag, view, post_time AS postTime
         FROM disqualification
         WHERE tag LIKE ?
+        ORDER BY post_time DESC
       `
       const [rows] = await conn.query(sql, [`%${tag}%`])
       return rowsToCamel(rows)
