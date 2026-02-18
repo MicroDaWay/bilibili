@@ -4,6 +4,7 @@ import { ref } from 'vue'
 const isMerging = ref(false)
 
 const upload = async () => {
+  if (isMerging.value) return
   isMerging.value = true
   const result = await window.electronAPI.mergeMp4()
   isMerging.value = false

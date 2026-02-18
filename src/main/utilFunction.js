@@ -73,7 +73,8 @@ export const importExcelHandler = async (mainWindow, ipcHandler) => {
         name: 'Excel',
         extensions: ['xlsx', 'xls']
       }
-    ]
+    ],
+    defaultPath: app.getPath('desktop')
   })
 
   if (!result.canceled && result.filePaths.length > 0) {
@@ -101,7 +102,7 @@ export const importExcelHandler = async (mainWindow, ipcHandler) => {
   }
 }
 
-// 扫描BilibiliRecorder目录下的ts文件并转换为mp4
+// 扫描BilibiliRecord目录下的ts文件并转换为mp4
 export const scanAndConvertTs = (dir) => {
   if (!fs.existsSync(dir)) return
   const files = fs.readdirSync(dir).filter((f) => f.endsWith('.ts'))
@@ -156,7 +157,7 @@ export const mergeMp4 = async (files) => {
   const listFile = path.join(dir, 'concat.txt')
   const content = sorted.map((f) => `file '${f.replace(/'/g, "'\\''")}'`).join('\n')
   fs.writeFileSync(listFile, content)
-  const outputDir = path.join(app.getPath('videos'), 'BilibiliRecorder')
+  const outputDir = path.join(app.getPath('videos'), 'BilibiliRecord')
   const outputPath = path.join(outputDir, `${upName}_merge.mp4`)
 
   return new Promise((resolve, reject) => {

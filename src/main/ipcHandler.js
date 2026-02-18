@@ -825,7 +825,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
 
     // 判断是否在播
     const { uid, live_status, title, user_cover, live_time, area_name } = await isLiving(roomId)
-    const outputDir = path.join(app.getPath('videos'), 'BilibiliRecorder')
+    const outputDir = path.join(app.getPath('videos'), 'BilibiliRecord')
 
     const living = live_status === 1
     if (!living) {
@@ -883,7 +883,8 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
     const { canceled, filePaths } = await dialog.showOpenDialog({
       title: '选择要合并的mp4文件',
       properties: ['openFile', 'multiSelections'],
-      filters: [{ name: 'Video', extensions: ['mp4'] }]
+      filters: [{ name: 'Video', extensions: ['mp4'] }],
+      defaultPath: path.join(app.getPath('videos'), 'BilibiliRecord')
     })
 
     if (canceled || filePaths.length === 0) return false

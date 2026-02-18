@@ -155,7 +155,7 @@ if (!gotTheLock) {
 }
 
 app.whenReady().then(async () => {
-  const recordDir = path.join(app.getPath('videos'), 'BilibiliRecorder')
+  const recordDir = path.join(app.getPath('videos'), 'BilibiliRecord')
   // 启动兜底恢复
   scanAndConvertTs(recordDir)
 
