@@ -42,6 +42,19 @@ export const getAnyDaysAgo = (day) => {
   return date
 }
 
+// 睡眠函数, 单位为秒
 export const sleep = (second) => {
   return new Promise((resolve) => setTimeout(resolve, second * 1000))
+}
+
+// 解析房间号
+export const parseRoomId = (url) => {
+  try {
+    const u = new URL(url)
+    if (!u.hostname.includes('bilibili.com')) return null
+    const match = u.pathname.match(/\/(\d+)/)
+    return match ? match[1] : null
+  } catch {
+    return null
+  }
 }

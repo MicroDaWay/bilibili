@@ -101,18 +101,6 @@ export const importExcelHandler = async (mainWindow, ipcHandler) => {
   }
 }
 
-// 解析房间号
-export const parseRoomId = (url) => {
-  try {
-    const u = new URL(url)
-    if (!u.hostname.includes('bilibili.com')) return null
-    const match = u.pathname.match(/\/(\d+)/)
-    return match ? match[1] : null
-  } catch {
-    return null
-  }
-}
-
 // 扫描BilibiliRecorder目录下的ts文件并转换为mp4
 export const scanAndConvertTs = (dir) => {
   if (!fs.existsSync(dir)) return

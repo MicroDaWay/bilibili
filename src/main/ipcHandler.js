@@ -8,6 +8,7 @@ import {
   excelDateToJSDate,
   formatTimestampToDatetime,
   getAnyDaysAgo,
+  parseRoomId,
   rowsToCamel,
   sleep
 } from '../renderer/src/utils'
@@ -22,7 +23,7 @@ import {
   isLiving
 } from './api.js'
 import { readCookie, writeCookie } from './cookie.js'
-import { getTagByTitle, mergeMp4, parseRoomId } from './utilFunction.js'
+import { getTagByTitle, mergeMp4 } from './utilFunction.js'
 
 // 注册IPC处理函数
 export const registerIpcHandler = (pool, mainWindow, recorder) => {

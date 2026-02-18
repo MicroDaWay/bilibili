@@ -3,6 +3,8 @@ import { onMounted, ref } from 'vue'
 
 import { useBilibiliStore } from '@/stores/bilibiliStore'
 
+import { parseRoomId } from '../utils'
+
 const roomUrl = ref('')
 const isRecording = ref(false)
 const isWatching = ref(false)
@@ -150,14 +152,14 @@ const proxyImage = (url) => {
       <div v-if="!isRecording && !isWatching" class="search-button" @click="clickHandler">
         开始录制
       </div>
-
       <div v-else-if="isWatching" class="search-button" @click="clickHandler">监控中</div>
-
       <div v-else-if="isRecording" class="search-button" @click="clickHandler">停止录制</div>
     </div>
     <div v-if="isRecording && liveItem.username" class="content-container">
       <div class="img-container">
-        <img :src="proxyImage(liveItem.userCover)" :alt="liveItem.title" />
+        <a :href="`https://live.bilibili.com/${parseRoomId(roomUrl)}`" target="_blank">
+          <img :src="proxyImage(liveItem.userCover)" :alt="liveItem.title" />
+        </a>
       </div>
       <div class="details">
         <div class="name">UP: {{ liveItem.username }}</div>
