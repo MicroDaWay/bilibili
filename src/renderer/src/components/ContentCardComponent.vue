@@ -55,7 +55,7 @@ const proxyImage = (url) => {
     flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: space-around;
+    justify-content: space-between;
     height: 16vh;
     margin-left: 1vw;
     font-size: 1.2vw;

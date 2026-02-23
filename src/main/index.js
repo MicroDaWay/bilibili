@@ -24,7 +24,7 @@ async function gracefulQuit() {
 
   try {
     if (recorder.isRecording()) {
-      await recorder.stop()
+      await recorder.stop(mainWindow)
     }
 
     if (server && server.listening) {

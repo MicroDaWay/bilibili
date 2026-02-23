@@ -21,20 +21,23 @@ const liveItem = ref({
 
 onMounted(async () => {
   roomUrl.value = bilibiliStore.roomUrl
-  isRecording.value = await window.electronAPI.isRecording()
-  isWatching.value = await window.electronAPI.isWatching()
   liveItem.value = bilibiliStore.liveItem
 
+  const result = await window.electronAPI.getStatus()
+  isRecording.value = result.recording
+  isWatching.value = result.watching
+
+  window.electronAPI.statusChange((data) => {
+    isRecording.value = data.recording
+    isWatching.value = data.watching
+  })
+
   window.electronAPI.startRecord((data) => {
-    isRecording.value = true
-    isWatching.value = false
     liveItem.value = data
     bilibiliStore.setLiveItem(data)
   })
 
   window.electronAPI.restartRecord(() => {
-    isRecording.value = false
-    isWatching.value = true
     liveItem.value = {
       username: '',
       title: '',
@@ -51,16 +54,10 @@ const startRecord = async () => {
   try {
     bilibiliStore.setRoomUrl(roomUrl.value)
     const result = await window.electronAPI.startRecordByRoomUrl(roomUrl.value)
-    const { username, title, userCover, liveTime, areaName } = result
+    const { username, title, userCover, liveTime, areaName, watching } = result
 
-    if (!username) {
-      isWatching.value = true
-      isRecording.value = false
-      return
-    }
-
-    isRecording.value = true
-    isWatching.value = false
+    if (watching) return
+    if (!username) return
 
     liveItem.value = {
       username,
@@ -69,16 +66,8 @@ const startRecord = async () => {
       liveTime,
       areaName
     }
-
-    bilibiliStore.setLiveItem({
-      username,
-      title,
-      userCover,
-      liveTime,
-      areaName
-    })
+    bilibiliStore.setLiveItem(liveItem.value)
   } catch (err) {
-    isRecording.value = false
     window.electronAPI.showMessage({
       title: '直播录制',
       type: 'error',
@@ -89,8 +78,8 @@ const startRecord = async () => {
 
 // 停止录制
 const stopRecord = () => {
+  window.electronAPI.stopRecord()
   roomUrl.value = ''
-  isRecording.value = false
   liveItem.value = {
     username: '',
     title: '',
@@ -98,22 +87,14 @@ const stopRecord = () => {
     liveTime: '',
     areaName: ''
   }
-
   bilibiliStore.setRoomUrl('')
-  bilibiliStore.setLiveItem({
-    username: '',
-    title: '',
-    userCover: '',
-    liveTime: '',
-    areaName: ''
-  })
-  window.electronAPI.stopRecord()
+  bilibiliStore.setLiveItem(liveItem.value)
 }
 
-const clickHandler = () => {
+const clickHandler = async () => {
   if (!isRecording.value && !isWatching.value) {
-    startRecord()
-  } else if (isRecording.value && !isWatching.value) {
+    await startRecord()
+  } else {
     stopRecord()
   }
 }

@@ -864,18 +864,16 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 停止录制
-  ipcMain.handle('stop-record', () => {
-    recorder.stop()
+  ipcMain.handle('stop-record', async () => {
+    await recorder.stop(mainWindow)
   })
 
-  // 判断是否正在直播录制
-  ipcMain.handle('is-recording', () => {
-    return recorder.isRecording()
-  })
-
-  // 判断是否正在监控直播
-  ipcMain.handle('is-watching', () => {
-    return recorder.isWatching()
+  // 查询录制或监控状态
+  ipcMain.handle('get-status', () => {
+    return {
+      watching: recorder.isWatching(),
+      recording: recorder.isRecording()
+    }
   })
 
   // 合并MP4文件

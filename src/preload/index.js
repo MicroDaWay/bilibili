@@ -104,14 +104,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 通过直播间地址开始录制
   startRecordByRoomUrl: (params) => ipcRenderer.invoke('start-record-by-room-url', params),
   appExit: (callback) => ipcRenderer.on('app-exit', callback),
-  // 判断是否正在直播录制
-  isRecording: () => ipcRenderer.invoke('is-recording'),
-  // 判断是否正在监控直播
-  isWatching: () => ipcRenderer.invoke('is-watching'),
   // 开始录制直播间
   startRecord: (callback) => ipcRenderer.on('start-record', (e, data) => callback(data)),
   // 直播断开后重新开始录制
   restartRecord: (callback) => ipcRenderer.on('restart-record', () => callback()),
   // 合并MP4文件
-  mergeMp4: () => ipcRenderer.invoke('merge-mp4')
+  mergeMp4: () => ipcRenderer.invoke('merge-mp4'),
+  // 获取录制或监控状态
+  getStatus: () => ipcRenderer.invoke('get-status'),
+  // 录制或监控状态变化
+  statusChange: (callback) => ipcRenderer.on('status-change', (e, params) => callback(params))
 })

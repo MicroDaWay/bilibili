@@ -29,7 +29,13 @@ export class LiveRecorder {
     this.roomId = roomId
     this.outputDir = outputDir
 
-    console.log(`开始监控直播间: ${roomId}`)
+    this.sendStatus(mainWindow)
+
+    const { uid } = await isLiving(roomId)
+    const result = await getUsernameByUid(uid)
+    const username = result?.info?.uname
+
+    console.log(`开始监控直播间: ${username}`)
 
     const check = async () => {
       if (!this.watching) return
@@ -41,6 +47,8 @@ export class LiveRecorder {
           console.log('检测到开播, 开始录制')
           this.watching = false
           clearInterval(this.watchTimer)
+
+          this.sendStatus(mainWindow)
 
           const result = await getUsernameByUid(uid)
           const username = result?.info?.uname
@@ -124,15 +132,19 @@ export class LiveRecorder {
       windowsHide: true
     })
 
+    this.sendStatus(mainWindow)
+
     this.process.stderr.on('data', (data) => {
       const msg = data.toString()
       console.log(`录制中: ${msg}`)
       if (
         !this.stopping &&
         !this.restarting &&
-        (msg.includes('Server returned 403 Forbidden') ||
+        (msg.includes('HTTP error 403 Forbidden') ||
+          msg.includes('keepalive request failed for') ||
           msg.includes('Error opening input') ||
           msg.includes('HTTP error 404 Not Found') ||
+          msg.includes('Failed to open segment') ||
           msg.includes('Failed to reload playlist 0'))
       ) {
         this.restarting = true
@@ -141,18 +153,15 @@ export class LiveRecorder {
       }
     })
 
-    this.process.on('close', async (code) => {
-      console.log(`code: ${code}`)
-
+    this.process.on('close', async () => {
       const tsFile = this.currentTs
       this.process = null
 
       // 如果是切段或停止, 都转mp4
       try {
         await this.tsToMp4(tsFile)
-        console.log(`单段转mp4完成: ${tsFile}`)
       } catch (err) {
-        console.log(`ts转mp4失败, ${err.message}`)
+        console.log(`${err.message}`)
       }
     })
   }
@@ -178,7 +187,7 @@ export class LiveRecorder {
       this.restarting = false
       setTimeout(() => this.restart(mainWindow), 5000)
       console.log(`获取新m3u8失败, 5秒后重试, ${err.message}`)
-      mainWindow.webContents.send('restart')
+      mainWindow.webContents.send('restart-record')
       return
     }
 
@@ -187,13 +196,19 @@ export class LiveRecorder {
   }
 
   // 停止录制
-  async stop() {
+  async stop(mainWindow) {
     this.watching = false
+
     if (this.watchTimer) {
       clearInterval(this.watchTimer)
       this.watchTimer = null
     }
-    if (!this.process || this.stopping) return
+
+    if (!this.process || this.stopping) {
+      this.sendStatus(mainWindow)
+      return
+    }
+
     this.stopping = true
     const proc = this.process
 
@@ -218,8 +233,11 @@ export class LiveRecorder {
     this.process = null
     this.restarting = false
     this.stopping = false
+
+    this.sendStatus(mainWindow)
   }
 
+  // ts转mp4
   tsToMp4(tsFile) {
     return new Promise((resolve, reject) => {
       const mp4File = tsFile.replace(/\.ts$/, '.mp4')
@@ -230,10 +248,11 @@ export class LiveRecorder {
 
       p.on('close', (code) => {
         if (code === 0) {
+          console.log('ts转mp4成功')
           // 转封装成功, 删除ts
           fs.unlink(tsFile, (err) => {
             if (err) {
-              console.log(`mp4已生成, 但ts删除失败, ${err.message}`)
+              console.log(`ts转mp4成功, 但ts删除失败, ${err.message}`)
             } else {
               console.log('ts已删除')
             }
@@ -254,5 +273,14 @@ export class LiveRecorder {
   // 判断是否正在监控
   isWatching() {
     return this.watching
+  }
+
+  // 录制或监控状态变化时通知渲染进程
+  sendStatus(mainWindow) {
+    if (!mainWindow) return
+    mainWindow.webContents.send('status-change', {
+      watching: this.watching,
+      recording: !!this.process
+    })
   }
 }
