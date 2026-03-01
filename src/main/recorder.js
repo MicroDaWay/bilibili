@@ -141,11 +141,8 @@ export class LiveRecorder {
         !this.stopping &&
         !this.restarting &&
         (msg.includes('HTTP error 403 Forbidden') ||
-          msg.includes('keepalive request failed for') ||
-          msg.includes('Error opening input') ||
-          msg.includes('HTTP error 404 Not Found') ||
-          msg.includes('Failed to open segment') ||
-          msg.includes('Failed to reload playlist 0'))
+          msg.includes('Failed to reload playlist 0') ||
+          msg.includes('Error opening input: End of file'))
       ) {
         this.restarting = true
         console.log('m3u8过期, 准备续录')
@@ -178,16 +175,17 @@ export class LiveRecorder {
       this.process = null
     }
 
-    await sleep(1)
-
     let newM3u8
+
+    await sleep(1)
+    this.sendStatus(mainWindow)
+
     try {
       newM3u8 = await getM3U8(this.roomId, 10000)
     } catch (err) {
       this.restarting = false
       setTimeout(() => this.restart(mainWindow), 5000)
       console.log(`获取新m3u8失败, 5秒后重试, ${err.message}`)
-      mainWindow.webContents.send('restart-record')
       return
     }
 

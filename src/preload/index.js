@@ -107,7 +107,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 开始录制直播间
   startRecord: (callback) => ipcRenderer.on('start-record', (e, data) => callback(data)),
   // 直播断开后重新开始录制
-  restartRecord: (callback) => ipcRenderer.on('restart-record', () => callback()),
+  restartRecord: (callback) => ipcRenderer.on('restart-record', (e, data) => callback(data)),
   // 合并MP4文件
   mergeMp4: () => ipcRenderer.invoke('merge-mp4'),
   // 获取录制或监控状态

@@ -37,15 +37,9 @@ onMounted(async () => {
     bilibiliStore.setLiveItem(data)
   })
 
-  window.electronAPI.restartRecord(() => {
-    liveItem.value = {
-      username: '',
-      title: '',
-      userCover: '',
-      liveTime: '',
-      areaName: ''
-    }
-    bilibiliStore.setLiveItem(liveItem.value)
+  window.electronAPI.restartRecord((data) => {
+    liveItem.value = data
+    bilibiliStore.setLiveItem(data)
   })
 })
 
