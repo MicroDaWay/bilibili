@@ -5,8 +5,6 @@ export const useBilibiliStore = defineStore(
   'bilibili',
   () => {
     const excelData = ref([])
-    const totalMoney = ref(0)
-    const balance = ref(0)
     const roomUrl = ref('')
     const liveItem = ref({
       username: '',
@@ -20,14 +18,6 @@ export const useBilibiliStore = defineStore(
       excelData.value = value
     }
 
-    const setTotalMoney = (value) => {
-      totalMoney.value = value
-    }
-
-    const setBalance = (value) => {
-      balance.value = value
-    }
-
     const setRoomUrl = (value) => {
       roomUrl.value = value
     }
@@ -38,13 +28,9 @@ export const useBilibiliStore = defineStore(
 
     return {
       excelData,
-      totalMoney,
-      balance,
       roomUrl,
       liveItem,
       setExcelData,
-      setTotalMoney,
-      setBalance,
       setRoomUrl,
       setLiveItem
     }

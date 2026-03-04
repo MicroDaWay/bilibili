@@ -245,6 +245,11 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
         }
 
         if (currentPage >= totalPage) {
+          const sql = `
+            UPDATE rewards
+            SET total_money = ?, balance = ?
+          `
+          await conn.query(sql, [totalMoney.toFixed(2), brokerage.toFixed(2)])
           e.sender.send('earnings-center-finish')
           dialog.showMessageBox(mainWindow, {
             title: '查询收益中心数据',
@@ -685,6 +690,28 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
       `
     const [rows] = await pool.query(sql)
     return rowsToCamel(rows)
+  })
+
+  // 查询收益中心累计金额
+  ipcMain.handle('get-total-money', async () => {
+    const sql = `
+        SELECT total_money AS totalMoney
+        FROM rewards
+        LIMIT 1;
+      `
+    const [rows] = await pool.query(sql)
+    return rowsToCamel(rows)[0]?.totalMoney
+  })
+
+  // 查询收益中心余额
+  ipcMain.handle('get-balance', async () => {
+    const sql = `
+        SELECT balance
+        FROM rewards
+        LIMIT 1;
+      `
+    const [rows] = await pool.query(sql)
+    return rowsToCamel(rows)[0]?.balance
   })
 
   // 将outcome中的数据写入数据库

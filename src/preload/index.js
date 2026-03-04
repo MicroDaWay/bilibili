@@ -77,6 +77,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getRewardsData: () => ipcRenderer.invoke('get-rewards-data'),
   // 查询disqualification表中的数据
   getDisqualificationData: () => ipcRenderer.invoke('get-disqualification-data'),
+  // 查询收益中心累计金额
+  getTotalMoney: () => ipcRenderer.invoke('get-total-money'),
+  // 查询收益中心余额
+  getBalance: () => ipcRenderer.invoke('get-balance'),
   // 查询每月的工资
   getSalaryByMonth: () => ipcRenderer.invoke('get-salary-by-month'),
   // 查询每年的工资

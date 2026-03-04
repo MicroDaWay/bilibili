@@ -4,7 +4,6 @@ import { format } from 'date-fns'
 import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 
 import TableComponent from '@/components/TableComponent.vue'
-import { useBilibiliStore } from '@/stores/bilibiliStore'
 
 const itemList = ref([])
 const totalMoney = ref(0)
@@ -24,8 +23,6 @@ const columns = [
   { title: '活动名称', key: 'productName' }
 ]
 
-const bilibiliStore = useBilibiliStore()
-
 const handleProgress = async (e, item) => {
   if (globalItemListRef) {
     itemList.value.push({
@@ -33,10 +30,6 @@ const handleProgress = async (e, item) => {
       money: item.money,
       productName: item.productName
     })
-    totalMoney.value = +item.totalMoney
-    balance.value = +item.balance
-    bilibiliStore.setTotalMoney(+item.totalMoney)
-    bilibiliStore.setBalance(+item.balance)
 
     await nextTick()
     const container = document.querySelector('.right-content')
@@ -55,14 +48,14 @@ const handleFinish = () => {
 // 获取数据库中的数据
 const getDatabaseData = async () => {
   const result = await window.electronAPI.getRewardsData()
+  totalMoney.value = +(await window.electronAPI.getTotalMoney())
+  balance.value = +(await window.electronAPI.getBalance())
   itemList.value = result
 }
 
 onMounted(() => {
   globalItemListRef = itemList
   isProcessing.value = false
-  totalMoney.value = bilibiliStore.totalMoney
-  balance.value = bilibiliStore.balance
 
   window.electronAPI.removeEarningsCenterProgressListener(handleProgress)
   window.electronAPI.removeEarningsCenterFinishListener(handleFinish)

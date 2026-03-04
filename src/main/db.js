@@ -65,7 +65,9 @@ export const initTable = async (mainWindow) => {
       CREATE TABLE IF NOT EXISTS rewards (
         product_name VARCHAR(255) COMMENT '活动名称',
         money DECIMAL(10,2) COMMENT '发放金额',
-        create_time DATETIME COMMENT '发放时间'
+        create_time DATETIME COMMENT '发放时间',
+        total_money DECIMAL(10,2) COMMENT '累计金额',
+        balance DECIMAL(10,2) COMMENT '余额'
       ) COMMENT '收益中心'
     `)
 
