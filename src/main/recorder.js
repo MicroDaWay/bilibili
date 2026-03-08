@@ -156,7 +156,7 @@ export class LiveRecorder {
 
       // 如果是切段或停止, 都转mp4
       try {
-        await this.tsToMp4(tsFile)
+        await this.tsToMp4(tsFile, mainWindow)
       } catch (err) {
         console.log(`${err.message}`)
       }
@@ -236,7 +236,7 @@ export class LiveRecorder {
   }
 
   // ts转mp4
-  tsToMp4(tsFile) {
+  tsToMp4(tsFile, mainWindow) {
     return new Promise((resolve, reject) => {
       const mp4File = tsFile.replace(/\.ts$/, '.mp4')
       const args = ['-y', '-i', tsFile, '-c', 'copy', '-movflags', '+faststart', mp4File]
@@ -255,6 +255,7 @@ export class LiveRecorder {
               console.log('ts已删除')
             }
             resolve(mp4File)
+            this.sendStatus(mainWindow)
           })
         } else {
           reject(new Error('ts转mp4失败'))
