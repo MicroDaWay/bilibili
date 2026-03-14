@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 import { spawn } from 'child_process'
+import { format } from 'date-fns'
 import { app, BrowserWindow, dialog } from 'electron'
 import xlsx from 'xlsx'
 
@@ -158,7 +159,8 @@ export const mergeMp4 = async (files) => {
   const content = sorted.map((f) => `file '${f.replace(/'/g, "'\\''")}'`).join('\n')
   fs.writeFileSync(listFile, content)
   const outputDir = path.join(app.getPath('videos'), 'BilibiliRecord')
-  const outputPath = path.join(outputDir, `${upName}_merge.mp4`)
+  const dateString = format(new Date(), 'yyyyMMdd')
+  const outputPath = path.join(outputDir, `${upName}_${dateString}.mp4`)
 
   return new Promise((resolve, reject) => {
     const args = ['-y', '-f', 'concat', '-safe', '0', '-i', listFile, '-c', 'copy', outputPath]
