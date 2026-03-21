@@ -17,6 +17,7 @@ const filterData = ref({})
 const totalPlay = ref(0)
 const totalCount = ref(0)
 const itemList = ref([])
+const disqualificationList = ref([])
 const isInputFocus = ref(false)
 
 const bilibiliStore = useBilibiliStore()
@@ -37,6 +38,11 @@ const main = async () => {
     const startTime = filterData.value['活动开始时间']
     let pn = 1
 
+    const disqualificationData = await window.electronAPI.getDisqualificationData()
+    disqualificationData.forEach((item) => {
+      disqualificationList.value.push(item.title)
+    })
+
     while (true) {
       await sleep(1)
       const result = await window.electronAPI.manuscriptManagement(pn)
@@ -50,7 +56,11 @@ const main = async () => {
         const title = item?.Archive?.title
         const cover = item?.Archive?.cover
 
-        if (tag.includes(postTag.value) && ptime >= startTime) {
+        if (
+          tag.includes(postTag.value) &&
+          ptime >= startTime &&
+          !disqualificationList.value.includes(title)
+        ) {
           totalPlay.value += view
           totalCount.value++
 
@@ -148,6 +158,7 @@ const searchHandler = () => {
             class="search-input"
             type="text"
             :class="{ 'input-focus': isInputFocus }"
+            :disabled="isSearching"
             placeholder="请输入投稿标签"
             @focus="isInputFocus = true"
             @blur="isInputFocus = false"
@@ -168,8 +179,10 @@ const searchHandler = () => {
         <div class="search-button" @click="searchHandler">搜索</div>
       </div>
       <div class="event-rules">
-        <div>活动规则：{{ filterData['活动规则'] }}</div>
-        <div>当前投稿：投稿量={{ totalCount }}, 播放量={{ totalPlay }}</div>
+        <div v-show="filterData['活动规则']">活动规则：{{ filterData['活动规则'] }}</div>
+        <div v-show="filterData['活动规则']">
+          当前投稿：投稿量={{ totalCount }}, 播放量={{ totalPlay }}
+        </div>
       </div>
     </div>
     <div class="content-box">

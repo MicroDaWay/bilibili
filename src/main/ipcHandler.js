@@ -16,7 +16,6 @@ import {
   getBalance,
   getEarningsList,
   getHotActivityList,
-  getM3U8,
   getManuscriptList,
   getMessageList,
   getUsernameByUid,
@@ -832,6 +831,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
 
   // 通过直播间地址开始录制
   ipcMain.handle('start-record-by-room-url', async (e, roomUrl) => {
+    await recorder.reset(mainWindow)
     const roomId = parseRoomId(roomUrl)
     if (!roomId) {
       dialog.showMessageBox(mainWindow, {
@@ -850,9 +850,11 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
       }
     }
 
-    // 判断是否在播
     const { uid, live_status, title, user_cover, live_time, area_name } = await isLiving(roomId)
+    const result = await getUsernameByUid(uid)
+    const username = result?.info?.uname
     const outputDir = path.join(app.getPath('videos'), 'BilibiliRecord')
+    await recorder.watchRoom(roomId, username, outputDir, mainWindow)
 
     const living = live_status === 1
     if (!living) {
@@ -861,8 +863,6 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
         type: 'info',
         message: '当前直播间未开播, 已进入监控状态'
       })
-
-      recorder.watchRoom(roomId, outputDir, mainWindow)
 
       return {
         username: '',
@@ -874,12 +874,6 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
       }
     }
 
-    const result = await getUsernameByUid(uid)
-    const username = result?.info?.uname
-
-    // 获取m3u8(原画优先)
-    const m3u8Url = await getM3U8(roomId, 10000)
-    recorder.start(m3u8Url, outputDir, username, roomId, mainWindow)
     return {
       username,
       title,

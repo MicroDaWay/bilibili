@@ -5,7 +5,7 @@ import { spawn } from 'child_process'
 import { format } from 'date-fns'
 
 import { sleep } from '../renderer/src/utils'
-import { getM3U8, getUsernameByUid, isLiving } from './api'
+import { getM3U8, isLiving } from './api'
 import { getFFmpegPath } from './utilFunction'
 
 export class LiveRecorder {
@@ -20,28 +20,24 @@ export class LiveRecorder {
     this.part = 0
     this.watching = false
     this.watchTimer = null
+    this.restartTimer = null
   }
 
   // 监控直播间是否开播
-  async watchRoom(roomId, outputDir, mainWindow) {
-    if (this.watching) return
+  async watchRoom(roomId, username, outputDir, mainWindow) {
     this.watching = true
     this.roomId = roomId
+    this.username = username
     this.outputDir = outputDir
 
     this.sendStatus(mainWindow)
-
-    const { uid } = await isLiving(roomId)
-    const result = await getUsernameByUid(uid)
-    const username = result?.info?.uname
-
     console.log(`开始监控直播间: ${username}`)
 
     const check = async () => {
       if (!this.watching) return
 
       try {
-        const { uid, live_status, title, user_cover, live_time, area_name } = await isLiving(roomId)
+        const { live_status, title, user_cover, live_time, area_name } = await isLiving(roomId)
 
         if (live_status === 1) {
           console.log('检测到开播, 开始录制')
@@ -49,11 +45,7 @@ export class LiveRecorder {
           clearInterval(this.watchTimer)
 
           this.sendStatus(mainWindow)
-
-          const result = await getUsernameByUid(uid)
-          const username = result?.info?.uname
           const m3u8Url = await getM3U8(roomId, 10000)
-
           this.start(m3u8Url, outputDir, username, roomId, mainWindow)
 
           // 通知渲染进程
@@ -142,6 +134,7 @@ export class LiveRecorder {
         !this.restarting &&
         (msg.includes('HTTP error 403 Forbidden') ||
           msg.includes('Failed to reload playlist 0') ||
+          msg.includes('HTTP error 404 Not Found') ||
           msg.includes('Error opening input: End of file'))
       ) {
         this.restarting = true
@@ -156,6 +149,7 @@ export class LiveRecorder {
 
       // 如果是切段或停止, 都转mp4
       try {
+        if (!tsFile || !fs.existsSync(tsFile)) return
         await this.tsToMp4(tsFile, mainWindow)
       } catch (err) {
         console.log(`${err.message}`)
@@ -165,7 +159,13 @@ export class LiveRecorder {
 
   // 续录
   async restart(mainWindow) {
-    if (this.stopping) {
+    if (this.restartTimer) {
+      clearTimeout(this.restartTimer)
+      this.restartTimer = null
+    }
+
+    // 如果已停止或者roomId被清空, 不再重试
+    if (this.stopping || !this.roomId) {
       this.restarting = false
       return
     }
@@ -184,12 +184,13 @@ export class LiveRecorder {
       newM3u8 = await getM3U8(this.roomId, 10000)
     } catch (err) {
       this.restarting = false
-      setTimeout(() => this.restart(mainWindow), 5000)
+      this.restartTimer = setTimeout(() => this.restart(mainWindow), 5000)
       console.log(`获取新m3u8失败, 5秒后重试, ${err.message}`)
       return
     }
 
     this.restarting = false
+    this.restartTimer = null
     this.startFFmpeg(newM3u8, mainWindow)
   }
 
@@ -232,6 +233,38 @@ export class LiveRecorder {
     this.restarting = false
     this.stopping = false
 
+    this.sendStatus(mainWindow)
+  }
+
+  // 停止所有操作并重置状态
+  async reset(mainWindow) {
+    // 停止监控
+    this.watching = false
+    if (this.watchTimer) {
+      clearInterval(this.watchTimer)
+      this.watchTimer = null
+    }
+
+    // 停止录制
+    this.restarting = false
+    this.stopping = true
+
+    if (this.process) {
+      await this.stop(mainWindow)
+    }
+
+    if (this.restartTimer) {
+      clearTimeout(this.restartTimer)
+      this.restartTimer = null
+    }
+
+    // 重置关键状态
+    this.roomId = null
+    this.username = ''
+    this.part = 0
+    this.currentTs = ''
+
+    this.stopping = false
     this.sendStatus(mainWindow)
   }
 
