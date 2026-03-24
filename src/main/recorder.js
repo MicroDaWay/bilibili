@@ -191,6 +191,24 @@ export class LiveRecorder {
 
     this.restarting = false
     this.restartTimer = null
+
+    try {
+      const { title, user_cover, live_time, area_name } = await isLiving(this.roomId)
+
+      // 通知渲染进程更新直播信息
+      if (mainWindow && !mainWindow.isDestroyed()) {
+        mainWindow.webContents.send('start-record', {
+          username: this.username,
+          title,
+          userCover: user_cover,
+          liveTime: live_time,
+          areaName: area_name
+        })
+      }
+    } catch (err) {
+      console.log('续录成功, 但获取直播信息失败', err.message)
+    }
+
     this.startFFmpeg(newM3u8, mainWindow)
   }
 
