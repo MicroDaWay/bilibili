@@ -198,6 +198,29 @@ app.whenReady().then(async () => {
           }
         }
       ]
+    },
+    {
+      label: '帮助',
+      submenu: [
+        {
+          label: 'GitHub',
+          click() {
+            shell.openExternal('https://github.com/MicroDaWay/bilibili')
+          }
+        },
+        {
+          label: 'Bilibili主页',
+          click() {
+            shell.openExternal('https://space.bilibili.com/506485454')
+          }
+        },
+        {
+          label: 'Bilibili直播间',
+          click() {
+            shell.openExternal('https://live.bilibili.com/23079218')
+          }
+        }
+      ]
     }
   ]
 
