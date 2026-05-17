@@ -1,11 +1,16 @@
+<!-- 直播录制 -->
 <script setup>
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 
 import { useBilibiliStore } from '@/stores/bilibiliStore'
 
 import { parseRoomId } from '../utils'
 
-const roomUrl = ref('')
+const roomUrl = computed({
+  get: () => bilibiliStore.roomUrl || 'https://live.bilibili.com/23079218',
+  set: (value) => bilibiliStore.setRoomUrl(value)
+})
+
 const isRecording = ref(false)
 const isWatching = ref(false)
 const isInputFocus = ref(false)
@@ -20,7 +25,6 @@ const liveItem = ref({
 })
 
 onMounted(async () => {
-  roomUrl.value = bilibiliStore.roomUrl
   liveItem.value = bilibiliStore.liveItem
 
   const result = await window.electronAPI.getStatus()
