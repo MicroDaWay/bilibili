@@ -88,6 +88,7 @@ const orderHandler = () => {
           <td
             v-for="column in props.columns"
             :key="column.key"
+            class="td-text"
             :style="{ width: column.width || 'auto' }"
           >
             {{ column.formatter ? column.formatter(item[column.key]) : item[column.key] }}
@@ -173,6 +174,7 @@ const orderHandler = () => {
   }
 
   .table-tbody {
+    table-layout: fixed;
     width: 100%;
 
     .tr-text {
@@ -185,6 +187,12 @@ const orderHandler = () => {
       &:hover {
         background-color: var(--color-primary);
       }
+    }
+
+    .td-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
   }
 }

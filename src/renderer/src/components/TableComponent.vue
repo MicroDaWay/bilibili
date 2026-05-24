@@ -111,8 +111,8 @@ onBeforeUnmount(() => {
     background: #fff;
 
     .title {
-      height: 14vh;
-      line-height: 14vh;
+      height: 12vh;
+      line-height: 12vh;
       text-align: center;
       font-size: 2.4vw;
       cursor: pointer;
@@ -123,8 +123,11 @@ onBeforeUnmount(() => {
     }
 
     .container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       text-align: center;
-      padding: 1vh 0;
+      height: 11vh;
 
       .total-money,
       .balance {
