@@ -10,6 +10,7 @@ import { excelDateToJSDate, formatTimestampToDatetime, sleep } from '@/utils'
 // 投稿标签
 const postTag = ref('')
 const isSearching = ref(false)
+const activeItem = ref(null)
 
 // 过滤后的数据
 const filterData = ref({})
@@ -188,9 +189,11 @@ const searchHandler = () => {
     <div class="content-box">
       <ContentCardComponent
         v-for="(item, index) in itemList"
-        :key="item.title"
+        :key="item.bvid"
         :item="item"
         :count="index + 1"
+        :is-active="activeItem?.bvid === item.bvid"
+        @select="activeItem = $event"
       ></ContentCardComponent>
     </div>
   </div>

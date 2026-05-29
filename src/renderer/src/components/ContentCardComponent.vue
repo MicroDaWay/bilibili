@@ -8,8 +8,18 @@ const props = defineProps({
   count: {
     type: Number,
     default: 0
+  },
+  isActive: {
+    type: Boolean,
+    default: false
   }
 })
+
+const emit = defineEmits(['select'])
+
+const clickHandler = () => {
+  emit('select', props.item)
+}
 
 const proxyImage = (url) => {
   return `http://localhost:3000/proxy/image?url=${encodeURIComponent(url)}`
@@ -17,7 +27,7 @@ const proxyImage = (url) => {
 </script>
 
 <template>
-  <div class="content-card">
+  <div class="content-card" :class="{ 'card-active': props.isActive }" @click="clickHandler">
     <div class="img-container">
       <a :href="`https://www.bilibili.com/video/${props.item.bvid}`" target="_blank">
         <img :src="proxyImage(item.cover)" :alt="props.item.title" />
@@ -43,6 +53,10 @@ const proxyImage = (url) => {
   width: 100%;
   border-bottom: 1px solid #ccc;
   padding: 2vh 0;
+
+  &.card-active {
+    background-color: var(--color-primary);
+  }
 
   .img-container {
     img {
