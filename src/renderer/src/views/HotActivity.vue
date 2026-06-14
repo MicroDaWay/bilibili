@@ -35,8 +35,10 @@ const handleProgress = async (e, item) => {
   }
 }
 
-const handleFinish = () => {
+const handleFinish = async () => {
   if (globalItemListRef) {
+    await nextTick()
+    await getDatabaseData()
     isProcessing.value = false
   }
 }
