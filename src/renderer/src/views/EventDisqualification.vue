@@ -4,11 +4,13 @@ import { format } from 'date-fns'
 import { onMounted, onUnmounted, ref } from 'vue'
 
 import TableComponent from '@/components/TableComponent.vue'
+import { useBilibiliStore } from '@/stores/bilibiliStore'
 
 const itemList = ref([])
 const title = '活动资格取消稿件'
 const isProcessing = ref(false)
 let globalItemListRef = null
+const bilibiliStore = useBilibiliStore()
 
 const columns = [
   {
@@ -36,7 +38,7 @@ const handleFinish = () => {
 
 // 获取数据库中的数据
 const getDatabaseData = async () => {
-  const result = await window.electronAPI.getDisqualificationData()
+  const result = await window.electronAPI.getDisqualificationData(bilibiliStore.uid)
   itemList.value = result
 }
 
@@ -66,7 +68,7 @@ const main = () => {
   if (isProcessing.value) return
   isProcessing.value = true
   itemList.value = []
-  window.electronAPI.eventDisqualification()
+  window.electronAPI.eventDisqualification(bilibiliStore.uid)
 }
 
 const orderHandler = () => {

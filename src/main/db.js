@@ -45,6 +45,7 @@ export const initTable = async (mainWindow) => {
     // 初始化manuscript表
     await conn.query(`
       CREATE TABLE IF NOT EXISTS manuscript (
+        uid VARCHAR(255) COMMENT '用户ID',
         title VARCHAR(255) COMMENT '标题',
         view INT COMMENT '播放量',
         post_time DATETIME COMMENT '投稿时间',
@@ -63,6 +64,7 @@ export const initTable = async (mainWindow) => {
     // 初始化rewards表
     await conn.query(`
       CREATE TABLE IF NOT EXISTS rewards (
+        uid VARCHAR(255) COMMENT '用户ID',
         product_name VARCHAR(255) COMMENT '活动名称',
         money DECIMAL(10,2) COMMENT '发放金额',
         create_time DATETIME COMMENT '发放时间',
@@ -74,6 +76,7 @@ export const initTable = async (mainWindow) => {
     // 初始化disqualification表
     await conn.query(`
       CREATE TABLE IF NOT EXISTS disqualification (
+        uid VARCHAR(255) COMMENT '用户ID',
         title VARCHAR(255) COMMENT '标题',
         tag VARCHAR(255) COMMENT '投稿标签',
         view INT COMMENT '播放量',
@@ -85,6 +88,7 @@ export const initTable = async (mainWindow) => {
     // 初始化salary表
     await conn.query(`
       CREATE TABLE IF NOT EXISTS salary (
+        uid VARCHAR(255) COMMENT '用户ID',
         year INT COMMENT '年份',
         month INT COMMENT '月份',
         salary DECIMAL(10,2) COMMENT '工资',
@@ -97,6 +101,7 @@ export const initTable = async (mainWindow) => {
     // 初始化withdraw表
     await conn.query(`
       CREATE TABLE IF NOT EXISTS withdraw (
+        uid VARCHAR(255) COMMENT '用户ID',
         year INT COMMENT '年份',
         month INT COMMENT '月份',
         brokerage DECIMAL(10,2) COMMENT '提现金额',
@@ -108,6 +113,7 @@ export const initTable = async (mainWindow) => {
     // 初始化outcome表
     await conn.query(`
       CREATE TABLE IF NOT EXISTS outcome (
+        uid VARCHAR(255) COMMENT '用户ID',
         pay_date date COMMENT '日期',
         pay_platform INT COMMENT '支付平台',
         amount DECIMAL(10,2) COMMENT '支付金额',

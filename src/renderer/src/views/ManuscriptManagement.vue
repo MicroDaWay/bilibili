@@ -39,7 +39,7 @@ const main = async () => {
     const startTime = filterData.value['活动开始时间']
     let pn = 1
 
-    const disqualificationData = await window.electronAPI.getDisqualificationData()
+    const disqualificationData = await window.electronAPI.getDisqualificationData(bilibiliStore.uid)
     disqualificationData.forEach((item) => {
       disqualificationList.value.push(item.title)
     })

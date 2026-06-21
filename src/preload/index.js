@@ -10,19 +10,19 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 查询登录二维码
   getQRCode: () => ipcRenderer.invoke('get-qrcode'),
   // 检查二维码状态
-  checkQRCodeStatus: (params) => ipcRenderer.invoke('check-qrcode-status', params),
+  checkQRCodeStatus: (qrcode_key) => ipcRenderer.invoke('check-qrcode-status', qrcode_key),
   // 保存cookie
-  saveCookie: (params) => ipcRenderer.invoke('save-cookie', params),
+  saveCookie: (cookie) => ipcRenderer.invoke('save-cookie', cookie),
   // 查询导航栏数据
   getNavigationData: () => ipcRenderer.invoke('get-navigation-data'),
   // 退出登录
   logout: () => ipcRenderer.invoke('logout'),
   // 修改登录状态
-  setLoginStatus: (params) => ipcRenderer.send('login-status-change', params),
+  setLoginStatus: (status) => ipcRenderer.send('login-status-change', status),
   // 监听登录状态变更
-  loginStatusChange: (params) => ipcRenderer.on('login-status-change', params),
+  loginStatusChange: (status) => ipcRenderer.on('login-status-change', status),
   // 稿件管理
-  manuscriptManagement: (params) => ipcRenderer.invoke('manuscript-management', params),
+  manuscriptManagement: (pn) => ipcRenderer.invoke('manuscript-management', pn),
   // 热门活动
   hotActivity: () => ipcRenderer.send('hot-activity'),
   hotActivityProgress: (callback) => ipcRenderer.on('hot-activity-progress', callback),
@@ -32,7 +32,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   removeHotActivityFinishListener: (callback) =>
     ipcRenderer.removeListener('hot-activity-finish', callback),
   // 收益中心
-  earningsCenter: () => ipcRenderer.send('earnings-center'),
+  earningsCenter: (uid) => ipcRenderer.send('earnings-center', uid),
   earningsCenterProgress: (callback) => ipcRenderer.on('earnings-center-progress', callback),
   earningsCenterFinish: (callback) => ipcRenderer.on('earnings-center-finish', callback),
   removeEarningsCenterProgressListener: (callback) =>
@@ -40,7 +40,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   removeEarningsCenterFinishListener: (callback) =>
     ipcRenderer.removeListener('earnings-center-finish', callback),
   // 更新数据库
-  updateDatabase: () => ipcRenderer.send('update-database'),
+  updateDatabase: (uid) => ipcRenderer.send('update-database', uid),
   updateDatabaseProgress: (callback) => ipcRenderer.on('update-database-progress', callback),
   updateDatabaseFinish: (callback) => ipcRenderer.on('update-database-finish', callback),
   removeUpdateDatabaseProgressListener: (callback) =>
@@ -48,7 +48,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
   removeUpdateDatabaseFinishListener: (callback) =>
     ipcRenderer.removeListener('update-database-finish', callback),
   // 活动资格取消稿件
-  eventDisqualification: () => ipcRenderer.send('event-disqualification'),
+  eventDisqualification: (uid) => ipcRenderer.send('event-disqualification', uid),
   eventDisqualificationProgress: (callback) =>
     ipcRenderer.on('event-disqualification-progress', callback),
   eventDisqualificationFinish: (callback) =>
@@ -58,55 +58,56 @@ contextBridge.exposeInMainWorld('electronAPI', {
   removeEventDisqualificationFinishListener: (callback) =>
     ipcRenderer.removeListener('event-disqualification-finish', callback),
   // 查询播放量<100的稿件
-  viewLessOneHundred: () => ipcRenderer.invoke('view-less-one-hundred'),
+  viewLessOneHundred: (uid) => ipcRenderer.invoke('view-less-one-hundred', uid),
   // 查询每年获得的激励金额
-  getMoneyByYear: () => ipcRenderer.invoke('get-money-by-year'),
+  getMoneyByYear: (uid) => ipcRenderer.invoke('get-money-by-year', uid),
   // 查询每月获得的激励金额
-  getMoneyByMonth: () => ipcRenderer.invoke('get-money-by-month'),
+  getMoneyByMonth: (uid) => ipcRenderer.invoke('get-money-by-month', uid),
   // 根据标签查询激励金额
-  getMoneyByTag: (params) => ipcRenderer.invoke('get-money-by-tag', params),
+  getMoneyByTag: (productName, uid) => ipcRenderer.invoke('get-money-by-tag', productName, uid),
   // 根据投稿标签查询稿件
-  getManuscriptByTag: (params) => ipcRenderer.invoke('get-manuscript-by-tag', params),
+  getManuscriptByTag: (tag, uid) => ipcRenderer.invoke('get-manuscript-by-tag', tag, uid),
   // 根据标签查询取消稿件
-  getDisqualificationByTag: (params) => ipcRenderer.invoke('get-disqualification-by-tag', params),
+  getDisqualificationByTag: (tag, uid) =>
+    ipcRenderer.invoke('get-disqualification-by-tag', tag, uid),
   // 查询manuscript表中的数据
-  getManuscriptData: () => ipcRenderer.invoke('get-manuscript-data'),
+  getManuscriptData: (uid) => ipcRenderer.invoke('get-manuscript-data', uid),
   // 查询hot_activity表中的数据
   getHotActivityData: () => ipcRenderer.invoke('get-hot-activity-data'),
   // 查询rewards表中的数据
-  getRewardsData: () => ipcRenderer.invoke('get-rewards-data'),
+  getRewardsData: (uid) => ipcRenderer.invoke('get-rewards-data', uid),
   // 查询disqualification表中的数据
-  getDisqualificationData: () => ipcRenderer.invoke('get-disqualification-data'),
+  getDisqualificationData: (uid) => ipcRenderer.invoke('get-disqualification-data', uid),
   // 查询收益中心累计金额
-  getTotalMoney: () => ipcRenderer.invoke('get-total-money'),
+  getTotalMoney: (uid) => ipcRenderer.invoke('get-total-money', uid),
   // 查询收益中心余额
-  getBalance: () => ipcRenderer.invoke('get-balance'),
+  getBalance: (uid) => ipcRenderer.invoke('get-balance', uid),
   // 查询每月的工资
-  getSalaryByMonth: () => ipcRenderer.invoke('get-salary-by-month'),
+  getSalaryByMonth: (uid) => ipcRenderer.invoke('get-salary-by-month', uid),
   // 查询每年的工资
-  getSalaryByYear: () => ipcRenderer.invoke('get-salary-by-year'),
+  getSalaryByYear: (uid) => ipcRenderer.invoke('get-salary-by-year', uid),
   // 查询每月提现金额
-  getWithdrawByMonth: () => ipcRenderer.invoke('get-withdraw-by-month'),
+  getWithdrawByMonth: (uid) => ipcRenderer.invoke('get-withdraw-by-month', uid),
   // 查询每年提现金额
-  getWithdrawByYear: () => ipcRenderer.invoke('get-withdraw-by-year'),
+  getWithdrawByYear: (uid) => ipcRenderer.invoke('get-withdraw-by-year', uid),
   saveOutcomeData: (callback) => ipcRenderer.on('save-outcome-data', (e, data) => callback(data)),
   saveSalaryData: (callback) => ipcRenderer.on('save-salary-data', (e, data) => callback(data)),
-  saveOutcome: (params) => ipcRenderer.invoke('save-outcome', params),
-  saveSalary: (params) => ipcRenderer.invoke('save-salary', params),
+  saveOutcome: (excelData, uid) => ipcRenderer.invoke('save-outcome', excelData, uid),
+  saveSalary: (excelData, uid) => ipcRenderer.invoke('save-salary', excelData, uid),
   // 查询每月的收入
-  getIncomeByMonth: () => ipcRenderer.invoke('get-income-by-month'),
+  getIncomeByMonth: (uid) => ipcRenderer.invoke('get-income-by-month', uid),
   // 查询每年的收入
-  getIncomeByYear: () => ipcRenderer.invoke('get-income-by-year'),
+  getIncomeByYear: (uid) => ipcRenderer.invoke('get-income-by-year', uid),
   // 查询支出明细
-  getOutcomeDetails: () => ipcRenderer.invoke('get-outcome-details'),
+  getOutcomeDetails: (uid) => ipcRenderer.invoke('get-outcome-details', uid),
   // 查询每月的支出
-  getOutcomeByMonth: () => ipcRenderer.invoke('get-outcome-by-month'),
+  getOutcomeByMonth: (uid) => ipcRenderer.invoke('get-outcome-by-month', uid),
   // 查询每年的支出
-  getOutcomeByYear: () => ipcRenderer.invoke('get-outcome-by-year'),
+  getOutcomeByYear: (uid) => ipcRenderer.invoke('get-outcome-by-year', uid),
   // 停止录制
   stopRecord: () => ipcRenderer.invoke('stop-record'),
   // 通过直播间地址开始录制
-  startRecordByRoomUrl: (params) => ipcRenderer.invoke('start-record-by-room-url', params),
+  startRecordByRoomUrl: (roomUrl) => ipcRenderer.invoke('start-record-by-room-url', roomUrl),
   appExit: (callback) => ipcRenderer.on('app-exit', callback),
   // 开始录制直播间
   startRecord: (callback) => ipcRenderer.on('start-record', (e, data) => callback(data)),

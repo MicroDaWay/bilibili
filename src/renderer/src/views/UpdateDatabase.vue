@@ -4,11 +4,13 @@ import { format } from 'date-fns'
 import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 
 import TableComponent from '@/components/TableComponent.vue'
+import { useBilibiliStore } from '@/stores/bilibiliStore'
 
 const itemList = ref([])
 const title = '更新数据库'
 const isProcessing = ref(false)
 let globalItemListRef = null
+const bilibiliStore = useBilibiliStore()
 
 const columns = [
   {
@@ -46,7 +48,7 @@ const handleFinish = () => {
 
 // 获取数据库中的数据
 const getDatabaseData = async () => {
-  const result = await window.electronAPI.getManuscriptData()
+  const result = await window.electronAPI.getManuscriptData(bilibiliStore.uid)
   itemList.value = result
 }
 
@@ -74,7 +76,7 @@ const main = () => {
   if (isProcessing.value) return
   isProcessing.value = true
   itemList.value = []
-  window.electronAPI.updateDatabase()
+  window.electronAPI.updateDatabase(bilibiliStore.uid)
 }
 
 const orderHandler = () => {

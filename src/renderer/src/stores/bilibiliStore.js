@@ -4,6 +4,8 @@ import { ref } from 'vue'
 export const useBilibiliStore = defineStore(
   'bilibili',
   () => {
+    const uid = ref('')
+    const uname = ref('')
     const excelData = ref([])
     const roomUrl = ref('')
     const liveItem = ref({
@@ -13,6 +15,14 @@ export const useBilibiliStore = defineStore(
       liveTime: '',
       areaName: ''
     })
+
+    const setUid = (value) => {
+      uid.value = value
+    }
+
+    const setUname = (value) => {
+      uname.value = value
+    }
 
     const setExcelData = (value) => {
       excelData.value = value
@@ -27,9 +37,13 @@ export const useBilibiliStore = defineStore(
     }
 
     return {
+      uid,
+      uname,
       excelData,
       roomUrl,
       liveItem,
+      setUid,
+      setUname,
       setExcelData,
       setRoomUrl,
       setLiveItem

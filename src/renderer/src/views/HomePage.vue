@@ -147,11 +147,11 @@ onMounted(() => {
   })
 
   window.electronAPI.saveOutcomeData((excelData) => {
-    window.electronAPI.saveOutcome(excelData)
+    window.electronAPI.saveOutcome(excelData, bilibiliStore.uid)
   })
 
   window.electronAPI.saveSalaryData((excelData) => {
-    window.electronAPI.saveSalary(excelData)
+    window.electronAPI.saveSalary(excelData, bilibiliStore.uid)
   })
 
   window.electronAPI.appExit(() => {

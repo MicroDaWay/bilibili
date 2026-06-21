@@ -3,13 +3,18 @@
 import qrcode from 'qrcode'
 import { nextTick, onMounted, ref } from 'vue'
 
+import { useBilibiliStore } from '@/stores/bilibiliStore'
 import { sleep } from '@/utils'
 
 const QRCode = ref(null)
 const QRCodeKey = ref('')
+const mid = ref('')
+const uname = ref('')
 const isLogin = ref(false)
 const avatar = ref('')
 const qrUrl = ref('')
+
+const bilibiliStore = useBilibiliStore()
 
 // 绘制二维码
 const drawQRCode = async () => {
@@ -78,8 +83,12 @@ const logout = async () => {
 // 获取导航栏信息
 const getNavigation = async () => {
   const result = await window.electronAPI.getNavigationData()
+  mid.value = result.mid
+  uname.value = result.uname
   avatar.value = result.face
   isLogin.value = result.isLogin
+  bilibiliStore.setUid(mid.value)
+  bilibiliStore.setUname(uname.value)
 }
 
 onMounted(async () => {

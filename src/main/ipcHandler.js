@@ -179,7 +179,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 查询收益中心数据
-  ipcMain.on('earnings-center', async (e) => {
+  ipcMain.on('earnings-center', async (e, uid) => {
     const conn = await pool.getConnection()
     await conn.query('DELETE FROM rewards')
 
@@ -203,16 +203,16 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
 
           if (productName === '银行卡提现') {
             const sql = `
-              INSERT IGNORE INTO withdraw(year, month, brokerage, type)
-              VALUES(?, ?, ?, ?)
+              INSERT IGNORE INTO withdraw(uid, year, month, brokerage, type)
+              VALUES(?, ?, ?, ?, ?)
             `
-            await conn.query(sql, [year, month, money, 0])
+            await conn.query(sql, [uid, year, month, money, 0])
           } else if (productName === '支付宝提现') {
             const sql = `
-              INSERT IGNORE INTO withdraw(year, month, brokerage, type)
-              VALUES(?, ?, ?, ?)
+              INSERT IGNORE INTO withdraw(uid, year, month, brokerage, type)
+              VALUES(?, ?, ?, ?, ?)
             `
-            await conn.query(sql, [year, month, money, 1])
+            await conn.query(sql, [uid, year, month, money, 1])
           }
 
           if (
@@ -229,10 +229,10 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
           )
 
           const sql = `
-            INSERT INTO rewards(product_name, money, create_time)
-            VALUES(?, ?, ?)
+            INSERT INTO rewards(uid, product_name, money, create_time)
+            VALUES(?, ?, ?, ?)
           `
-          await conn.query(sql, [productName, money, createTime])
+          await conn.query(sql, [uid, productName, money, createTime])
 
           e.sender.send('earnings-center-progress', {
             productName,
@@ -271,7 +271,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 更新数据库
-  ipcMain.on('update-database', async (e) => {
+  ipcMain.on('update-database', async (e, uid) => {
     const conn = await pool.getConnection()
     await conn.query('DELETE FROM manuscript')
 
@@ -300,10 +300,10 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
           )
 
           const sql = `
-            INSERT INTO manuscript(title, view, post_time, tag)
-            VALUES(?, ?, ?, ?)
+            INSERT INTO manuscript(uid, title, view, post_time, tag)
+            VALUES(?, ?, ?, ?, ?)
           `
-          await conn.query(sql, [title, view, postTime, tag])
+          await conn.query(sql, [uid, title, view, postTime, tag])
 
           e.sender.send('update-database-progress', {
             title,
@@ -336,7 +336,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 查询活动资格取消稿件
-  ipcMain.on('event-disqualification', async (e) => {
+  ipcMain.on('event-disqualification', async (e, uid) => {
     const conn = await pool.getConnection()
 
     try {
@@ -377,11 +377,11 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
           const { tag, view } = data
 
           const sql = `
-            INSERT IGNORE INTO disqualification(title, tag, view, post_time)
-            VALUES(?, ?, ?, ?)
+            INSERT IGNORE INTO disqualification(uid, title, tag, view, post_time)
+            VALUES(?, ?, ?, ?, ?)
           `
           const postTime = formatTimestampToDatetime(timestamp)
-          await conn.query(sql, [title, tag, view, postTime])
+          await conn.query(sql, [uid, title, tag, view, postTime])
 
           e.sender.send('event-disqualification-progress', {
             title,
@@ -415,15 +415,15 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 查询播放量<100的稿件
-  ipcMain.handle('view-less-one-hundred', async () => {
+  ipcMain.handle('view-less-one-hundred', async (e, uid) => {
     const conn = await pool.getConnection()
     try {
       const sql = `
         SELECT * FROM manuscript
-        WHERE view < 100 AND post_time <= DATE_SUB(CURDATE(), INTERVAL 180 DAY)
+        WHERE uid = ? AND view < 100 AND post_time <= DATE_SUB(CURDATE(), INTERVAL 180 DAY)
         ORDER BY view ASC
       `
-      const [rows] = await conn.query(sql)
+      const [rows] = await conn.query(sql, [uid])
       return rowsToCamel(rows)
     } catch (err) {
       dialog.showMessageBox(mainWindow, {
@@ -437,16 +437,17 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 查询每年获得的激励金额
-  ipcMain.handle('get-money-by-year', async () => {
+  ipcMain.handle('get-money-by-year', async (e, uid) => {
     const conn = await pool.getConnection()
     try {
       const sql = `
         SELECT YEAR(create_time) AS year, SUM(money) AS totalMoney
         FROM rewards
+        WHERE uid = ?
         GROUP BY YEAR(create_time)
         ORDER BY year DESC
       `
-      const [rows] = await conn.query(sql)
+      const [rows] = await conn.query(sql, [uid])
       return rowsToCamel(rows)
     } catch (err) {
       dialog.showMessageBox(mainWindow, {
@@ -460,16 +461,17 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 查询每月获得的激励金额
-  ipcMain.handle('get-money-by-month', async () => {
+  ipcMain.handle('get-money-by-month', async (e, uid) => {
     const conn = await pool.getConnection()
     try {
       const sql = `
         SELECT YEAR(create_time) AS year, MONTH(create_time) AS month, SUM(money) AS totalMoney
         FROM rewards
+        WHERE uid = ?
         GROUP BY YEAR(create_time), MONTH(create_time)
         ORDER BY year DESC, month DESC
       `
-      const [rows] = await conn.query(sql)
+      const [rows] = await conn.query(sql, [uid])
       return rowsToCamel(rows)
     } catch (err) {
       dialog.showMessageBox(mainWindow, {
@@ -483,16 +485,16 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 根据标签查询激励金额
-  ipcMain.handle('get-money-by-tag', async (e, productName) => {
+  ipcMain.handle('get-money-by-tag', async (e, productName, uid) => {
     const conn = await pool.getConnection()
     try {
       const sql = `
         SELECT product_name AS productName, money, create_time AS createTime, SUM(money) OVER () AS totalMoney
         FROM rewards
-        WHERE product_name LIKE ?
+        WHERE uid = ? AND product_name LIKE ?
         ORDER BY create_time DESC
       `
-      const [rows] = await conn.query(sql, [`%${productName}%`])
+      const [rows] = await conn.query(sql, [uid, `%${productName}%`])
       return rowsToCamel(rows)
     } catch (err) {
       dialog.showMessageBox(mainWindow, {
@@ -506,15 +508,15 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 根据投稿标签查询稿件
-  ipcMain.handle('get-manuscript-by-tag', async (e, tag) => {
+  ipcMain.handle('get-manuscript-by-tag', async (e, tag, uid) => {
     const conn = await pool.getConnection()
     try {
       const sql = `
         SELECT title, view, post_time AS postTime, tag
         FROM manuscript
-        WHERE tag LIKE ?
+        WHERE uid = ? AND tag LIKE ?
       `
-      const [rows] = await conn.query(sql, [`%${tag}%`])
+      const [rows] = await conn.query(sql, [uid, `%${tag}%`])
       return rowsToCamel(rows)
     } catch (err) {
       dialog.showMessageBox(mainWindow, {
@@ -528,16 +530,16 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 根据标签查询取消稿件
-  ipcMain.handle('get-disqualification-by-tag', async (e, tag) => {
+  ipcMain.handle('get-disqualification-by-tag', async (e, tag, uid) => {
     const conn = await pool.getConnection()
     try {
       const sql = `
         SELECT title, tag, view, post_time AS postTime
         FROM disqualification
-        WHERE tag LIKE ?
+        WHERE uid = ? AND tag LIKE ?
         ORDER BY post_time DESC
       `
-      const [rows] = await conn.query(sql, [`%${tag}%`])
+      const [rows] = await conn.query(sql, [uid, `%${tag}%`])
       return rowsToCamel(rows)
     } catch (err) {
       dialog.showMessageBox(mainWindow, {
@@ -551,15 +553,16 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 查询每月的工资
-  ipcMain.handle('get-salary-by-month', async () => {
+  ipcMain.handle('get-salary-by-month', async (e, uid) => {
     const conn = await pool.getConnection()
     try {
       const sql = `
         SELECT year, month, salary, working_hours, hourly_wage
         FROM salary
+        WHERE uid = ?
         ORDER BY year DESC, month DESC
       `
-      const [rows] = await conn.query(sql)
+      const [rows] = await conn.query(sql, [uid])
       return rowsToCamel(rows)
     } catch (err) {
       dialog.showMessageBox(mainWindow, {
@@ -573,16 +576,17 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 查询每年的工资
-  ipcMain.handle('get-salary-by-year', async () => {
+  ipcMain.handle('get-salary-by-year', async (e, uid) => {
     const conn = await pool.getConnection()
     try {
       const sql = `
         SELECT year, SUM(salary) AS totalSalary
         FROM salary
+        WHERE uid = ?
         GROUP BY year
         ORDER BY year DESC
       `
-      const [rows] = await conn.query(sql)
+      const [rows] = await conn.query(sql, [uid])
       return rowsToCamel(rows)
     } catch (err) {
       dialog.showMessageBox(mainWindow, {
@@ -596,7 +600,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 查询每月提现金额
-  ipcMain.handle('get-withdraw-by-month', async () => {
+  ipcMain.handle('get-withdraw-by-month', async (e, uid) => {
     const conn = await pool.getConnection()
     try {
       const sql = `
@@ -609,9 +613,10 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
             WHEN 1 THEN '支付宝提现'
           END AS type
         FROM withdraw
+        WHERE uid = ?
         ORDER BY year DESC, month DESC
       `
-      const [rows] = await conn.query(sql)
+      const [rows] = await conn.query(sql, [uid])
       return rowsToCamel(rows)
     } catch (err) {
       dialog.showMessageBox(mainWindow, {
@@ -625,16 +630,17 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 查询每年提现金额
-  ipcMain.handle('get-withdraw-by-year', async () => {
+  ipcMain.handle('get-withdraw-by-year', async (e, uid) => {
     const conn = await pool.getConnection()
     try {
       const sql = `
         SELECT year, SUM(brokerage) AS totalBrokerage
         FROM withdraw
+        WHERE uid = ?
         GROUP BY year
         ORDER BY year DESC
       `
-      const [rows] = await conn.query(sql)
+      const [rows] = await conn.query(sql, [uid])
       return rowsToCamel(rows)
     } catch (err) {
       dialog.showMessageBox(mainWindow, {
@@ -648,13 +654,14 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 查询manuscript表中的数据
-  ipcMain.handle('get-manuscript-data', async () => {
+  ipcMain.handle('get-manuscript-data', async (e, uid) => {
     const sql = `
         SELECT title, view, post_time, tag
         FROM manuscript
+        WHERE uid = ?
         ORDER BY post_time DESC
       `
-    const [rows] = await pool.query(sql)
+    const [rows] = await pool.query(sql, [uid])
     return rowsToCamel(rows)
   })
 
@@ -670,53 +677,58 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 查询rewards表中的数据
-  ipcMain.handle('get-rewards-data', async () => {
+  ipcMain.handle('get-rewards-data', async (e, uid) => {
     const sql = `
         SELECT product_name, money, create_time
         FROM rewards
+        WHERE uid = ?
         ORDER BY create_time DESC
       `
-    const [rows] = await pool.query(sql)
+    const [rows] = await pool.query(sql, [uid])
     return rowsToCamel(rows)
   })
 
   // 查询disqualification表中的数据
-  ipcMain.handle('get-disqualification-data', async () => {
+  ipcMain.handle('get-disqualification-data', async (e, uid) => {
     const sql = `
         SELECT title, tag, view, post_time
         FROM disqualification
+        WHERE uid = ?
         ORDER BY post_time DESC
       `
-    const [rows] = await pool.query(sql)
+    const [rows] = await pool.query(sql, [uid])
     return rowsToCamel(rows)
   })
 
   // 查询收益中心累计金额
-  ipcMain.handle('get-total-money', async () => {
+  ipcMain.handle('get-total-money', async (e, uid) => {
     const sql = `
         SELECT total_money AS totalMoney
         FROM rewards
+        WHERE uid = ?
         LIMIT 1;
       `
-    const [rows] = await pool.query(sql)
+    const [rows] = await pool.query(sql, [uid])
     return rowsToCamel(rows)[0]?.totalMoney
   })
 
   // 查询收益中心余额
-  ipcMain.handle('get-balance', async () => {
+  ipcMain.handle('get-balance', async (e, uid) => {
     const sql = `
         SELECT balance
         FROM rewards
+        WHERE uid = ?
         LIMIT 1;
       `
-    const [rows] = await pool.query(sql)
+    const [rows] = await pool.query(sql, [uid])
     return rowsToCamel(rows)[0]?.balance
   })
 
   // 将outcome中的数据写入数据库
-  ipcMain.handle('save-outcome', async (e, excelData) => {
+  ipcMain.handle('save-outcome', async (e, excelData, uid) => {
     const records = excelData.map((item) => {
       return [
+        uid,
         format(excelDateToJSDate(item['日期']), 'yyyy-MM-dd'),
         item['支付平台'],
         item['支付金额'],
@@ -724,15 +736,16 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
       ]
     })
     const sql = `
-      INSERT IGNORE INTO outcome(pay_date, pay_platform, amount, note)
+      INSERT IGNORE INTO outcome(uid, pay_date, pay_platform, amount, note)
       VALUES ?
     `
     await pool.query(sql, [records])
   })
 
   // 将salary.excel中的数据写入数据库
-  ipcMain.handle('save-salary', async (e, excelData) => {
+  ipcMain.handle('save-salary', async (e, excelData, uid) => {
     const records = excelData.map((item) => [
+      uid,
       item['年份'],
       item['月份'],
       item['工资'],
@@ -740,51 +753,55 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
       item['时薪']
     ])
     const sql = `
-      INSERT IGNORE INTO salary(year, month, salary, working_hours, hourly_wage)
+      INSERT IGNORE INTO salary(uid, year, month, salary, working_hours, hourly_wage)
       VALUES ?
     `
     await pool.query(sql, [records])
   })
 
   // 查询每月的收入
-  ipcMain.handle('get-income-by-month', async () => {
+  ipcMain.handle('get-income-by-month', async (e, uid) => {
     const sql = `
         SELECT
+          uid,
           year,
           month,
           SUM(COALESCE(salary, 0) + COALESCE(brokerage, 0)) AS totalIncome
         FROM (
-            SELECT year, month, salary, NULL AS brokerage FROM salary
+            SELECT uid, year, month, salary, NULL AS brokerage FROM salary
             UNION ALL
-            SELECT year, month, NULL AS salary, brokerage FROM withdraw
+            SELECT uid, year, month, NULL AS salary, brokerage FROM withdraw
         ) combined
+        WHERE uid = ?
         GROUP BY year, month
         ORDER BY year DESC, month DESC;
       `
-    const [rows] = await pool.query(sql)
+    const [rows] = await pool.query(sql, [uid])
     return rowsToCamel(rows)
   })
 
   // 查询每年的收入
-  ipcMain.handle('get-income-by-year', async () => {
+  ipcMain.handle('get-income-by-year', async (e, uid) => {
     const sql = `
         SELECT
+          uid,
           year,
           SUM(COALESCE(salary, 0) + COALESCE(brokerage, 0)) AS totalIncome
         FROM (
-            SELECT year, salary, NULL AS brokerage FROM salary
+            SELECT uid, year, salary, NULL AS brokerage FROM salary
             UNION ALL
-            SELECT year, NULL AS salary, brokerage FROM withdraw
+            SELECT uid, year, NULL AS salary, brokerage FROM withdraw
         ) t
+        WHERE uid = ?
         GROUP BY year
         ORDER BY year DESC;
       `
-    const [rows] = await pool.query(sql)
+    const [rows] = await pool.query(sql, [uid])
     return rowsToCamel(rows)
   })
 
   // 查询支出明细
-  ipcMain.handle('get-outcome-details', async () => {
+  ipcMain.handle('get-outcome-details', async (e, uid) => {
     const sql = `
         SELECT
           CAST(pay_date AS DATE) AS payDate,
@@ -796,36 +813,39 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
           amount,
           note
         FROM outcome
+        WHERE uid = ?
         ORDER BY pay_date DESC
       `
-    const [rows] = await pool.query(sql)
+    const [rows] = await pool.query(sql, [uid])
     return rowsToCamel(rows)
   })
 
   // 查询每月的支出
-  ipcMain.handle('get-outcome-by-month', async () => {
+  ipcMain.handle('get-outcome-by-month', async (e, uid) => {
     const sql = `
         SELECT
           YEAR(pay_date) AS year,
           MONTH(pay_date) AS month,
           SUM(amount) AS totalOutcome
         FROM outcome
+        WHERE uid = ?
         GROUP BY YEAR(pay_date), MONTH(pay_date)
         ORDER BY year DESC, month DESC;
       `
-    const [rows] = await pool.query(sql)
+    const [rows] = await pool.query(sql, [uid])
     return rowsToCamel(rows)
   })
 
   // 查询每年的支出
-  ipcMain.handle('get-outcome-by-year', async () => {
+  ipcMain.handle('get-outcome-by-year', async (e, uid) => {
     const sql = `
         SELECT YEAR(pay_date) AS year, SUM(amount) AS totalOutcome
         FROM outcome
+        WHERE uid = ?
         GROUP BY YEAR(pay_date)
         ORDER BY year DESC
       `
-    const [rows] = await pool.query(sql)
+    const [rows] = await pool.query(sql, [uid])
     return rowsToCamel(rows)
   })
 

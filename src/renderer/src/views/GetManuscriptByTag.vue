@@ -4,8 +4,10 @@ import { format } from 'date-fns'
 import { ref } from 'vue'
 
 import SearchComponent from '@/components/SearchComponent.vue'
+import { useBilibiliStore } from '@/stores/bilibiliStore'
 
 const itemList = ref([])
+const bilibiliStore = useBilibiliStore()
 const columns = [
   { title: '标题', key: 'title' },
   { title: '播放量', key: 'view', width: '8%' },
@@ -20,7 +22,7 @@ const columns = [
 
 // 点击搜索的处理函数
 const searchHandler = async (tag) => {
-  const result = await window.electronAPI.getManuscriptByTag(tag)
+  const result = await window.electronAPI.getManuscriptByTag(tag, bilibiliStore.uid)
   itemList.value = result
 
   if (result.length === 0) {

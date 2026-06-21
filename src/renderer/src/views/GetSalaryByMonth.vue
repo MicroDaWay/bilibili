@@ -3,8 +3,10 @@
 import { onMounted, ref } from 'vue'
 
 import TableComponent from '@/components/TableComponent.vue'
+import { useBilibiliStore } from '@/stores/bilibiliStore'
 
 const itemList = ref([])
+const bilibiliStore = useBilibiliStore()
 const title = '每月的工资'
 const columns = [
   { title: '年份', key: 'year', width: '20%' },
@@ -16,7 +18,7 @@ const columns = [
 
 // 获取数据库中的数据
 const getDatabaseData = async () => {
-  const result = await window.electronAPI.getSalaryByMonth()
+  const result = await window.electronAPI.getSalaryByMonth(bilibiliStore.uid)
   itemList.value = result
 }
 
@@ -26,8 +28,7 @@ onMounted(() => {
 
 // 主函数
 const main = async () => {
-  const result = await window.electronAPI.getSalaryByMonth()
-  itemList.value = result
+  getDatabaseData()
   window.electronAPI.showMessage({
     title: '查询每月的工资',
     type: 'info',
