@@ -45,7 +45,7 @@ export const initTable = async (mainWindow) => {
     // 初始化manuscript表
     await conn.query(`
       CREATE TABLE IF NOT EXISTS manuscript (
-        uid VARCHAR(255) COMMENT '用户ID',
+        uid INT COMMENT '用户ID',
         title VARCHAR(255) COMMENT '标题',
         view INT COMMENT '播放量',
         post_time DATETIME COMMENT '投稿时间',
@@ -64,7 +64,7 @@ export const initTable = async (mainWindow) => {
     // 初始化rewards表
     await conn.query(`
       CREATE TABLE IF NOT EXISTS rewards (
-        uid VARCHAR(255) COMMENT '用户ID',
+        uid INT COMMENT '用户ID',
         product_name VARCHAR(255) COMMENT '活动名称',
         money DECIMAL(10,2) COMMENT '发放金额',
         create_time DATETIME COMMENT '发放时间',
@@ -76,49 +76,49 @@ export const initTable = async (mainWindow) => {
     // 初始化disqualification表
     await conn.query(`
       CREATE TABLE IF NOT EXISTS disqualification (
-        uid VARCHAR(255) COMMENT '用户ID',
+        uid INT COMMENT '用户ID',
         title VARCHAR(255) COMMENT '标题',
         tag VARCHAR(255) COMMENT '投稿标签',
         view INT COMMENT '播放量',
         post_time DATETIME COMMENT '投稿时间',
-        UNIQUE KEY UK_disqualification_title_post_time(title, post_time)
+        UNIQUE KEY UK_disqualification_uid_title_post_time(uid, title, post_time)
       ) COMMENT '活动资格取消稿件'
     `)
 
     // 初始化salary表
     await conn.query(`
       CREATE TABLE IF NOT EXISTS salary (
-        uid VARCHAR(255) COMMENT '用户ID',
+        uid INT COMMENT '用户ID',
         year INT COMMENT '年份',
         month INT COMMENT '月份',
         salary DECIMAL(10,2) COMMENT '工资',
         working_hours DECIMAL(4,1) COMMENT '工时',
         hourly_wage DECIMAL(4,2) COMMENT '时薪',
-        UNIQUE KEY UK_salary_year_month(year, month)
+        UNIQUE KEY UK_salary_uid_year_month(uid, year, month)
       ) COMMENT '每月工资'
     `)
 
     // 初始化withdraw表
     await conn.query(`
       CREATE TABLE IF NOT EXISTS withdraw (
-        uid VARCHAR(255) COMMENT '用户ID',
+        uid INT COMMENT '用户ID',
         year INT COMMENT '年份',
         month INT COMMENT '月份',
         brokerage DECIMAL(10,2) COMMENT '提现金额',
         type INT COMMENT '提现类型',
-        UNIQUE KEY UK_withdraw_year_month_type(year, month)
+        UNIQUE KEY UK_withdraw_uid_year_month_type(uid, year, month, type)
       ) COMMENT '提现表'
     `)
 
     // 初始化outcome表
     await conn.query(`
       CREATE TABLE IF NOT EXISTS outcome (
-        uid VARCHAR(255) COMMENT '用户ID',
+        uid INT COMMENT '用户ID',
         pay_date date COMMENT '日期',
         pay_platform INT COMMENT '支付平台',
         amount DECIMAL(10,2) COMMENT '支付金额',
         note VARCHAR(255) COMMENT '备注',
-        UNIQUE KEY UK_outcome_pay_date_pay_platform_amount_note(pay_date, pay_platform, amount, note)
+        UNIQUE KEY UK_outcome_uid_pay_date_pay_platform_amount_note(uid, pay_date, pay_platform, amount, note)
       ) COMMENT '支出表'
     `)
   } catch (err) {
