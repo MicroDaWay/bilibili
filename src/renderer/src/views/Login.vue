@@ -76,6 +76,7 @@ const logout = async () => {
     QRCodeKey.value = ''
     avatar.value = ''
     await window.electronAPI.setLoginStatus(false)
+    bilibiliStore.resetStore()
     login()
   }
 }

@@ -36,6 +36,20 @@ export const useBilibiliStore = defineStore(
       liveItem.value = value
     }
 
+    const resetStore = () => {
+      uid.value = ''
+      uname.value = ''
+      excelData.value = []
+      roomUrl.value = ''
+      liveItem.value = {
+        username: '',
+        title: '',
+        userCover: '',
+        liveTime: '',
+        areaName: ''
+      }
+    }
+
     return {
       uid,
       uname,
@@ -46,7 +60,8 @@ export const useBilibiliStore = defineStore(
       setUname,
       setExcelData,
       setRoomUrl,
-      setLiveItem
+      setLiveItem,
+      resetStore
     }
   },
   {
