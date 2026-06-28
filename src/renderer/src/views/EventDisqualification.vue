@@ -1,7 +1,7 @@
 <!-- 活动资格取消稿件 -->
 <script setup>
 import { format } from 'date-fns'
-import { onMounted, onUnmounted, ref } from 'vue'
+import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 
 import TableComponent from '@/components/TableComponent.vue'
 import { useBilibiliStore } from '@/stores/bilibiliStore'
@@ -30,8 +30,10 @@ const handleProgress = (e, item) => {
   }
 }
 
-const handleFinish = () => {
+const handleFinish = async () => {
   if (globalItemListRef) {
+    await nextTick()
+    await getDatabaseData()
     isProcessing.value = false
   }
 }
