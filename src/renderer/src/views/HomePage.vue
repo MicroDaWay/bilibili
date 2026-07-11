@@ -18,10 +18,6 @@ const list = [
     url: '/manuscript-management'
   },
   {
-    text: '稿件自动播放',
-    url: '/manuscript-auto-click'
-  },
-  {
     text: '热门活动',
     url: '/hot-activity'
   },
@@ -32,6 +28,10 @@ const list = [
   {
     text: '更新数据库',
     url: '/update-database'
+  },
+  {
+    text: '稿件自动播放',
+    url: '/manuscript-auto-click'
   },
   {
     text: '活动资格取消稿件',
