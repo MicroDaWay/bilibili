@@ -1,11 +1,63 @@
-<!-- 稿件管理 -->
+<!-- 稿件自动播放 -->
 <script setup>
 import { format } from 'date-fns'
-import { nextTick, ref } from 'vue'
+import { nextTick, onUnmounted, ref } from 'vue'
 
 import ContentCardComponent from '@/components/ContentCardComponent.vue'
 import { useBilibiliStore } from '@/stores/bilibiliStore'
 import { excelDateToJSDate, formatTimestampToDatetime, sleep } from '@/utils'
+
+const cardRefMap = new Map()
+let autoClickTimer = null
+let isAutoClicking = false
+
+const setCardRef = (el, bvid) => {
+  if (!el || !bvid) return
+  cardRefMap.set(bvid, el)
+}
+
+const getOrderedCardRefs = () => {
+  return itemList.value.map((item) => cardRefMap.get(item.bvid)).filter(Boolean)
+}
+
+const stopAutoClick = () => {
+  isAutoClicking = false
+  if (autoClickTimer !== null) {
+    clearTimeout(autoClickTimer)
+    autoClickTimer = null
+  }
+}
+
+const startAutoClick = async () => {
+  stopAutoClick()
+  await nextTick()
+
+  if (getOrderedCardRefs().length === 0) return
+
+  isAutoClicking = true
+  let index = 0
+
+  const clickNext = () => {
+    const orderedRefs = getOrderedCardRefs()
+    if (!isAutoClicking || index >= orderedRefs.length) {
+      stopAutoClick()
+      window.electronAPI.showMessage({
+        title: '稿件管理',
+        type: 'info',
+        message: index >= orderedRefs.length ? '所有视频已遍历完毕' : '自动点击已停止'
+      })
+      return
+    }
+
+    activeItem.value = itemList.value[index]
+    orderedRefs[index]?.triggerImgClick()
+    console.log(`${index + 1}/${orderedRefs.length}: ${itemList.value[index].title}`)
+
+    index++
+    autoClickTimer = setTimeout(clickNext, 10000)
+  }
+  clickNext()
+}
 
 // 投稿标签
 const postTag = ref('')
@@ -36,6 +88,8 @@ const main = async () => {
     totalPlay.value = 0
     totalCount.value = 0
     itemList.value = []
+    cardRefMap.clear()
+    stopAutoClick()
     const startTime = filterData.value['活动开始时间']
     let pn = 1
 
@@ -91,14 +145,14 @@ const main = async () => {
       const latestPostTime = formatTimestampToDatetime(arc_audits.at(-1)?.Archive?.ptime)
 
       if (latestPostTime < startTime) {
-        window.electronAPI.showMessage({
-          title: '稿件管理',
-          type: 'info',
-          message: '查询结束'
-        })
         break
       }
       pn++
+    }
+
+    if (itemList.value.length > 0) {
+      await nextTick()
+      startAutoClick()
     }
   } catch (err) {
     window.electronAPI.showMessage({
@@ -114,6 +168,8 @@ const main = async () => {
 // 点击搜索的处理函数
 const searchHandler = () => {
   if (isSearching.value) return
+  stopAutoClick()
+  activeItem.value = null
   let flag = false
 
   if (postTag.value === '') {
@@ -146,6 +202,10 @@ const searchHandler = () => {
 
   main()
 }
+
+onUnmounted(() => {
+  stopAutoClick()
+})
 </script>
 
 <template>
@@ -189,6 +249,7 @@ const searchHandler = () => {
       <ContentCardComponent
         v-for="(item, index) in itemList"
         :key="item.bvid"
+        :ref="(el) => setCardRef(el, item.bvid)"
         :item="item"
         :count="index + 1"
         :is-active="activeItem?.bvid === item.bvid"

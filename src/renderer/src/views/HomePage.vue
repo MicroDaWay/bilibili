@@ -18,6 +18,10 @@ const list = [
     url: '/manuscript-management'
   },
   {
+    text: '稿件自动播放',
+    url: '/manuscript-auto-click'
+  },
+  {
     text: '热门活动',
     url: '/hot-activity'
   },

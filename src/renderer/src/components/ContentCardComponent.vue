@@ -1,5 +1,7 @@
 <!-- 稿件管理卡片组件 -->
 <script setup>
+import { ref } from 'vue'
+
 const props = defineProps({
   item: {
     type: Object,
@@ -16,10 +18,17 @@ const props = defineProps({
 })
 
 const emit = defineEmits(['select'])
+const linkRef = ref(null)
 
 const clickHandler = () => {
   emit('select', props.item)
 }
+
+const triggerImgClick = () => {
+  linkRef.value?.click()
+}
+
+defineExpose({ triggerImgClick })
 
 const proxyImage = (url) => {
   return `http://localhost:3000/proxy/image?url=${encodeURIComponent(url)}`
@@ -29,7 +38,7 @@ const proxyImage = (url) => {
 <template>
   <div class="content-card" :class="{ 'card-active': props.isActive }" @click="clickHandler">
     <div class="img-container">
-      <a :href="`https://www.bilibili.com/video/${props.item.bvid}`" target="_blank">
+      <a ref="linkRef" :href="`https://www.bilibili.com/video/${props.item.bvid}`" target="_blank">
         <img :src="proxyImage(item.cover)" :alt="props.item.title" />
       </a>
     </div>
