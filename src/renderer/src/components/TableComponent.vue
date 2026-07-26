@@ -94,7 +94,15 @@ onBeforeUnmount(() => {
             class="td-text"
             :style="{ width: column.width || 'auto' }"
           >
-            {{ column.formatter ? column.formatter(item[column.key]) : item[column.key] }}
+            <template v-if="column.formatter">
+              {{ column.formatter(item[column.key]) }}
+            </template>
+            <a v-else-if="column.key === 'link'" :href="item.url" target="_blank">
+              {{ item.name }}
+            </a>
+            <template v-else>
+              {{ item[column.key] }}
+            </template>
           </td>
         </tr>
       </tbody>

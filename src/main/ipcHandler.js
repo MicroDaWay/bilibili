@@ -135,7 +135,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
         const totalPage = Math.ceil(total / ps)
 
         for (const item of list) {
-          const { name, stime } = item
+          const { name, stime, act_url } = item
           const startTime = formatTimestampToDatetime(stime)
           console.log(`活动开始时间 = ${startTime}, 活动名称 = ${name}`)
 
@@ -145,14 +145,15 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
           }
 
           const sql = `
-            INSERT INTO hot_activity(name, start_time)
-            VALUES(?, ?)
+            INSERT INTO hot_activity(name, start_time, url)
+            VALUES(?, ?, ?)
           `
-          await conn.query(sql, [name, startTime])
+          await conn.query(sql, [name, startTime, act_url])
 
           e.sender.send('hot-activity-progress', {
             name,
-            startTime
+            startTime,
+            act_url
           })
         }
 
@@ -668,7 +669,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   // 查询hot_activity表中的数据
   ipcMain.handle('get-hot-activity-data', async () => {
     const sql = `
-        SELECT name, start_time
+        SELECT name, start_time, url
         FROM hot_activity
         ORDER BY start_time ASC
       `

@@ -57,7 +57,8 @@ export const initTable = async (mainWindow) => {
     await conn.query(`
       CREATE TABLE IF NOT EXISTS hot_activity (
         name VARCHAR(255) COMMENT '活动名称',
-        start_time DATETIME COMMENT '活动开始时间'
+        start_time DATETIME COMMENT '活动开始时间',
+        url VARCHAR(255) COMMENT '活动链接'
       ) COMMENT '热门活动'
     `)
 

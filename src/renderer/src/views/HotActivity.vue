@@ -17,14 +17,15 @@ const columns = [
     width: '22%',
     formatter: (value) => format(value, 'yyyy-MM-dd HH:mm:ss')
   },
-  { title: '活动名称', key: 'name' }
+  { title: '活动名称', key: 'link' }
 ]
 
 const handleProgress = async (e, item) => {
   if (globalItemListRef) {
     itemList.value.push({
       startTime: item.startTime,
-      name: item.name
+      name: item.name,
+      url: item.url
     })
 
     await nextTick()
