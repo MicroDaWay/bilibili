@@ -8,7 +8,18 @@ import { parseRoomId } from '../utils'
 
 const roomUrl = computed({
   get: () => bilibiliStore.roomUrl || 'https://live.bilibili.com/23079218',
-  set: (value) => bilibiliStore.setRoomUrl(value)
+  set: (value) => {
+    try {
+      const url = new URL(value)
+      if (url.hostname === 'live.bilibili.com' && /^\/\d+$/.test(url.pathname)) {
+        bilibiliStore.setRoomUrl(`${url.origin}${url.pathname}`)
+      } else {
+        bilibiliStore.setRoomUrl(value)
+      }
+    } catch {
+      bilibiliStore.setRoomUrl(value)
+    }
+  }
 })
 
 const isRecording = ref(false)

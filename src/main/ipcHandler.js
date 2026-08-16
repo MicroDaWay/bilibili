@@ -941,7 +941,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   })
 
   // 合并MP4文件
-  ipcMain.handle('merge-mp4', async () => {
+  ipcMain.handle('merge-mp4', async (e) => {
     const { canceled, filePaths } = await dialog.showOpenDialog({
       title: '选择要合并的mp4文件',
       properties: ['openFile', 'multiSelections'],
@@ -950,7 +950,15 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
     })
 
     if (canceled || filePaths.length === 0) return false
-    await mergeMp4(filePaths)
-    return true
+    e.sender.send('merge-mp4-started')
+
+    try {
+      await mergeMp4(filePaths, (percent) => {
+        e.sender.send('merge-mp4-progress', percent)
+      })
+      return true
+    } catch {
+      return false
+    }
   })
 }

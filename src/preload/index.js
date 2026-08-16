@@ -117,6 +117,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   restartRecord: (callback) => ipcRenderer.on('restart-record', (e, data) => callback(data)),
   // 合并MP4文件
   mergeMp4: () => ipcRenderer.invoke('merge-mp4'),
+  mergeMp4Progress: (callback) =>
+    ipcRenderer.on('merge-mp4-progress', (e, percent) => callback(percent)),
+  removeMergeMp4ProgressListener: (callback) =>
+    ipcRenderer.removeListener('merge-mp4-progress', callback),
+  mergeMp4Started: (callback) => ipcRenderer.on('merge-mp4-started', callback),
+  removeMergeMp4StartedListener: (callback) =>
+    ipcRenderer.removeListener('merge-mp4-started', callback),
   // 获取录制或监控状态
   getStatus: () => ipcRenderer.invoke('get-status'),
   // 录制或监控状态变化

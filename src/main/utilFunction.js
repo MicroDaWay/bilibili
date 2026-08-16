@@ -151,13 +151,20 @@ export const sortByPart = (files) => {
 }
 
 // 合并MP4文件
-export const mergeMp4 = async (files) => {
+export const mergeMp4 = async (files, onProgress) => {
   const upName = files[0].split('\\').at(-1).split('_')[0]
   const sorted = sortByPart(files)
   const dir = path.dirname(sorted[0])
   const listFile = path.join(dir, 'concat.txt')
+
+  let totalInputBytes = 0
+  for (const f of sorted) {
+    totalInputBytes += fs.statSync(f).size
+  }
+
   const content = sorted.map((f) => `file '${f.replace(/'/g, "'\\''")}'`).join('\n')
   fs.writeFileSync(listFile, content)
+
   const outputDir = path.join(app.getPath('videos'), 'BilibiliRecord')
   const dateString = format(new Date(), 'yyyyMMdd')
   const outputPath = path.join(outputDir, `${upName}_${dateString}.mp4`)
@@ -166,10 +173,33 @@ export const mergeMp4 = async (files) => {
     const args = ['-y', '-f', 'concat', '-safe', '0', '-i', listFile, '-c', 'copy', outputPath]
     const p = spawn(getFFmpegPath(), args, { windowsHide: true })
 
+    let lastPercent = 0
+    const progressTimer = setInterval(() => {
+      if (fs.existsSync(outputPath)) {
+        const currentSize = fs.statSync(outputPath).size
+        const percent = Math.min(Math.round((currentSize / totalInputBytes) * 100), 99)
+        if (percent > lastPercent) {
+          lastPercent = percent
+          onProgress?.(percent)
+        }
+      }
+    }, 300)
+
     p.on('close', (code) => {
+      clearInterval(progressTimer)
       fs.unlinkSync(listFile)
-      if (code === 0) resolve(outputPath)
-      else reject(new Error('合并失败'))
+      if (code === 0) {
+        onProgress?.(100)
+        resolve(outputPath)
+      } else {
+        reject(new Error(`合并失败, exit code: ${code}`))
+      }
+    })
+
+    p.on('error', (err) => {
+      clearInterval(progressTimer)
+      fs.unlinkSync(listFile)
+      reject(err)
     })
   })
 }
