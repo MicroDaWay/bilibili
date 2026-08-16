@@ -49,7 +49,8 @@ export const initTable = async (mainWindow) => {
         title VARCHAR(255) COMMENT '标题',
         view INT COMMENT '播放量',
         post_time DATETIME COMMENT '投稿时间',
-        tag VARCHAR(255) COMMENT '投稿标签'
+        tag VARCHAR(255) COMMENT '投稿标签',
+        state_desc VARCHAR(255) COMMENT '稿件状态'
       ) COMMENT '稿件管理'
     `)
 

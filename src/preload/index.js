@@ -57,6 +57,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.removeListener('event-disqualification-progress', callback),
   removeEventDisqualificationFinishListener: (callback) =>
     ipcRenderer.removeListener('event-disqualification-finish', callback),
+  // 查询限流稿件
+  restrictManuscript: (uid) => ipcRenderer.invoke('restrict-manuscript', uid),
   // 查询播放量<100的稿件
   viewLessOneHundred: (uid) => ipcRenderer.invoke('view-less-one-hundred', uid),
   // 查询每年获得的激励金额

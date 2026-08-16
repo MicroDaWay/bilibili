@@ -34,6 +34,10 @@ const list = [
     url: '/manuscript-auto-click'
   },
   {
+    text: '限流稿件',
+    url: '/restrict-manuscript'
+  },
+  {
     text: '活动资格取消稿件',
     url: '/event-disqualification'
   },

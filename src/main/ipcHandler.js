@@ -294,6 +294,7 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
           const view = stat?.view
           const pubTime = archive?.ptime
           const tag = archive?.tag
+          const state_desc = archive?.state_desc
           const postTime = formatTimestampToDatetime(pubTime)
 
           console.log(
@@ -301,10 +302,10 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
           )
 
           const sql = `
-            INSERT INTO manuscript(uid, title, view, post_time, tag)
-            VALUES(?, ?, ?, ?, ?)
+            INSERT INTO manuscript(uid, title, view, post_time, tag, state_desc)
+            VALUES(?, ?, ?, ?, ?, ?)
           `
-          await conn.query(sql, [uid, title, view, postTime, tag])
+          await conn.query(sql, [uid, title, view, postTime, tag, state_desc])
 
           e.sender.send('update-database-progress', {
             title,
@@ -409,6 +410,27 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
         title: '查询活动资格取消稿件',
         type: 'error',
         message: `查询活动资格取消稿件失败, ${err.message}`
+      })
+    } finally {
+      conn.release()
+    }
+  })
+
+  // 查询限流稿件
+  ipcMain.handle('restrict-manuscript', async (e, uid) => {
+    const conn = await pool.getConnection()
+    try {
+      const sql = `
+        SELECT * FROM manuscript
+        WHERE state_desc = '稿件流量受影响' AND uid = ?
+      `
+      const [rows] = await conn.query(sql, [uid])
+      return rowsToCamel(rows)
+    } catch (err) {
+      dialog.showMessageBox(mainWindow, {
+        title: '查询限流稿件',
+        type: 'error',
+        message: `查询限流稿件失败, ${err.message}`
       })
     } finally {
       conn.release()
