@@ -36,13 +36,12 @@ const main = async () => {
     totalPlay.value = 0
     totalCount.value = 0
     itemList.value = []
+    disqualificationList.value = []
     const startTime = filterData.value['活动开始时间']
     let pn = 1
 
     const disqualificationData = await window.electronAPI.getDisqualificationData(bilibiliStore.uid)
-    disqualificationData.forEach((item) => {
-      disqualificationList.value.push(item.title)
-    })
+    disqualificationList.value = disqualificationData.map((item) => item.title)
 
     while (true) {
       await sleep(1)
@@ -100,6 +99,25 @@ const main = async () => {
       }
       pn++
     }
+
+    if (bilibiliStore.excelPath && postTag.value) {
+      const queryTime = format(new Date(), 'yyyy-MM-dd HH:mm:ss')
+      const res = await window.electronAPI.writeBackExcel({
+        filePath: bilibiliStore.excelPath,
+        postTag: postTag.value,
+        totalPlay: totalPlay.value,
+        totalCount: totalCount.value,
+        queryTime
+      })
+
+      if (!res.success) {
+        window.electronAPI.showMessage({
+          title: '稿件管理',
+          type: 'error',
+          message: `写入失败: ${res.message}`
+        })
+      }
+    }
   } catch (err) {
     window.electronAPI.showMessage({
       title: '稿件管理',
@@ -112,7 +130,7 @@ const main = async () => {
 }
 
 // 点击搜索的处理函数
-const searchHandler = () => {
+const searchHandler = async () => {
   if (isSearching.value) return
   let flag = false
 
@@ -144,7 +162,19 @@ const searchHandler = () => {
     return
   }
 
-  main()
+  if (bilibiliStore.excelPath) {
+    const result = await window.electronAPI.checkExcelWritable(bilibiliStore.excelPath)
+    if (!result.writable) {
+      window.electronAPI.showMessage({
+        title: '稿件管理',
+        type: 'warning',
+        message: 'Excel文件已被打开, 请先关闭Excel再查询'
+      })
+      return
+    }
+  }
+
+  await main()
 }
 </script>
 

@@ -127,5 +127,9 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 获取录制或监控状态
   getStatus: () => ipcRenderer.invoke('get-status'),
   // 录制或监控状态变化
-  statusChange: (callback) => ipcRenderer.on('status-change', (e, params) => callback(params))
+  statusChange: (callback) => ipcRenderer.on('status-change', (e, params) => callback(params)),
+  // 将播放量投稿量和查询时间写回Excel文件
+  writeBackExcel: (data) => ipcRenderer.invoke('write-back-excel', data),
+  // 检查Excel文件是否可写
+  checkExcelWritable: (filePath) => ipcRenderer.invoke('check-excel-writable', filePath)
 })

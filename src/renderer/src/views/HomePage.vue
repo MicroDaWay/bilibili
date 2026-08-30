@@ -150,8 +150,9 @@ onMounted(() => {
     isLogin.value = status
   })
 
-  window.electronAPI.saveBilibiliData((excelData) => {
-    bilibiliStore.setExcelData(excelData)
+  window.electronAPI.saveBilibiliData((data) => {
+    bilibiliStore.setExcelData(data.excelData)
+    bilibiliStore.setExcelPath(data.excelPath)
   })
 
   window.electronAPI.saveOutcomeData((excelData) => {

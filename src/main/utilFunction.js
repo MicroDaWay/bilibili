@@ -4,6 +4,7 @@ import path from 'node:path'
 import { spawn } from 'child_process'
 import { format } from 'date-fns'
 import { app, BrowserWindow, dialog } from 'electron'
+import ExcelJS from 'exceljs'
 import xlsx from 'xlsx'
 
 import { formatTimestampToDatetime, sleep } from '../renderer/src/utils/index'
@@ -91,7 +92,10 @@ export const importExcelHandler = async (mainWindow, ipcHandler) => {
           message: '导入Excel表成功'
         })
 
-        BrowserWindow.getFocusedWindow().webContents.send(ipcHandler, excelData)
+        BrowserWindow.getFocusedWindow().webContents.send(ipcHandler, {
+          excelData,
+          excelPath: filePath
+        })
       }
     } catch (err) {
       dialog.showMessageBox(mainWindow, {
@@ -101,6 +105,85 @@ export const importExcelHandler = async (mainWindow, ipcHandler) => {
       })
     }
   }
+}
+
+// 将播放量投稿量和查询时间写回Excel文件
+export const writeBackToExcel = async (filePath, postTag, totalPlay, totalCount, queryTime) => {
+  if (!filePath || !fs.existsSync(filePath)) {
+    throw new Error('Excel文件不存在或未导入')
+  }
+
+  const workbook = new ExcelJS.Workbook()
+  // 完整读取含样式
+  await workbook.xlsx.readFile(filePath)
+
+  const worksheet = workbook.worksheets[0]
+  if (!worksheet) throw new Error('工作表为空')
+
+  // 定位表头列索引
+  const headerRow = worksheet.getRow(1)
+  let tagCol = null,
+    playCol = null,
+    countCol = null,
+    timeCol = null
+  const existingHeaders = []
+
+  headerRow.eachCell({ includeEmpty: false }, (cell, colNumber) => {
+    const val = String(cell.value ?? '').trim()
+    existingHeaders.push(val)
+    if (val === '投稿标签') tagCol = colNumber
+    else if (val === '播放量') playCol = colNumber
+    else if (val === '投稿量') countCol = colNumber
+    else if (val === '查询时间') timeCol = colNumber
+  })
+
+  if (tagCol === null) throw new Error('未找到"投稿标签"列')
+
+  // 动态添加缺失的列
+  const ensureColumn = (colName, refCol) => {
+    if (refCol !== null) return refCol
+    const newCol = existingHeaders.length + 1
+    const headerCell = headerRow.getCell(newCol)
+    headerCell.value = colName
+    // 复制参考列的表头样式
+    if (refCol === null && existingHeaders.length > 0) {
+      const refCell = headerRow.getCell(existingHeaders.length)
+      if (refCell.font) headerCell.font = refCell.font
+      if (refCell.fill) headerCell.fill = refCell.fill
+      if (refCell.border) headerCell.border = refCell.border
+      if (refCell.alignment) headerCell.alignment = refCell.alignment
+    }
+    existingHeaders.push(colName)
+    return newCol
+  }
+
+  playCol = ensureColumn('播放量', playCol)
+  countCol = ensureColumn('投稿量', countCol)
+  timeCol = ensureColumn('查询时间', timeCol)
+
+  // 遍历数据行, 只改目标单元格(其他单元格样式完全不动)
+  let matched = false
+
+  const rowCount = worksheet.rowCount
+
+  for (let rowNumber = 2; rowNumber <= rowCount; rowNumber++) {
+    const row = worksheet.getRow(rowNumber)
+    const tagValue = String(row.getCell(tagCol).value ?? '')
+
+    if (tagValue.includes(postTag)) {
+      row.getCell(playCol).value = totalPlay
+      row.getCell(countCol).value = totalCount
+      row.getCell(timeCol).value = queryTime
+      matched = true
+      break
+    }
+  }
+
+  if (!matched) throw new Error(`未找到投稿标签 "${postTag}" 对应的行`)
+
+  // 写回原文件
+  await workbook.xlsx.writeFile(filePath)
+  return true
 }
 
 // 扫描BilibiliRecord目录下的ts文件并转换为mp4

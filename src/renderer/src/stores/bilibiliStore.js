@@ -7,6 +7,7 @@ export const useBilibiliStore = defineStore(
     const uid = ref('')
     const uname = ref('')
     const excelData = ref([])
+    const excelPath = ref('')
     const roomUrl = ref('')
     const liveItem = ref({
       username: '',
@@ -28,6 +29,10 @@ export const useBilibiliStore = defineStore(
       excelData.value = value
     }
 
+    const setExcelPath = (value) => {
+      excelPath.value = value
+    }
+
     const setRoomUrl = (value) => {
       roomUrl.value = value
     }
@@ -40,6 +45,7 @@ export const useBilibiliStore = defineStore(
       uid.value = ''
       uname.value = ''
       excelData.value = []
+      excelPath.value = ''
       roomUrl.value = ''
       liveItem.value = {
         username: '',
@@ -54,11 +60,13 @@ export const useBilibiliStore = defineStore(
       uid,
       uname,
       excelData,
+      excelPath,
       roomUrl,
       liveItem,
       setUid,
       setUname,
       setExcelData,
+      setExcelPath,
       setRoomUrl,
       setLiveItem,
       resetStore

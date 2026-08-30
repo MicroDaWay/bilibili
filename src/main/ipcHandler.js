@@ -1,3 +1,4 @@
+import fs from 'node:fs'
 import path from 'node:path'
 
 import axios from 'axios'
@@ -22,7 +23,7 @@ import {
   isLiving
 } from './api.js'
 import { readCookie, writeCookie } from './cookie.js'
-import { getTagByTitle, mergeMp4 } from './utilFunction.js'
+import { getTagByTitle, mergeMp4, writeBackToExcel } from './utilFunction.js'
 
 // 注册IPC处理函数
 export const registerIpcHandler = (pool, mainWindow, recorder) => {
@@ -959,6 +960,40 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
       return true
     } catch {
       return false
+    }
+  })
+
+  // 将播放量投稿量和查询时间写回Excel文件
+  ipcMain.handle(
+    'write-back-excel',
+    async (e, { filePath, postTag, totalPlay, totalCount, queryTime }) => {
+      try {
+        await writeBackToExcel(filePath, postTag, totalPlay, totalCount, queryTime)
+        return {
+          success: true
+        }
+      } catch (err) {
+        return {
+          success: false,
+          message: err.message
+        }
+      }
+    }
+  )
+
+  // 检查Excel文件是否可写
+  ipcMain.handle('check-excel-writable', (e, filePath) => {
+    try {
+      const fd = fs.openSync(filePath, 'r+')
+      fs.closeSync(fd)
+      return {
+        writable: true
+      }
+    } catch (err) {
+      return {
+        writable: false,
+        code: err.code
+      }
     }
   })
 }
