@@ -190,6 +190,8 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
     const conn = await pool.getConnection()
     await conn.query('DELETE FROM rewards')
 
+    const startTime = Date.now()
+
     try {
       let currentPage = 1
       let totalPage = 1
@@ -257,10 +259,17 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
           `
           await conn.query(sql, [totalMoney.toFixed(2), brokerage.toFixed(2)])
           e.sender.send('earnings-center-finish')
+
+          const elapsed = Date.now() - startTime
+          const totalSec = Math.floor(elapsed / 1000)
+          const h = String(Math.floor(totalSec / 3600)).padStart(2, '0')
+          const m = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0')
+          const s = String(totalSec % 60).padStart(2, '0')
+
           dialog.showMessageBox(mainWindow, {
             title: '查询收益中心数据',
             type: 'info',
-            message: '查询结束'
+            message: `查询结束，总用时: ${h}:${m}:${s}`
           })
           break
         }
@@ -281,6 +290,8 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
   ipcMain.on('update-database', async (e, uid) => {
     const conn = await pool.getConnection()
     await conn.query('DELETE FROM manuscript')
+
+    const startTime = Date.now()
 
     try {
       let currentPage = 1
@@ -323,10 +334,17 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
 
         if (currentPage >= totalPage) {
           e.sender.send('update-database-finish')
+
+          const elapsed = Date.now() - startTime
+          const totalSec = Math.floor(elapsed / 1000)
+          const h = String(Math.floor(totalSec / 3600)).padStart(2, '0')
+          const m = String(Math.floor((totalSec % 3600) / 60)).padStart(2, '0')
+          const s = String(totalSec % 60).padStart(2, '0')
+
           dialog.showMessageBox(mainWindow, {
             title: '更新数据库',
             type: 'info',
-            message: '查询结束'
+            message: `查询结束，总用时: ${h}:${m}:${s}`
           })
           break
         }
