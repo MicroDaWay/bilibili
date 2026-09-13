@@ -131,5 +131,13 @@ contextBridge.exposeInMainWorld('electronAPI', {
   // 将播放量投稿量和查询时间写回Excel文件
   writeBackExcel: (data) => ipcRenderer.invoke('write-back-excel', data),
   // 检查Excel文件是否可写
-  checkExcelWritable: (filePath) => ipcRenderer.invoke('check-excel-writable', filePath)
+  checkExcelWritable: (filePath) => ipcRenderer.invoke('check-excel-writable', filePath),
+  selectOutputPath: () => ipcRenderer.invoke('m3u8-select-output'),
+  downloadM3u8: (params) => ipcRenderer.invoke('m3u8-download', params),
+  onM3u8Progress: (callback) => {
+    ipcRenderer.on('m3u8-progress', (e, percent) => callback(percent))
+  },
+  offM3u8Progress: () => {
+    ipcRenderer.removeAllListeners('m3u8-progress')
+  }
 })

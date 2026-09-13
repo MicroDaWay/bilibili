@@ -23,7 +23,12 @@ import {
   isLiving
 } from './api.js'
 import { readCookie, writeCookie } from './cookie.js'
-import { getTagByTitle, mergeMp4, writeBackToExcel } from './utilFunction.js'
+import {
+  downloadM3u8BySegments,
+  getTagByTitle,
+  mergeMp4,
+  writeBackToExcel
+} from './utilFunction.js'
 
 // 注册IPC处理函数
 export const registerIpcHandler = (pool, mainWindow, recorder) => {
@@ -993,6 +998,33 @@ export const registerIpcHandler = (pool, mainWindow, recorder) => {
       return {
         writable: false,
         code: err.code
+      }
+    }
+  })
+
+  ipcMain.handle('m3u8-select-output', async () => {
+    const result = await dialog.showSaveDialog({
+      title: '保存MP4文件',
+      defaultPath: path.join(app.getPath('downloads'), 'video.mp4'),
+      filters: [{ name: 'MP4', extensions: ['mp4'] }]
+    })
+    return result.canceled ? null : result.filePath
+  })
+
+  // 开始下载
+  ipcMain.handle('m3u8-download', async (event, { url, outputPath }) => {
+    try {
+      const result = await downloadM3u8BySegments(url, outputPath, (progressInfo) => {
+        event.sender.send('m3u8-progress', progressInfo)
+      })
+      return {
+        success: true,
+        path: result
+      }
+    } catch (err) {
+      return {
+        success: false,
+        error: err.message
       }
     }
   })

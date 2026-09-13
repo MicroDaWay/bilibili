@@ -108,6 +108,10 @@ const list = [
   {
     text: '合并MP4',
     url: '/merge-mp4'
+  },
+  {
+    text: '下载M3U8',
+    url: '/download-m3u8'
   }
 ]
 

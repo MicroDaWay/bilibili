@@ -1,10 +1,13 @@
+import crypto from 'node:crypto'
 import fs from 'node:fs'
 import path from 'node:path'
 
+import axios from 'axios'
 import { spawn } from 'child_process'
 import { format } from 'date-fns'
 import { app, BrowserWindow, dialog } from 'electron'
 import ExcelJS from 'exceljs'
+import { request } from 'undici'
 import xlsx from 'xlsx'
 
 import { formatTimestampToDatetime, sleep } from '../renderer/src/utils/index'
@@ -285,4 +288,275 @@ export const mergeMp4 = async (files, onProgress) => {
       reject(err)
     })
   })
+}
+
+// 单文件TS转MP4
+const ffmpegRemux = (inputPath, outputPath, onProgress) => {
+  return new Promise((resolve, reject) => {
+    const args = [
+      '-y',
+      '-i',
+      inputPath,
+      '-c:v',
+      'copy',
+      '-c:a',
+      'aac',
+      '-bsf:a',
+      'aac_adtstoasc',
+      '-movflags',
+      '+faststart',
+      outputPath
+    ]
+    const proc = spawn(getFFmpegPath(), args, { windowsHide: true })
+    let stderrOutput = ''
+    proc.stderr.on('data', (chunk) => {
+      stderrOutput += chunk.toString()
+    })
+    let totalInputBytes = 0
+    totalInputBytes = fs.statSync(inputPath).size
+    const timer = setInterval(() => {
+      if (fs.existsSync(outputPath) && totalInputBytes > 0) {
+        const pct = Math.min(Math.round((fs.statSync(outputPath).size / totalInputBytes) * 5), 5)
+        onProgress?.({ type: 'merge', percent: 95 + pct })
+      }
+    }, 300)
+    proc.on('close', (code) => {
+      clearInterval(timer)
+      if (code === 0) resolve()
+      else {
+        const tail = stderrOutput.split('\n').filter(Boolean).slice(-3).join('\n')
+        reject(new Error(`FFmpeg转换失败, exit code: ${code}\n${tail}`))
+      }
+    })
+    proc.on('error', (err) => {
+      clearInterval(timer)
+      reject(err)
+    })
+  })
+}
+
+// 多文件合并
+const ffmpegConcat = (listFile, outputPath, tsPaths, onProgress) => {
+  return new Promise((resolve, reject) => {
+    const args = [
+      '-y',
+      '-f',
+      'concat',
+      '-safe',
+      '0',
+      '-i',
+      listFile,
+      '-c:v',
+      'copy',
+      '-c:a',
+      'aac',
+      '-bsf:a',
+      'aac_adtstoasc',
+      '-movflags',
+      '+faststart',
+      outputPath
+    ]
+    const proc = spawn(getFFmpegPath(), args, { windowsHide: true })
+    let stderrOutput = ''
+    proc.stderr.on('data', (chunk) => {
+      stderrOutput += chunk.toString()
+    })
+    let totalInputBytes = 0
+    for (const p of tsPaths) {
+      totalInputBytes += fs.statSync(p).size
+    }
+    const timer = setInterval(() => {
+      if (fs.existsSync(outputPath) && totalInputBytes > 0) {
+        const pct = Math.min(Math.round((fs.statSync(outputPath).size / totalInputBytes) * 9), 9)
+        onProgress?.({ type: 'merge', percent: 91 + pct })
+      }
+    }, 300)
+    proc.on('close', (code) => {
+      clearInterval(timer)
+      if (code === 0) resolve()
+      else {
+        const tail = stderrOutput.split('\n').filter(Boolean).slice(-3).join('\n')
+        reject(new Error(`FFmpeg合并失败, exit code: ${code}\n${tail}`))
+      }
+    })
+    proc.on('error', (err) => {
+      clearInterval(timer)
+      reject(err)
+    })
+  })
+}
+
+const undiciFetch = async (url, retries = 3) => {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const { statusCode, body } = await request(url, {
+        headersTimeout: 15000,
+        bodyTimeout: 30000
+      })
+      if (statusCode !== 200) {
+        await body.dump()
+        throw new Error(`HTTP ${statusCode}`)
+      }
+      const ab = await body.arrayBuffer()
+      return Buffer.from(ab, 0, ab.byteLength)
+    } catch (err) {
+      if (attempt === retries) throw err
+      await sleep(500 * (attempt + 1))
+    }
+  }
+}
+
+// 下载m3u8并转换为mp4
+export const downloadM3u8BySegments = async (m3u8Url, outputPath, onProgress) => {
+  let finalUrl = m3u8Url
+  let content = ''
+
+  const masterRes = await axios.get(m3u8Url, { responseType: 'text', timeout: 15000 })
+  if (masterRes.data.includes('#EXT-X-STREAM-INF')) {
+    const lines = masterRes.data.split('\n')
+    let bestUrl = ''
+    let maxBw = 0
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].startsWith('#EXT-X-STREAM-INF')) {
+        const bwMatch = lines[i].match(/BANDWIDTH=(\d+)/)
+        const bw = bwMatch ? +bwMatch[1] : 0
+        if (bw >= maxBw) {
+          maxBw = bw
+          bestUrl = lines[i + 1]?.trim() || ''
+        }
+      }
+    }
+    if (!bestUrl) throw new Error('无法解析 master playlist')
+    if (!bestUrl.startsWith('http')) {
+      bestUrl = m3u8Url.substring(0, m3u8Url.lastIndexOf('/') + 1) + bestUrl
+    }
+    finalUrl = bestUrl
+    const mediaRes = await axios.get(finalUrl, { responseType: 'text', timeout: 15000 })
+    content = mediaRes.data
+  } else {
+    content = masterRes.data
+  }
+
+  const baseUrl = finalUrl.substring(0, finalUrl.lastIndexOf('/') + 1)
+  const allLines = content.split('\n')
+
+  // 解析 AES-128 加密信息
+  let keyInfo = null
+  for (const line of allLines) {
+    if (line.startsWith('#EXT-X-KEY')) {
+      const methodMatch = line.match(/METHOD=([^,\s]+)/)
+      const uriMatch = line.match(/URI="([^"]+)"/)
+      const ivMatch = line.match(/IV=0x([0-9a-fA-F]+)/)
+      if (methodMatch?.[1] === 'AES-128' && uriMatch) {
+        let keyUrl = uriMatch[1]
+        if (!keyUrl.startsWith('http')) keyUrl = baseUrl + keyUrl
+        console.log('检测到 AES-128 加密, 正在下载密钥:', keyUrl)
+        // 密钥也用 undici 下载
+        const keyBuf = await undiciFetch(keyUrl)
+        if (keyBuf.length !== 16) throw new Error(`AES 密钥长度异常: ${keyBuf.length} bytes`)
+        const iv = ivMatch ? Buffer.from(ivMatch[1], 'hex') : null
+        keyInfo = { key: keyBuf, iv, hasExplicitIv: !!ivMatch }
+        console.log('密钥下载成功, IV:', iv ? iv.toString('hex') : '(按序号生成)')
+      }
+      break
+    }
+  }
+
+  // 解析分片列表
+  const segments = []
+  for (const line of allLines) {
+    const trimmed = line.trim()
+    if (trimmed && !trimmed.startsWith('#')) {
+      segments.push(trimmed.startsWith('http') ? trimmed : baseUrl + trimmed)
+    }
+  }
+  if (segments.length === 0) throw new Error('未找到任何TS分片')
+
+  // undici 高速并发下载 + 解密
+  const CONCURRENCY = 32
+  let downloadedCount = 0
+  const totalSegments = segments.length
+  const buffers = new Array(totalSegments)
+
+  const ivBuffers =
+    keyInfo && !keyInfo.hasExplicitIv
+      ? segments.map((_, i) => {
+          const buf = Buffer.allocUnsafe(16)
+          buf.fill(0)
+          buf.writeUInt32BE(i, 12)
+          return buf
+        })
+      : null
+
+  const downloadSegment = async (url, index) => {
+    let data = await undiciFetch(url)
+
+    // AES-128-CBC 解密
+    if (keyInfo) {
+      const iv = keyInfo.hasExplicitIv ? keyInfo.iv : ivBuffers[index]
+      const decipher = crypto.createDecipheriv('aes-128-cbc', keyInfo.key, iv)
+      data = Buffer.concat([decipher.update(data), decipher.final()])
+    }
+
+    buffers[index] = data
+  }
+
+  let nextIndex = 0
+  const workers = Array.from({ length: Math.min(CONCURRENCY, totalSegments) }, async () => {
+    while (true) {
+      const idx = nextIndex++
+      if (idx >= totalSegments) break
+      await downloadSegment(segments[idx], idx)
+      downloadedCount++
+      onProgress?.({
+        type: 'download',
+        downloadedSegments: downloadedCount,
+        totalSegments,
+        percent: Math.round((downloadedCount / totalSegments) * 90)
+      })
+    }
+  })
+
+  await Promise.all(workers)
+
+  // 检测格式
+  const firstBytes = buffers[0].subarray(0, 12)
+  const isMpegTs = firstBytes[0] === 0x47
+  const isFmp4 = firstBytes.subarray(4, 8).toString('ascii') === 'ftyp'
+  console.log(
+    `解密后格式检测: MPEG-TS=${isMpegTs}, fMP4=${isFmp4}, 前12字节hex=${firstBytes.toString('hex')}`
+  )
+
+  // 合并
+  if (isMpegTs) {
+    onProgress?.({ type: 'merge', percent: 91 })
+    const mergedBuffer = Buffer.concat(buffers)
+    // 释放内存
+    buffers.length = 0
+    const mergedTsPath = outputPath + '.tmp.ts'
+    await fs.promises.writeFile(mergedTsPath, mergedBuffer)
+    onProgress?.({ type: 'merge', percent: 95 })
+    await ffmpegRemux(mergedTsPath, outputPath, onProgress)
+    fs.unlinkSync(mergedTsPath)
+  } else {
+    onProgress?.({ type: 'merge', percent: 91 })
+    const tmpDir = path.join(path.dirname(outputPath), 'download_m3u8_' + Date.now())
+    fs.mkdirSync(tmpDir, { recursive: true })
+    const tsPaths = buffers.map((buf, i) => {
+      const p = path.join(tmpDir, String(i).padStart(5, '0') + '.ts')
+      fs.writeFileSync(p, buf)
+      return p
+    })
+    buffers.length = 0
+    const listFile = path.join(tmpDir, 'concat.txt')
+    fs.writeFileSync(
+      listFile,
+      tsPaths.map((f) => `file '${f.replace(/\\/g, '/').replace(/'/g, "'\\''")}'`).join('\n')
+    )
+    await ffmpegConcat(listFile, outputPath, tsPaths, onProgress)
+    fs.rmSync(tmpDir, { recursive: true, force: true })
+  }
+
+  onProgress?.({ type: 'done', percent: 100 })
+  return outputPath
 }

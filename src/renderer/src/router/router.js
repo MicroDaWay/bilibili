@@ -32,7 +32,8 @@ const routes = [
   { path: '/get-outcome-by-month', component: () => import('@/views/GetOutcomeByMonth.vue') },
   { path: '/get-outcome-by-year', component: () => import('@/views/GetOutcomeByYear.vue') },
   { path: '/live-recorder', component: () => import('@/views/LiveRecorder.vue') },
-  { path: '/merge-mp4', component: () => import('@/views/MergeMp4.vue') }
+  { path: '/merge-mp4', component: () => import('@/views/MergeMp4.vue') },
+  { path: '/download-m3u8', component: () => import('@/views/DownloadM3U8.vue') }
 ]
 
 const router = createRouter({

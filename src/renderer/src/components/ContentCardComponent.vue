@@ -70,7 +70,8 @@ const proxyImage = (url) => {
   .img-container {
     img {
       display: block;
-      width: 14vw;
+      height: 16vh;
+      max-width: 14vw;
     }
   }
 
