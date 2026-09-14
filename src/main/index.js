@@ -14,7 +14,7 @@ let mainWindow
 let isQuit = false
 const recorder = new LiveRecorder()
 
-async function gracefulQuit() {
+const gracefulQuit = async () => {
   if (isQuit) return
   isQuit = true
 
